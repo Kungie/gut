@@ -12,6 +12,8 @@ import pytest
 
 from gut._config import reset_configuration
 
+pytest_plugins = ["pytester"]
+
 
 @pytest.fixture(autouse=True)
 def _reset_gut_configuration() -> Iterator[None]:

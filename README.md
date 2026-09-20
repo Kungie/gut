@@ -228,31 +228,81 @@ not, so a stale entry is at least visible in the record.
 
 ## Testing semantic decisions
 
-Judgment is testable like anything else. Write example files:
+Judgment is testable like anything else. You cannot assert an exact output, but you can assert that
+a predicate agrees with you on cases you have written down, often enough to rely on.
 
 ```yaml
 # predicates/cancel_threat.yaml
 question: "the customer threatens to cancel"
+min_accuracy: 0.9
 examples:
   - text: "If this happens again I'm cancelling my subscription."
     expected: yes
-  - text: "How do I cancel my subscription?"
+  - text: "How do I cancel my subscription? I want to downgrade."
     expected: no
-min_accuracy: 0.9
+  - text: "Third outage this month. We're evaluating alternatives."
+    expected: yes
 ```
 
 ```bash
-pytest --gut-evals     # collects the files, reports accuracy, fails below min_accuracy
+pytest --gut-evals predicates/
 ```
 
-For everyday CI, record once and replay forever:
+```
+---------------------------------- gut evals -----------------------------------
+PASS  cancel_threat                      100%  (5/5) min 90%
+FAIL  owning_team                         67%  (2/3) min 80%
+PASS  urgency                            100%  (2/2) min 60%
+```
+
+Each file is one test, because the unit that passes or fails is the file's accuracy. A failure
+prints every case that went the wrong way, with what the model actually said:
+
+```
+owning_team: accuracy 67% (2/3), below min_accuracy 80%
+  question: which team should own this ticket
+
+  expected 'OTHER', got BILLING (confidence=0.65)
+    Do you have a student discount?
+```
+
+The hard cases are the point. A file of obvious examples proves nothing; the ones worth writing down
+are the ones you had to think about, and the ones that went wrong in production. Choice and score
+files work the same way, with `options:` or `levels:` instead of a bare question.
+
+`min_accuracy` defaults to `1.0` — lowering it should be a decision you made, not one the library
+made quietly on your behalf.
+
+### Record once, replay forever
+
+Evals against a live model are slow and cost money on every run. Record them once:
+
+```python
+# conftest.py
+import gut
+from gut import CassetteBackend, JevBackend, record_requested
+
+inner = JevBackend(model="jev-1.13.0") if record_requested() else None
+backend = CassetteBackend("cassettes/predicates.json", inner, model="jev-1.13.0")
+gut.configure(backend=backend)
+
+def pytest_sessionfinish(session, exitstatus):
+    backend.save()
+```
 
 ```bash
-GUT_RECORD=1 pytest    # records real responses to cassettes
-pytest                 # replays them: fast, offline, deterministic
+GUT_RECORD=1 pytest --gut-evals predicates/   # 4.05s, against the real model
+pytest --gut-evals predicates/                # 0.07s, offline, identical
 ```
 
-`FakeBackend` covers development with no API key at all. The entire test suite passes without one.
+Commit the cassette. Entries are keyed by the state and the question, not by the request they
+travelled in, so regrouping questions — adding `@semantic`, say — does not invalidate a recording.
+In replay mode an unrecorded question is an error that names itself; quietly reaching for the network
+would turn one forgotten re-record into a suite that passes on your laptop, fails in CI, and bills
+you either way.
+
+`FakeBackend` covers development with no API key at all, and the entire test suite of this project
+passes without one.
 
 ---
 
