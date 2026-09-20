@@ -263,6 +263,8 @@ def test_no_backend_configured_says_what_to_do() -> None:
 class WrongShapeBackend:
     """Returns an answer of the wrong kind, as a misbehaving backend would."""
 
+    model_id = "wrong-1.0"
+
     def __init__(self, answer: NoulAnswer | ChoiceAnswer | ScoreAnswer) -> None:
         self.answer = answer
 
@@ -272,6 +274,8 @@ class WrongShapeBackend:
 
 class EmptyBackend:
     """Returns no answers at all."""
+
+    model_id = "empty-1.0"
 
     def ask(self, state: State, questions: Mapping[str, QuestionSpec]) -> BackendResponse:
         return BackendResponse(answers={}, model="empty-1.0")

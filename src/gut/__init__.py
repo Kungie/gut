@@ -21,6 +21,7 @@ from gut._backends import (
     ScoreAnswer,
     deterministic_rule,
 )
+from gut._cache import Cache, CacheEntry, MemoryCache, NullCache, SQLiteCache
 from gut._config import configure, on_unsure
 from gut._decision import BaseDecision, ChoiceDecision, Decision, ScoreDecision
 from gut._errors import (
@@ -47,6 +48,8 @@ __all__ = [
     "BackendError",
     "BackendResponse",
     "BaseDecision",
+    "Cache",
+    "CacheEntry",
     "ChoiceAnswer",
     "ChoiceDecision",
     "ChoiceSpec",
@@ -54,12 +57,15 @@ __all__ = [
     "Decision",
     "FakeBackend",
     "GutError",
+    "MemoryCache",
     "NoulAnswer",
     "NoulSpec",
+    "NullCache",
     "Outcome",
     "Policy",
     "PolicyError",
     "QuestionError",
+    "SQLiteCache",
     "ScoreAnswer",
     "ScoreDecision",
     "ScoreSpec",
