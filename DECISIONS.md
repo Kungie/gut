@@ -227,6 +227,33 @@ Two known limits, both preferred to the churn above:
 The walk skips however many `gut` frames sit between the call and `caller_site()`, so the site does
 not move when the library's internal call depth changes between releases.
 
+## D12 — The cache key names the model asked for, not the model that answered
+
+**Date:** 2026-09-20
+
+The key is a hash of the state, the question spec and the model — as the handoff specifies — but
+there is an ordering problem the specification glosses over: **the resolved model version is only
+known after the call, and the key is needed before it.** So the key uses the model the backend was
+*configured* to ask, which may be a moving alias such as `jev-latest`, while the entry stores the
+resolved version that actually answered.
+
+Two consequences, both deliberate:
+
+- `Decision.model` on a cache hit reports the **stored** version, not the alias. Reporting the alias
+  would make a recorded decision unfalsifiable later — you could no longer tell which model produced
+  it.
+- Caching under an alias can serve an answer from an older version after a release, because the key
+  did not change when the alias moved. The honest fix is the one the vendor docs already recommend:
+  pin a version. Callers who pin get exact keys; callers who use an alias get a documented trade,
+  not a silent one.
+
+`Backend` therefore exposes `model_id` as a read-only property, known before any call. Declaring it
+read-only rather than as a plain attribute matters: a protocol attribute is implicitly settable, and
+mypy rejects an implementation that exposes it as a property — which `FakeBackend` does.
+
+An in-memory bounded LRU is the default, `SQLiteCache` persists across restarts, and `NullCache`
+turns caching off.
+
 ---
 
 ## Implementation order

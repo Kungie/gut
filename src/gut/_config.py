@@ -16,6 +16,7 @@ from gut._errors import ConfigurationError
 
 if TYPE_CHECKING:
     from gut._backends.base import Backend
+    from gut._cache import Cache
     from gut._decision import BaseDecision
 
 UnsureLiteral: TypeAlias = Literal["raise", "true", "false"]
@@ -30,6 +31,7 @@ DEFAULT_ON_UNSURE: Final[UnsureLiteral] = "raise"
 _configured: UnsurePolicy = DEFAULT_ON_UNSURE
 _override: ContextVar[UnsurePolicy | None] = ContextVar("gut_on_unsure_override", default=None)
 _backend: Backend | None = None
+_cache: Cache | None = None
 
 
 def _validate(policy: UnsurePolicy) -> UnsurePolicy:
@@ -44,7 +46,12 @@ def _validate(policy: UnsurePolicy) -> UnsurePolicy:
     return policy
 
 
-def configure(*, on_unsure: UnsurePolicy | None = None, backend: Backend | None = None) -> None:
+def configure(
+    *,
+    on_unsure: UnsurePolicy | None = None,
+    backend: Backend | None = None,
+    cache: Cache | None = None,
+) -> None:
     """Set process-wide defaults.
 
     Args:
@@ -53,15 +60,19 @@ def configure(*, on_unsure: UnsurePolicy | None = None, backend: Backend | None 
             handed the decision and returns a bool.
         backend: What answers questions. Left unset, `gut` has no backend and says so; offline work
             uses `configure(backend=FakeBackend(...))`.
+        cache: Where answers are kept between calls. Defaults to a bounded in-memory LRU; pass
+            `SQLiteCache(...)` to persist across restarts, or `NullCache()` to turn caching off.
 
     Raises:
         ConfigurationError: `on_unsure` is not a recognised policy.
     """
-    global _configured, _backend
+    global _configured, _backend, _cache
     if on_unsure is not None:
         _configured = _validate(on_unsure)
     if backend is not None:
         _backend = backend
+    if cache is not None:
+        _cache = cache
 
 
 def current_backend() -> Backend:
@@ -109,8 +120,19 @@ def on_unsure(policy: UnsurePolicy) -> Iterator[None]:
         _override.reset(token)
 
 
+def current_cache() -> Cache:
+    """The configured cache, creating the default in-memory one on first use."""
+    global _cache
+    if _cache is None:
+        from gut._cache import MemoryCache
+
+        _cache = MemoryCache()
+    return _cache
+
+
 def reset_configuration() -> None:
     """Restore the unconfigured defaults. Intended for tests."""
-    global _configured, _backend
+    global _configured, _backend, _cache
     _configured = DEFAULT_ON_UNSURE
     _backend = None
+    _cache = None

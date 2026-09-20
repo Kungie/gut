@@ -175,6 +175,11 @@ class FakeBackend:
     calls: list[RecordedCall] = field(default_factory=list, init=False)
 
     @property
+    def model_id(self) -> str:
+        """The model this backend reports; there is no alias to resolve."""
+        return self.model
+
+    @property
     def call_count(self) -> int:
         """How many backend calls have been made -- the batching assertion in one number."""
         return len(self.calls)

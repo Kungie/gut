@@ -10,11 +10,13 @@ from __future__ import annotations
 import time
 import warnings
 from collections.abc import Mapping, Sequence
+from dataclasses import dataclass
 from enum import Enum
 from typing import TypeVar
 
 from gut._backends.base import Answer, Backend, ChoiceAnswer, NoulAnswer, ScoreAnswer
-from gut._config import current_backend
+from gut._cache import CacheEntry, cache_key
+from gut._config import current_backend, current_cache
 from gut._decision import ChoiceDecision, Decision, ScoreDecision
 from gut._errors import BackendError, QuestionError
 from gut._outcomes import Outcome
@@ -31,15 +33,36 @@ CATCH_ALL_NAMES = frozenset({"OTHER", "UNKNOWN", "NONE", "MISC", "MISCELLANEOUS"
 _warned_enums: set[type[Enum]] = set()
 
 
-def _ask(state: State, spec: QuestionSpec, backend: Backend | None) -> tuple[Answer, str, float]:
-    """Send one question and time it."""
+@dataclass(frozen=True, slots=True)
+class _Resolved:
+    """One answer and how it was obtained."""
+
+    answer: Answer
+    model: str
+    cached: bool
+    latency_ms: float | None
+
+
+def _ask(state: State, spec: QuestionSpec, backend: Backend | None) -> _Resolved:
+    """Answer one question, from cache when possible."""
     chosen = current_backend() if backend is None else backend
+    cache = current_cache()
+    key = cache_key(state, spec, chosen.model_id)
+
+    hit = cache.get(key)
+    if hit is not None:
+        # The stored model is the version that actually answered, which is more specific than
+        # the alias in the key. Reporting the alias would make a recorded decision unfalsifiable.
+        return _Resolved(answer=hit.answer, model=hit.model, cached=True, latency_ms=None)
+
     started = time.perf_counter()
     response = chosen.ask(state, {"q": spec})
     latency_ms = (time.perf_counter() - started) * 1000.0
     if "q" not in response.answers:
         raise BackendError(f"{type(chosen).__name__} returned no answer for the question asked.")
-    return response.answers["q"], response.model, latency_ms
+    answer = response.answers["q"]
+    cache.set(key, CacheEntry(answer=answer, model=response.model))
+    return _Resolved(answer=answer, model=response.model, cached=False, latency_ms=latency_ms)
 
 
 def _expect(answer: Answer, kind: type[A], spec: QuestionSpec) -> A:
@@ -109,13 +132,14 @@ def likely(
     )
     spec = NoulSpec(instructions=question, yes_means=yes_means, no_means=no_means)
     site = caller_site()
-    answer, model, latency_ms = _ask(subject, spec, backend)
-    noul = _expect(answer, NoulAnswer, spec)
+    resolved = _ask(subject, spec, backend)
+    noul = _expect(resolved.answer, NoulAnswer, spec)
     return Decision(
         outcome=rule.decide(noul.p),
         id=decision_id(spec.fingerprint, site),
-        model=model,
-        latency_ms=latency_ms,
+        model=resolved.model,
+        cached=resolved.cached,
+        latency_ms=resolved.latency_ms,
         p=noul.p,
         policy=rule,
     )
@@ -189,8 +213,8 @@ def classify(
     _warn_without_catch_all(enum_class)
     spec = ChoiceSpec(instructions=question, criteria=criteria)
     site = caller_site()
-    answer, model, latency_ms = _ask(subject, spec, backend)
-    choice = _expect(answer, ChoiceAnswer, spec)
+    resolved = _ask(subject, spec, backend)
+    choice = _expect(resolved.answer, ChoiceAnswer, spec)
 
     by_name = {member.name: member for member in enum_class}
     if choice.choice not in by_name:
@@ -204,8 +228,9 @@ def classify(
     return ChoiceDecision(
         outcome=outcome,
         id=decision_id(spec.fingerprint, site),
-        model=model,
-        latency_ms=latency_ms,
+        model=resolved.model,
+        cached=resolved.cached,
+        latency_ms=resolved.latency_ms,
         value=by_name[choice.choice] if outcome is Outcome.YES else Outcome.UNSURE,
         probabilities=probabilities,
         confidence=choice.confidence,
@@ -240,13 +265,14 @@ def rate(
     """
     spec = ScoreSpec(instructions=question, criteria=levels)
     site = caller_site()
-    answer, model, latency_ms = _ask(subject, spec, backend)
-    score = _expect(answer, ScoreAnswer, spec)
+    resolved = _ask(subject, spec, backend)
+    score = _expect(resolved.answer, ScoreAnswer, spec)
     return ScoreDecision(
         outcome=_min_confidence_outcome(score.confidence, min_confidence),
         id=decision_id(spec.fingerprint, site),
-        model=model,
-        latency_ms=latency_ms,
+        model=resolved.model,
+        cached=resolved.cached,
+        latency_ms=resolved.latency_ms,
         score=score.score,
         probabilities=dict(score.probabilities),
         confidence=score.confidence,

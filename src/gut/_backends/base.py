@@ -74,6 +74,16 @@ class Backend(Protocol):
     ride along with it.
     """
 
+    @property
+    def model_id(self) -> str:
+        """The model this backend will ask, as configured -- a pinned version or an alias.
+
+        Known before any call, because the cache key includes it: an answer is only interchangeable
+        with another answer from the same model. Declared read-only so an implementation is free to
+        expose it as a plain attribute or compute it.
+        """
+        ...
+
     def ask(self, state: State, questions: Mapping[str, QuestionSpec]) -> BackendResponse:
         """Answer `questions` about `state`.
 

@@ -186,6 +186,23 @@ with gut.judge(ticket) as j:
 
 ---
 
+## Caching
+
+Asking the same question about the same state twice buys nothing and is billed again, so answers are
+cached by default — keyed on the state, the question *and the model asked for*.
+
+```python
+gut.configure(cache=gut.SQLiteCache(".gut_cache/answers.db"))  # survives restarts
+gut.configure(cache=gut.NullCache())                           # off
+```
+
+One caveat worth knowing: if your backend names its model by a moving alias, the key does not change
+when the alias moves, so the cache can keep serving answers from the previous version. Pin a version
+if that matters. `Decision.model` always reports the version that actually answered, cache hit or
+not, so a stale entry is at least visible in the record.
+
+---
+
 ## Testing semantic decisions
 
 Judgment is testable like anything else. Write example files:
