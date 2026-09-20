@@ -10,6 +10,7 @@ The public API is re-exported here. Everything else is private and may move betw
 
 from __future__ import annotations
 
+from gut._api import classify, likely, rate
 from gut._backends import (
     Answer,
     Backend,
@@ -64,8 +65,11 @@ __all__ = [
     "ScoreSpec",
     "UnsureDecision",
     "__version__",
+    "classify",
     "configure",
     "deterministic_rule",
+    "likely",
     "on_unsure",
     "policy",
+    "rate",
 ]

@@ -84,13 +84,16 @@ class NoulSpec:
 class ChoiceSpec:
     """A question that selects one of several named options."""
 
-    instructions: str
+    instructions: str | None
+    """What to decide. `None` leaves it to the options to speak for themselves, which the API
+    allows and which is often enough for a well-described set of categories."""
     criteria: Mapping[str, str | None]
     """Option names mapped to descriptions of when each applies; `None` means the name speaks
     for itself."""
 
     def __post_init__(self) -> None:
-        _require_text("question", self.instructions)
+        if self.instructions is not None:
+            _require_text("question", self.instructions)
         if not isinstance(self.criteria, Mapping):
             raise QuestionError(f"criteria must be a mapping, got {type(self.criteria).__name__}.")
         count = len(self.criteria)
@@ -106,11 +109,10 @@ class ChoiceSpec:
 
     def canonical(self) -> dict[str, Any]:
         """The stable, comparable form of this question."""
-        return {
-            "type": "choice",
-            "instructions": self.instructions,
-            "criteria": dict(self.criteria),
-        }
+        spec: dict[str, Any] = {"type": "choice", "criteria": dict(self.criteria)}
+        if self.instructions is not None:
+            spec["instructions"] = self.instructions
+        return spec
 
     @property
     def fingerprint(self) -> str:
@@ -122,7 +124,8 @@ class ChoiceSpec:
 class ScoreSpec:
     """A question that rates the state against an ordered rubric."""
 
-    instructions: str
+    instructions: str | None
+    """What to rate. `None` leaves it to the rubric to speak for itself."""
     criteria: Sequence[str]
     """Level descriptions in order; the first is level 0.
 
@@ -131,7 +134,8 @@ class ScoreSpec:
     """
 
     def __post_init__(self) -> None:
-        _require_text("question", self.instructions)
+        if self.instructions is not None:
+            _require_text("question", self.instructions)
         if isinstance(self.criteria, str) or not isinstance(self.criteria, Sequence):
             raise QuestionError(
                 f"levels must be a sequence of strings, got {type(self.criteria).__name__}."
@@ -148,11 +152,10 @@ class ScoreSpec:
 
     def canonical(self) -> dict[str, Any]:
         """The stable, comparable form of this question."""
-        return {
-            "type": "score",
-            "instructions": self.instructions,
-            "criteria": list(self.criteria),
-        }
+        spec: dict[str, Any] = {"type": "score", "criteria": list(self.criteria)}
+        if self.instructions is not None:
+            spec["instructions"] = self.instructions
+        return spec
 
     @property
     def fingerprint(self) -> str:

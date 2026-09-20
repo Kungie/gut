@@ -189,14 +189,18 @@ class FakeBackend:
             if value is not None:
                 return value
         for key in (spec.instructions, spec.fingerprint):
-            if key in self.answers:
+            if key is not None and key in self.answers:
                 return self.answers[key]
         if self.default is not None:
             return self.default
+        described = (
+            repr(spec.instructions)
+            if spec.instructions
+            else f"a {spec.canonical()['type']} question"
+        )
         raise BackendError(
-            f"FakeBackend has no fixture for {spec.instructions!r} (fingerprint "
-            f"{spec.fingerprint}). Add it to answers=, return it from rule=, or set default= to "
-            f"answer everything."
+            f"FakeBackend has no fixture for {described} (fingerprint {spec.fingerprint}). Add it "
+            f"to answers=, return it from rule=, or set default= to answer everything."
         )
 
     def ask(self, state: State, questions: Mapping[str, QuestionSpec]) -> BackendResponse:

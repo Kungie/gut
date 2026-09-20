@@ -15,6 +15,7 @@ from typing import TYPE_CHECKING, Final, Literal, TypeAlias, get_args
 from gut._errors import ConfigurationError
 
 if TYPE_CHECKING:
+    from gut._backends.base import Backend
     from gut._decision import BaseDecision
 
 UnsureLiteral: TypeAlias = Literal["raise", "true", "false"]
@@ -28,6 +29,7 @@ DEFAULT_ON_UNSURE: Final[UnsureLiteral] = "raise"
 
 _configured: UnsurePolicy = DEFAULT_ON_UNSURE
 _override: ContextVar[UnsurePolicy | None] = ContextVar("gut_on_unsure_override", default=None)
+_backend: Backend | None = None
 
 
 def _validate(policy: UnsurePolicy) -> UnsurePolicy:
@@ -42,20 +44,39 @@ def _validate(policy: UnsurePolicy) -> UnsurePolicy:
     return policy
 
 
-def configure(*, on_unsure: UnsurePolicy | None = None) -> None:
+def configure(*, on_unsure: UnsurePolicy | None = None, backend: Backend | None = None) -> None:
     """Set process-wide defaults.
 
     Args:
         on_unsure: What `bool(decision)` should do when the decision is UNSURE. `"raise"` (the
             default) raises `UnsureDecision`, `"true"` and `"false"` coerce, and a callable is
             handed the decision and returns a bool.
+        backend: What answers questions. Left unset, `gut` has no backend and says so; offline work
+            uses `configure(backend=FakeBackend(...))`.
 
     Raises:
         ConfigurationError: `on_unsure` is not a recognised policy.
     """
-    global _configured
+    global _configured, _backend
     if on_unsure is not None:
         _configured = _validate(on_unsure)
+    if backend is not None:
+        _backend = backend
+
+
+def current_backend() -> Backend:
+    """The configured backend.
+
+    Raises:
+        ConfigurationError: No backend has been configured.
+    """
+    if _backend is None:
+        raise ConfigurationError(
+            "No backend is configured. For offline work use "
+            "gut.configure(backend=gut.FakeBackend(answers={...})); for real answers install "
+            "gut[jev], set TYPESAFE_API_KEY, and configure gut.JevBackend()."
+        )
+    return _backend
 
 
 def current_on_unsure() -> UnsurePolicy:
@@ -90,5 +111,6 @@ def on_unsure(policy: UnsurePolicy) -> Iterator[None]:
 
 def reset_configuration() -> None:
     """Restore the unconfigured defaults. Intended for tests."""
-    global _configured
+    global _configured, _backend
     _configured = DEFAULT_ON_UNSURE
+    _backend = None

@@ -203,6 +203,30 @@ Comparing a decision against anything else returns `NotImplemented` rather than 
 reflected-comparison fallback still works. A test asserts `Outcome.YES == decision` in that
 direction specifically.
 
+## D11 — Decision-site ids use module and function, not file and line
+
+**Date:** 2026-09-20
+
+The handoff specifies the site id as a hash of the question spec plus the `file:line` of the call
+site. Following that literally has a failure mode worth avoiding: **adding a line anywhere above the
+call changes its id.** Since the id is what ties today's decisions to next month's resolved outcomes,
+an unrelated edit would silently orphan a decision's entire calibration history, with nothing in the
+data to indicate why the series stopped.
+
+So the id is built from the question fingerprint plus `module:function`, which survives ordinary
+editing. The file and line are still captured on every `CallSite` and recorded alongside the
+decision, so debugging keeps the precise location; they are simply not part of the identity.
+
+Two known limits, both preferred to the churn above:
+
+- Two same-named functions in one module asking the *same* question share an id. That needs a
+  genuine collision of place and question, and the answer is arguably the same decision anyway.
+- `co_qualname` would distinguish methods on different classes, but it only exists on Python 3.11+,
+  and an id that changes with the interpreter version is worse than one that merges rare duplicates.
+
+The walk skips however many `gut` frames sit between the call and `caller_site()`, so the site does
+not move when the library's internal call depth changes between releases.
+
 ---
 
 ## Implementation order
