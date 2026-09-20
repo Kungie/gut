@@ -49,20 +49,86 @@ contributor set is still one person.
 
 ---
 
-## Facts to verify before coding the backend
+## Jev / `typesafe-sdk` inspection — findings
 
-The handoff's description of Jev predates this repo and **must not be trusted blind**. Verified so far:
+**Date:** 2026-09-20 · SDK `typesafe-sdk==0.7.0` · model `jev-1.13.0` · docs `docs.typesafe.ai`
 
-- [x] `typesafe-sdk` exists on PyPI — version `0.7.0`, `requires-python >=3.10`,
-      repo `github.com/typesafe-ai/typesafe-sdk-python`, docs `docs.typesafe.ai/sdk/python/`.
-- [ ] `TypeSafeClient().system_one(state=..., questions={...})` signature and `.answers[id]` shape
-- [ ] `Choice` / `Score` / `Noul` constructor arguments and response attributes
-- [ ] Whether `state` genuinely accepts `str | dict | list[str]`
-- [ ] Context limits (64k combined / 32k single question) and rate limits (250k tok/s, 1200 req/min)
-- [ ] How the response reports the versioned model ID, and how to pin a version
-- [ ] Error/retry semantics: 429 body, `retry-after` header
+The handoff's description of Jev predates this repo, so every claim was checked against the installed
+SDK source and the live docs before any backend design. **The handoff was accurate on all the facts it
+stated.** What follows is the corrections and the things it did not mention.
 
-Differences found during inspection get written up here before any backend code is committed.
+### Corrections
+
+| Handoff | Reality |
+|---|---|
+| import `typesafe` (implied) | The import name is **`typesafe_sdk`**. `pip install typesafe-sdk` was right. |
+| `Noul(instructions)`, nothing else | `Noul` also takes **`criteria={"true": ..., "false": ...}`**, optional descriptions of each outcome. Both fields are optional. |
+| `Choice(criteria={key: description})` | Same, but a description may be **`None`** — the label is then interpreted by its name alone. |
+| `Score` takes 2–10 levels | Docs confirm "at least two levels and up to 10", **but the SDK's wire schema only enforces `min_length=1`**. A 1-level rubric passes the SDK and fails at the API. |
+| `Score` returns `.score` / `.probabilities` / `.confidence` | Also returns **`.legend`**, level number → description. And the public `ScoreAnswer` **coerces `legend` and `probabilities` keys to `int`**, while `ChoiceAnswer.probabilities` stays keyed by `str`. Easy to get wrong. |
+| "`JevBackend` … retries with backoff on 429, honors `retry-after`" | **The SDK already does all of this.** `RetryPolicy`: `max_retries=2`, backoff `0.5s → 5s` doubling, `backoff_jitter=0.25`, retried statuses `{408, 429, 5xx}`, `respect_retry_after=True` (honors both `retry-after` **and** `retry-after-ms`), and a 30s total retry budget per call. |
+
+### Not mentioned in the handoff
+
+- `model` is a **required** field on the wire request. The SDK fills it from the `model=` argument,
+  then `TYPESAFE_DEFAULT_MODEL`, then the constant `"jev-latest"`.
+- Aliases: `jev-latest` and `jev-preview`, both currently `jev-1.13.0`. `response.model` reports the
+  resolved versioned ID — the handoff was right that this must be recorded on every decision.
+- Env vars: `TYPESAFE_API_KEY`, `TYPESAFE_BASE_URL`, `TYPESAFE_DEFAULT_MODEL`, `TYPESAFE_LOG_LEVEL`.
+  `DEFAULT_TIMEOUT = 10.0` seconds per HTTP operation.
+- `SystemOneResponse` offers typed views `.nouls` / `.choices` / `.scores` alongside `.answers`, plus
+  `.model` and `.usage` (`input_tokens` / `output_tokens`, both `int | None` on the public type).
+- Unknown answer types are **dropped with a warning** rather than raising — the SDK is forward-compatible.
+- `questions` must be nonempty (`min_length=1`).
+- There is an `AsyncTypeSafeClient`, and `client.models.list()` for discovering available versions.
+- The SDK depends on **`httpx2`**, not `httpx`.
+- Pricing: `$0.042` per million input tokens, output free. Confirms that padding a batch with extra
+  questions is nearly free — the economic premise behind `@semantic`.
+- Limits confirmed: 64k tokens per request, 32k for `state` plus the longest single question,
+  250k tokens/s and 1,200 requests/min.
+
+### The one that changes our design
+
+**`confidence` is not a calibrated accuracy estimate.** The docs define it as "a statistic computed
+from the probability distribution the answer already gives you" — i.e. how peaked the distribution is —
+and advise "start with conservative thresholds, test with your own data, and adjust as you observe
+results." Noul carries no confidence at all: "(Noul answers don't carry one.)"
+
+Consequences for `gut`:
+
+- `min_confidence` on `classify` / `rate` is a **spread filter**, not a probability of being right.
+  The README and docstrings must say so rather than implying a guarantee.
+- The cost rule for `likely` runs on `noul` directly, which *is* a probability of yes. Keep the two
+  ideas separate in the API and never quietly convert one into the other.
+- Docs warn that "negated questions don't necessarily sum to 1, and different primitives yield
+  non-comparable results". So `gut` must **never** synthesize `P(no)` as `1 - noul` from a separately
+  asked negated question, and must not compare a `Score` probability against a `Noul` probability.
+
+## D4 — `JevBackend` configures the SDK's retry policy rather than reimplementing it
+
+**Date:** 2026-09-20
+
+Given the finding above, wrapping the SDK in our own retry loop would stack two backoffs and double
+the effective delay on a 429. `JevBackend` instead exposes the knobs we care about (max retries,
+timeout, pinned model) and maps them onto `RetryPolicy`. The `Backend` protocol stays free of retry
+concerns so that a future backend without built-in retries can add its own.
+
+## D5 — Client-side validation of question shapes
+
+**Date:** 2026-09-20
+
+`gut` validates before calling: 2–10 score levels, 2–255 choice options, nonempty questions. The SDK
+lets a 1-level rubric through to fail server-side; catching it locally turns a round trip and an opaque
+422 into an immediate, readable error. Validation lives next to the question builders, not in the
+backend, so `FakeBackend` enforces the same rules as `JevBackend`.
+
+## D6 — No mypy override for `typesafe_sdk`
+
+**Date:** 2026-09-20
+
+The SDK ships `py.typed` and is fully annotated; a probe module using `system_one`, `Noul`, `Choice`
+and `Score` passes `mypy --strict` with no `ignore_missing_imports`. The override drafted in the
+initial scaffold was removed so that real type errors against the SDK surface instead of being silenced.
 
 ---
 
