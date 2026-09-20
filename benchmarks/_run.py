@@ -27,7 +27,7 @@ from benchmarks._core import (
     check_budget,
     stratified_split,
 )
-from benchmarks._datasets import Benchmark
+from benchmarks._datasets import Benchmark, benchmarks
 from benchmarks._metrics import (
     HEADER,
     OutOfScope,
@@ -516,16 +516,21 @@ def _oos_json(analysis: OutOfScope | None) -> dict[str, Any] | None:
 
 
 def save(results: list[Result], path: Path) -> None:
-    """Write every result, keeping timings that only a live run could have measured.
+    """Merge these results into the file, keeping what only a live run could have measured.
 
-    Replaying a cassette takes microseconds, so an offline rerun would otherwise overwrite the
-    latency figures with zeros and quietly delete the only numbers that required spending money.
+    Two things here are load-bearing, and both were learned by losing data:
+
+    Benchmarks not in this run keep their entries. `python -m benchmarks irony` used to write a
+    file containing irony alone, so running one benchmark deleted the other four.
+
+    Timings survive an offline rerun. Replaying a cassette takes microseconds, so a cassette-backed
+    run measures ~0 ms; without this, every rerun would overwrite the latency figures with zeros
+    and throw away the only numbers that required spending money.
     """
     previous: dict[str, dict[str, Any]] = {}
     if path.exists():
         previous = {entry["name"]: entry for entry in json.loads(path.read_text())}
 
-    payload = []
     for result in results:
         entry = to_json(result)
         recorded = previous.get(entry["name"], {}).get("cost", {})
@@ -533,9 +538,11 @@ def save(results: list[Result], path: Path) -> None:
             entry["cost"] = {
                 **entry["cost"],
                 **{k: recorded[k] for k in ("median_ms", "p95_ms") if k in recorded},
-                "timing_from": "the recording run",
+                "timing_from": recorded.get("timing_from", "the recording run"),
             }
-        payload.append(entry)
+        previous[entry["name"]] = entry
 
+    order = list(benchmarks())
+    payload = sorted(previous.values(), key=lambda entry: order.index(entry["name"]))
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")

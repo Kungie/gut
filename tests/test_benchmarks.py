@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import hashlib
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 from benchmarks._core import (
@@ -22,6 +23,7 @@ from benchmarks._core import (
     fetch,
     stratified_split,
 )
+from benchmarks._datasets import benchmarks
 from benchmarks._metrics import (
     forced_choice,
     keyword_rule,
@@ -34,6 +36,7 @@ from benchmarks._metrics import (
 )
 
 from gut._backends.base import ChoiceAnswer, NoulAnswer
+from gut._calibration import calibrate
 from gut._questions import NoulSpec
 
 SPEC = NoulSpec("is a bug report")
@@ -63,6 +66,10 @@ def choice(chosen: str, confidence: float, label: str) -> Asked:
         ),
         latency_ms=1.0,
     )
+
+
+if TYPE_CHECKING:
+    from benchmarks._run import Result
 
 
 # --------------------------------------------------------------------------- sampling
@@ -285,3 +292,82 @@ def test_answers_come_back_in_order() -> None:
 
 def test_percentiles_survive_an_empty_run() -> None:
     assert RunStats().percentile(0.5) == 0.0
+
+
+# --------------------------------------------------------------------------- writing results
+
+
+def _result(name: str, *, median_ms: float) -> Result:
+    """A `Result` carrying nothing but the name and the one latency the writer reasons about."""
+    from benchmarks._run import MODEL, Result
+
+    return Result(
+        benchmark=benchmarks()[name],
+        model=MODEL,
+        split={},
+        dev_size=0,
+        test_size=0,
+        stats=RunStats(requests=1, latencies_ms=[median_ms]),
+        postures_raw=[],
+        postures_calibrated=[],
+        baselines=[],
+        calibration_raw=calibrate([]),
+        calibration_fitted=calibrate([]),
+    )
+
+
+def _entry(name: str, median: float, **cost: object) -> dict[str, object]:
+    return {"name": name, "cost": {"median_ms": median, "p95_ms": median * 2, **cost}}
+
+
+def test_a_partial_run_leaves_the_other_benchmarks_alone(tmp_path: Path) -> None:
+    """Running one benchmark used to write a file containing that one alone, deleting every entry
+    it had not rerun -- and with them latency figures that cost money to measure."""
+    import json
+
+    from benchmarks._run import save
+
+    path = tmp_path / "results.json"
+    path.write_text(
+        json.dumps([_entry("clinc", 306.1, timing_from="the recording run"), _entry("sms", 322.0)])
+    )
+
+    save([_result("nlbse-bug", median_ms=299.3)], path)
+
+    written = {entry["name"]: entry for entry in json.loads(path.read_text())}
+    assert set(written) == {"clinc", "sms", "nlbse-bug"}
+    assert written["clinc"]["cost"]["median_ms"] == 306.1
+    assert written["sms"]["cost"]["median_ms"] == 322.0
+
+
+def test_an_offline_rerun_keeps_timings_only_a_live_run_could_measure(tmp_path: Path) -> None:
+    """Replaying a cassette takes microseconds, so the rerun measures ~0 ms. Those zeros must not
+    overwrite the recorded figures, and the file must say where the kept numbers came from."""
+    import json
+
+    from benchmarks._run import save
+
+    path = tmp_path / "results.json"
+    path.write_text(json.dumps([_entry("sms", 322.0, timing_from="a live sample of 40")]))
+
+    save([_result("sms", median_ms=0.0)], path)
+
+    (written,) = json.loads(path.read_text())
+    assert written["cost"]["median_ms"] == 322.0
+    assert written["cost"]["timing_from"] == "a live sample of 40"
+
+
+def test_a_live_rerun_replaces_the_old_timings(tmp_path: Path) -> None:
+    """The guard is for zeros only: a real measurement is always the better number."""
+    import json
+
+    from benchmarks._run import save
+
+    path = tmp_path / "results.json"
+    path.write_text(json.dumps([_entry("sms", 322.0, timing_from="the recording run")]))
+
+    save([_result("sms", median_ms=280.5)], path)
+
+    (written,) = json.loads(path.read_text())
+    assert written["cost"]["median_ms"] == 280.5
+    assert "timing_from" not in written["cost"]

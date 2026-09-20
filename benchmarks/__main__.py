@@ -81,12 +81,14 @@ def main(argv: list[str] | None = None) -> int:
                 f"  {name:<12} median {median:>6.0f} ms   p95 {p95:>6.0f} ms"
                 f"   ({stats.requests} live requests)"
             )
-            if name in by_name:
-                by_name[name]["cost"] |= {
-                    "median_ms": round(median, 1),
-                    "p95_ms": round(p95, 1),
-                    "timing_from": f"a live sample of {stats.requests}",
-                }
+            if name not in by_name:
+                print(f"    (no scored run for {name} yet, so there is nothing to merge into)")
+                continue
+            by_name[name]["cost"] |= {
+                "median_ms": round(median, 1),
+                "p95_ms": round(p95, 1),
+                "timing_from": f"a live sample of {stats.requests}",
+            }
         arguments.json.write_text(
             json.dumps(list(by_name.values()), indent=2, sort_keys=True) + "\n", encoding="utf-8"
         )
