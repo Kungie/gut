@@ -75,3 +75,7 @@ class CassetteMissError(GutError):
 
 class EvalError(GutError, ValueError):
     """A predicate example file cannot be read as one."""
+
+
+class CalibrationError(GutError, ValueError):
+    """A probability correction cannot be fitted, loaded, or applied as asked."""

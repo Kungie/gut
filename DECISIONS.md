@@ -529,10 +529,83 @@ distribution, and the honest fix is to measure and adjust rather than to trust t
 Fitting calibrators to correct any of this is deliberately out of scope. Measuring it is the
 prerequisite, and it now exists.
 
+## D24 — Isotonic by default, because of how it fails
+
+**Date:** 2026-09-20
+
+Two calibrators ship. **Platt** is a two-parameter logistic fit in log-odds space: it can stretch or
+shift a curve but never bend it, and it works on very little data. **Isotonic** is the best
+non-decreasing fit by pool-adjacent-violators, assuming nothing about the shape.
+
+Isotonic is the default because of its failure mode rather than its fit. Given a relationship that
+is actually *inverted* — which is exactly what D23 found in `urgency` — the best non-decreasing fit
+is a **constant**. A signal that does not rank therefore calibrates to "I have no information"
+instead of to a confident lie. Fitted on the real `urgency` data it collapses three of its four
+buckets onto a single value.
+
+That property is worth more than a better curve, because the failure it guards against is the one
+that does real damage: a number that looks like a probability, behaves like noise, and gets fed into
+a cost rule.
+
+Neither invents information. A calibrator fixes a number that ranks well and is wrongly scaled; it
+cannot fix a number that does not rank, and a test pins that accuracy is untouched by construction.
+
+## D25 — Corrections are keyed per question, and per model
+
+**Date:** 2026-09-20
+
+A correction fitted on "is this a churn threat" says nothing about "is this a bug report". The two
+questions have different base rates, different difficulty, and different failure shapes; applying
+one to the other would be worse than applying nothing. So a `CalibrationSet` maps question
+fingerprint → calibrator, and a question with no entry gets the identity.
+
+The model is recorded on each entry and checked at use. A mismatch warns once per question rather
+than refusing: refusing would break a deployment over a version bump, and a correction fitted on a
+near neighbour is usually better than none — but it is a claim about one model's distribution, so
+silence would be wrong too.
+
+Corrections are applied **on the way out of the cache**, never on the way in. What is stored is what
+the model said, so refitting a calibrator does not invalidate a single cached answer. The same
+applies to cassettes, and to `Decision.raw_p`, which keeps the uncorrected number alongside the one
+the rule used.
+
+## D26 — What fitting produced, and what got thrown away
+
+**Date:** 2026-09-20
+
+Fitted on the same five predicates as D23, reported out-of-fold over five folds so the improvement
+is not self-graded.
+
+| predicate | Brier | ECE | |
+|---|---|---|---|
+| cancel_threat | 0.029 → 0.006 | 0.100 → **0.004** | shipped |
+| urgency | 0.255 → 0.197 | 0.248 → **0.061** | shipped |
+| bug_report | 0.126 → 0.095 | 0.156 → **0.082** | shipped |
+| refund_request | 0.028 → 0.037 | 0.049 → **0.036** | shipped |
+| owning_team | 0.110 → 0.124 | 0.037 → 0.058 | **dropped** |
+
+**`owning_team` got worse, so it is not shipped.** It was already the best-calibrated of the five;
+fitting on 101 examples added noise and nothing else. `gut calibrate` drops any correction that
+loses out of fold and says so, with `--keep-all` to override. Shipping a correction that makes
+calibration worse is strictly worse than shipping nothing, and the in-sample number would have
+hidden it.
+
+**The in-sample numbers are not to be believed, and the tool prints the gap.** For `bug_report`,
+in-sample ECE reads `0.007` against `0.082` out of fold — a tenfold difference, which is isotonic
+fitting noise on 101 points. Evaluating with the corrections applied on the same data shows
+`cancel_threat` at 100% accuracy and an ECE of exactly `0.000`, which is the signature of measuring
+a fit on its own training set, not a result.
+
+**Calibration cannot fix `urgency`'s real problem.** Its ECE falls from `0.248` to `0.061` and its
+accuracy does not move at all, because the correction flattens a signal that does not rank. That is
+the right outcome: the number is now honestly uninformative rather than confidently wrong, and a
+`min_confidence` gate built on it will abstain rather than choosing badly.
+
+**Calibration optimises calibration, not accuracy.** `refund_request` improves on ECE and loses a
+point of accuracy. They are different objectives and a fit will trade one for the other.
+
 ## Next steps, noted and not started
 
-- `gut calibrate` — fit and apply a calibrator from resolved outcomes and eval runs. D23 is the
-  argument for it.
 - A written specification separate from the README.
 - Agent skills, so a coding agent can use `gut` without reading the whole README.
 - `async` support in `@semantic`, which today declines rather than blocking an event loop.

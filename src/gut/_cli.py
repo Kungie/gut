@@ -4,6 +4,8 @@
 gut eval predicates/                          # against the configured model
 gut eval predicates/ --cassette tape.json     # offline, from a recording
 GUT_RECORD=1 gut eval predicates/ --cassette tape.json --model jev-1.13.0
+
+gut calibrate predicates/ --cassette tape.json --out calibration.json
 ```
 
 `gut eval` runs predicate files and reports not just whether the answers were right but whether the
@@ -25,11 +27,15 @@ from typing import Any
 import yaml
 
 from gut._backends.base import Backend
-from gut._calibration import MIN_EXAMPLES
+from gut._calibration import MIN_EXAMPLES, Calibration, calibrate
+from gut._calibrators import MIN_FIT_EXAMPLES, CalibrationSet, Entry, Method, fit
 from gut._errors import GutError
 from gut._evals import EvalResult, load_suite, looks_like_suite, run_suite
 
 SUFFIXES = (".yaml", ".yml")
+
+OVERFIT_GAP = 0.02
+"""How much better in-sample has to look than out-of-fold before the gap is called out."""
 
 
 def discover(paths: Sequence[str]) -> list[Path]:
@@ -183,7 +189,8 @@ def run_eval(arguments: argparse.Namespace) -> int:
         return 1
 
     backend = build_backend(arguments.cassette, arguments.model)
-    gut.configure(backend=backend)
+    calibration = CalibrationSet.load(arguments.calibration) if arguments.calibration else None
+    gut.configure(backend=backend, calibration=calibration)
     results = [run_suite(load_suite(path), backend) for path in files]
 
     if arguments.cassette is not None:
@@ -198,6 +205,12 @@ def run_eval(arguments: argparse.Namespace) -> int:
     if arguments.json:
         print(json.dumps(_to_json(results, arguments.bins), indent=2))
     else:
+        if calibration is not None:
+            print(
+                f"measuring the pipeline with {len(calibration)} correction(s) from "
+                f"{arguments.calibration} applied.\n"
+                "If these were fitted on these same examples, the numbers below are in-sample.\n"
+            )
         for result in results:
             print(_render(result, bins=arguments.bins))
             print()
@@ -209,6 +222,129 @@ def run_eval(arguments: argparse.Namespace) -> int:
             print(f"reliability diagram written to {arguments.plot}")
 
     return 1 if any(not result.passed for result in results) else 0
+
+
+def _out_of_fold(pairs: list[tuple[float, bool]], method: Method, folds: int) -> Calibration | None:
+    """Corrected probabilities from calibrators that never saw the point they correct.
+
+    Fitting a calibrator and then scoring it on the same examples flatters it -- isotonic in
+    particular can fit noise exactly. So the improvement is reported from k-fold: each point is
+    corrected by a calibrator fitted on the other folds. The calibrator that actually ships is
+    then fitted on everything, which is the usual arrangement and the reason both numbers are
+    printed.
+
+    `None` when there is not enough data to split.
+    """
+    if folds < 2 or len(pairs) < folds * 2:
+        return None
+    corrected: list[tuple[float, bool]] = []
+    for index in range(folds):
+        # Stride rather than shuffle: the split is reproducible without seeding anything.
+        holdout = pairs[index::folds]
+        training = [pair for position, pair in enumerate(pairs) if position % folds != index]
+        if not training or not holdout:  # pragma: no cover - guarded by the length check
+            return None
+        curve = fit(training, method=method, minimum=0)
+        corrected.extend((curve.apply(probability), event) for probability, event in holdout)
+    return calibrate(corrected)
+
+
+def _fit_one(
+    result: EvalResult, method: Method, folds: int, model: str | None
+) -> tuple[Entry, Calibration, Calibration, Calibration | None]:
+    """Fit one predicate, and measure what it bought."""
+    pairs = [(item.probability, item.event) for item in result.results]
+    before = calibrate(pairs)
+    curve = fit(pairs, method=method)
+    in_sample = calibrate([(curve.apply(p), event) for p, event in pairs])
+    honest = _out_of_fold(pairs, method, folds)
+
+    entry = Entry(
+        fingerprint=result.suite.spec.fingerprint,
+        calibrator=curve,
+        question=result.suite.spec.canonical(),
+        model=model,
+        examples=len(pairs),
+        before={"brier": round(before.brier, 6), "ece": round(before.ece, 6)},
+        after=(
+            None
+            if honest is None
+            else {"brier": round(honest.brier, 6), "ece": round(honest.ece, 6)}
+        ),
+    )
+    return entry, before, in_sample, honest
+
+
+def run_calibrate(arguments: argparse.Namespace) -> int:
+    """Run `gut calibrate`, returning the process exit code."""
+    import gut
+
+    files = discover(arguments.paths)
+    if not files:
+        print(f"No predicate files found under {', '.join(arguments.paths)}.", file=sys.stderr)
+        return 1
+
+    backend = build_backend(arguments.cassette, arguments.model)
+    gut.configure(backend=backend, calibration=CalibrationSet())
+    results = [run_suite(load_suite(path), backend) for path in files]
+    if arguments.cassette is not None:
+        from gut._cassette import CassetteBackend
+
+        assert isinstance(backend, CassetteBackend)
+        backend.save()
+
+    produced = CalibrationSet()
+    skipped: list[str] = []
+    worsened: list[str] = []
+    print(
+        f"\nfitting {arguments.method} corrections   "
+        f"(out-of-fold over {arguments.folds} folds, so the improvement is not self-graded)\n"
+    )
+    for result in results:
+        name = result.suite.name
+        if len(result.results) < MIN_FIT_EXAMPLES:
+            skipped.append(name)
+            print(f"  {name:<18} skipped: {len(result.results)} examples, needs {MIN_FIT_EXAMPLES}")
+            continue
+        entry, before, in_sample, honest = _fit_one(
+            result, arguments.method, arguments.folds, arguments.model
+        )
+        measured = honest or in_sample
+        label = "out-of-fold" if honest else "in-sample only"
+        print(
+            f"  {name:<18} brier {before.brier:.3f} -> {measured.brier:.3f}   "
+            f"ece {before.ece:.3f} -> {measured.ece:.3f}   ({label})"
+        )
+        print(f"  {'':<18} {entry.calibrator}")
+        if honest is not None and in_sample.ece < honest.ece - OVERFIT_GAP:
+            print(
+                f"  {'':<18} in-sample ece would have read {in_sample.ece:.3f}; "
+                f"that gap is the overfit"
+            )
+
+        # A correction that loses out of fold is worse than none. Fitting noise onto an
+        # already-calibrated question is the usual cause, and the in-sample number hides it.
+        if honest is not None and honest.ece > before.ece and not arguments.keep_all:
+            worsened.append(name)
+            print(
+                f"  {'':<18} DROPPED: this makes calibration worse out of fold "
+                f"({before.ece:.3f} -> {honest.ece:.3f}). Pass --keep-all to ship it anyway."
+            )
+            continue
+        produced.add(entry)
+
+    if not len(produced):
+        print("\nNothing worth shipping was fitted.")
+        return 1
+
+    produced.save(arguments.out)
+    print(f"\n{len(produced)} correction(s) written to {arguments.out}")
+    if skipped:
+        print(f"skipped for want of data: {', '.join(skipped)}")
+    if worsened:
+        print(f"dropped for making things worse: {', '.join(worsened)}")
+    print("\nLoad it with:  gut.configure(calibration=CalibrationSet.load(path))")
+    return 0
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -227,7 +363,36 @@ def build_parser() -> argparse.ArgumentParser:
     )
     evaluate.add_argument("--json", action="store_true", help="machine-readable output")
     evaluate.add_argument("--plot", metavar="OUT.png", help="reliability diagram, needs gut[plot]")
+    evaluate.add_argument(
+        "--calibration",
+        help="apply corrections from this file, measuring the pipeline rather than the model",
+    )
     evaluate.set_defaults(handler=run_eval)
+
+    calibrate_command = subcommands.add_parser(
+        "calibrate", help="fit corrections to a model's probabilities from predicate files"
+    )
+    calibrate_command.add_argument("paths", nargs="*", default=["."], help="files or directories")
+    calibrate_command.add_argument("--cassette", help="record/replay file, so this can run offline")
+    calibrate_command.add_argument("--model", help="the model these corrections are fitted for")
+    calibrate_command.add_argument(
+        "--method",
+        choices=("isotonic", "platt"),
+        default="isotonic",
+        help="isotonic assumes only monotonicity; platt needs less data (default: isotonic)",
+    )
+    calibrate_command.add_argument(
+        "--folds", type=int, default=5, help="folds for the honest estimate (default 5)"
+    )
+    calibrate_command.add_argument(
+        "--out", default="calibration.json", help="where to write the corrections"
+    )
+    calibrate_command.add_argument(
+        "--keep-all",
+        action="store_true",
+        help="ship corrections even where they make calibration worse out of fold",
+    )
+    calibrate_command.set_defaults(handler=run_calibrate)
     return parser
 
 

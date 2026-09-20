@@ -34,6 +34,8 @@ import yaml
 from gut._backends.base import Backend, ChoiceAnswer, NoulAnswer, ScoreAnswer
 from gut._batching import fetch
 from gut._calibration import DEFAULT_BINS, Calibration, calibrate
+from gut._calibrators import correct as apply_correction
+from gut._config import current_calibration
 from gut._errors import EvalError
 from gut._questions import ChoiceSpec, NoulSpec, QuestionSpec, ScoreSpec, State
 
@@ -299,8 +301,12 @@ def load_suite(path: str | Path) -> EvalSuite:
 
 
 def _judge_example(suite: EvalSuite, example: Example, backend: Backend) -> ExampleResult:
-    answers = fetch(example.state, [suite.spec], backend)
-    answer = answers[suite.spec].answer
+    entry = fetch(example.state, [suite.spec], backend)[suite.spec]
+    # Measure the pipeline as configured: with no calibration this is the raw model, and with one
+    # it is what the code would actually decide on.
+    answer, _ = apply_correction(
+        entry.answer, suite.spec.fingerprint, entry.model, current_calibration()
+    )
 
     if isinstance(answer, NoulAnswer):
         said_yes = answer.p > suite.threshold

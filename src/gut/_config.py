@@ -18,6 +18,7 @@ from gut._errors import ConfigurationError
 if TYPE_CHECKING:
     from gut._backends.base import Backend
     from gut._cache import Cache
+    from gut._calibrators import CalibrationSet
     from gut._decision import BaseDecision
     from gut._log import Sink
 
@@ -35,6 +36,7 @@ _override: ContextVar[UnsurePolicy | None] = ContextVar("gut_on_unsure_override"
 _backend: Backend | None = None
 _cache: Cache | None = None
 _sink: Sink | None = None
+_calibration: CalibrationSet | None = None
 
 
 def _validate(policy: UnsurePolicy) -> UnsurePolicy:
@@ -55,6 +57,7 @@ def configure(
     backend: Backend | None = None,
     cache: Cache | None = None,
     sink: Sink | None = None,
+    calibration: CalibrationSet | None = None,
 ) -> None:
     """Set process-wide defaults.
 
@@ -68,11 +71,14 @@ def configure(
             `SQLiteCache(...)` to persist across restarts, or `NullCache()` to turn caching off.
         sink: Where decisions are recorded. Defaults to writing nothing; pass `JSONLSink(path)` or
             `MemorySink()` to keep them.
+        calibration: Corrections to apply to the model's probabilities, fitted per question by
+            `gut calibrate`. Off by default: a correction is only right for the model and the task
+            it was fitted on.
 
     Raises:
         ConfigurationError: `on_unsure` is not a recognised policy.
     """
-    global _configured, _backend, _cache, _sink
+    global _configured, _backend, _cache, _sink, _calibration
     if on_unsure is not None:
         _configured = _validate(on_unsure)
     if backend is not None:
@@ -81,6 +87,8 @@ def configure(
         _cache = cache
     if sink is not None:
         _sink = sink
+    if calibration is not None:
+        _calibration = calibration
 
 
 def current_backend() -> Backend:
@@ -164,6 +172,11 @@ def current_sink() -> Sink:
     return _sink
 
 
+def current_calibration() -> CalibrationSet | None:
+    """The configured corrections, or `None` when the model is taken at its word."""
+    return _calibration
+
+
 def recording() -> bool:
     """Whether anything is listening, so a record need not be built when nothing will read it."""
     from gut._log import NullSink
@@ -173,8 +186,9 @@ def recording() -> bool:
 
 def reset_configuration() -> None:
     """Restore the unconfigured defaults. Intended for tests."""
-    global _configured, _backend, _cache, _sink
+    global _configured, _backend, _cache, _sink, _calibration
     _configured = DEFAULT_ON_UNSURE
     _backend = None
     _cache = None
     _sink = None
+    _calibration = None

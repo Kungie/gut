@@ -44,7 +44,8 @@ from gut._api import (
 )
 from gut._backends.base import Backend
 from gut._batching import fetch
-from gut._config import current_backend
+from gut._calibrators import correct
+from gut._config import current_backend, current_calibration
 from gut._decision import BaseDecision, ChoiceDecision, Decision, ScoreDecision
 from gut._errors import JudgeClosedError
 from gut._questions import ChoiceSpec, NoulSpec, QuestionSpec, ScoreSpec, State
@@ -231,8 +232,18 @@ class Judge:
 
         for index, registration in zip(indices, registrations, strict=True):
             entry = answers[registration.spec]
+            corrected, raw = correct(
+                entry.answer,
+                registration.spec.fingerprint,
+                entry.model,
+                current_calibration(),
+            )
             resolved = _Resolved(
-                answer=entry.answer, model=entry.model, source="prefetch", latency_ms=None
+                answer=corrected,
+                model=entry.model,
+                source="prefetch",
+                latency_ms=None,
+                raw_answer=raw,
             )
             self._decisions[index] = _build(registration, resolved)
 

@@ -16,7 +16,14 @@ from typing import Any, TypeVar
 
 from gut._backends.base import Answer, Backend, ChoiceAnswer, NoulAnswer, ScoreAnswer
 from gut._cache import CacheEntry, cache_key
-from gut._config import current_backend, current_cache, current_sink, recording
+from gut._calibrators import correct
+from gut._config import (
+    current_backend,
+    current_cache,
+    current_calibration,
+    current_sink,
+    recording,
+)
 from gut._decision import ChoiceDecision, Decision, DecisionSource, ScoreDecision
 from gut._errors import BackendError, PolicyError, QuestionError
 from gut._log import DecisionRecord, _now, emit_decision, policy_to_json, site_to_json
@@ -41,9 +48,21 @@ class _Resolved:
     """One answer and how it was obtained."""
 
     answer: Answer
+    """What the decision is made on: corrected, if a calibrator applies."""
     model: str
     source: DecisionSource
     latency_ms: float | None
+    raw_answer: Answer | None = None
+    """What the model said before correction, when something corrected it."""
+
+
+def _corrected(answer: Answer, spec: QuestionSpec, model: str) -> tuple[Answer, Answer | None]:
+    """Apply the configured correction to one answer.
+
+    Corrections are applied on the way out of the cache rather than on the way in: a cached answer
+    stays valid when the calibrator changes, because what was stored is what the model said.
+    """
+    return correct(answer, spec.fingerprint, model, current_calibration())
 
 
 def _ask(state: State, spec: QuestionSpec, backend: Backend | None) -> _Resolved:
@@ -56,11 +75,13 @@ def _ask(state: State, spec: QuestionSpec, backend: Backend | None) -> _Resolved
     if prefetch is not None:
         prefetched = prefetch.take(state, spec)
         if prefetched is not None:
+            answer, raw = _corrected(prefetched.answer, spec, prefetched.model)
             return _Resolved(
-                answer=prefetched.answer,
+                answer=answer,
                 model=prefetched.model,
                 source="prefetch",
                 latency_ms=None,
+                raw_answer=raw,
             )
 
     cache = current_cache()
@@ -70,7 +91,10 @@ def _ask(state: State, spec: QuestionSpec, backend: Backend | None) -> _Resolved
     if hit is not None:
         # The stored model is the version that actually answered, which is more specific than
         # the alias in the key. Reporting the alias would make a recorded decision unfalsifiable.
-        return _Resolved(answer=hit.answer, model=hit.model, source="cache", latency_ms=None)
+        answer, raw = _corrected(hit.answer, spec, hit.model)
+        return _Resolved(
+            answer=answer, model=hit.model, source="cache", latency_ms=None, raw_answer=raw
+        )
 
     started = time.perf_counter()
     response = chosen.ask(state, {"q": spec})
@@ -78,8 +102,16 @@ def _ask(state: State, spec: QuestionSpec, backend: Backend | None) -> _Resolved
     if "q" not in response.answers:
         raise BackendError(f"{type(chosen).__name__} returned no answer for the question asked.")
     answer = response.answers["q"]
+    # Cache what the model said, then correct on the way out, so a cached answer survives a refit.
     cache.set(key, CacheEntry(answer=answer, model=response.model))
-    return _Resolved(answer=answer, model=response.model, source="backend", latency_ms=latency_ms)
+    corrected, raw = _corrected(answer, spec, response.model)
+    return _Resolved(
+        answer=corrected,
+        model=response.model,
+        source="backend",
+        latency_ms=latency_ms,
+        raw_answer=raw,
+    )
 
 
 def _expect(answer: Answer, kind: type[A], spec: QuestionSpec) -> A:
@@ -191,6 +223,7 @@ def build_decision(
 ) -> Decision:
     """Assemble a yes/no decision from a raw answer."""
     noul = _expect(resolved.answer, NoulAnswer, spec)
+    raw = _expect(resolved.raw_answer, NoulAnswer, spec) if resolved.raw_answer else None
     decision = Decision(
         outcome=rule.decide(noul.p),
         id=decision_id(spec.fingerprint, site),
@@ -198,9 +231,17 @@ def build_decision(
         source=resolved.source,
         latency_ms=resolved.latency_ms,
         p=noul.p,
+        raw_p=raw.p if raw else None,
         policy=rule,
     )
-    _record(decision, spec, site, p=noul.p, costs=policy_to_json(rule))
+    _record(
+        decision,
+        spec,
+        site,
+        p=noul.p,
+        raw_p=raw.p if raw else None,
+        costs=policy_to_json(rule),
+    )
     return decision
 
 
@@ -214,6 +255,7 @@ def build_choice_decision(
 ) -> ChoiceDecision[E]:
     """Assemble a categorical decision, mapping the chosen label back to its enum member."""
     choice = _expect(resolved.answer, ChoiceAnswer, spec)
+    raw = _expect(resolved.raw_answer, ChoiceAnswer, spec) if resolved.raw_answer else None
     by_name = {member.name: member for member in enum_class}
     if choice.choice not in by_name:
         raise BackendError(
@@ -231,6 +273,7 @@ def build_choice_decision(
             by_name[name]: value for name, value in choice.probabilities.items() if name in by_name
         },
         confidence=choice.confidence,
+        raw_confidence=raw.confidence if raw else None,
         min_confidence=min_confidence,
     )
     _record(
@@ -239,6 +282,7 @@ def build_choice_decision(
         site,
         value=decision.value.name if outcome is Outcome.YES else None,
         confidence=choice.confidence,
+        raw_confidence=raw.confidence if raw else None,
         probabilities=dict(choice.probabilities),
         min_confidence=min_confidence,
     )
@@ -250,6 +294,7 @@ def build_score_decision(
 ) -> ScoreDecision:
     """Assemble an ordinal decision from a raw answer."""
     score = _expect(resolved.answer, ScoreAnswer, spec)
+    raw = _expect(resolved.raw_answer, ScoreAnswer, spec) if resolved.raw_answer else None
     decision = ScoreDecision(
         outcome=_min_confidence_outcome(score.confidence, min_confidence),
         id=decision_id(spec.fingerprint, site),
@@ -259,6 +304,7 @@ def build_score_decision(
         score=score.score,
         probabilities=dict(score.probabilities),
         confidence=score.confidence,
+        raw_confidence=raw.confidence if raw else None,
         levels=tuple(spec.criteria),
         min_confidence=min_confidence,
     )
@@ -268,6 +314,7 @@ def build_score_decision(
         site,
         score=score.score,
         confidence=score.confidence,
+        raw_confidence=raw.confidence if raw else None,
         probabilities={str(level): value for level, value in score.probabilities.items()},
         min_confidence=min_confidence,
     )
