@@ -10,12 +10,12 @@ claims is checked against the code that produces it.
 from __future__ import annotations
 
 import re
-from pathlib import Path
 
 import pytest
 
-README = Path(__file__).resolve().parent.parent / "README.md"
-BLOCK = re.compile(r"^```python\n(.*?)^```", re.MULTILINE | re.DOTALL)
+from tests._markdown import blocks, read
+
+README = "README.md"
 PRESET_ROW = re.compile(
     r"^\|\s*\*\*(low|medium|high)\*\*\s*\|(.+?)\|(.+?)\|(.+?)\|\s*$", re.MULTILINE
 )
@@ -23,16 +23,12 @@ BAND = re.compile("ask\\s+([\\d.]+)\\s*[\u2013-]\\s*([\\d.]+)")
 
 
 def text() -> str:
-    return README.read_text(encoding="utf-8")
+    return read(README)
 
 
 def python_blocks() -> list[tuple[int, str]]:
     """Every fenced Python block, with the line it starts on."""
-    document = text()
-    return [
-        (document[: match.start()].count("\n") + 2, match.group(1))
-        for match in BLOCK.finditer(document)
-    ]
+    return blocks(README, "python")
 
 
 def test_the_readme_has_examples() -> None:

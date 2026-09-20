@@ -565,6 +565,10 @@ uv run coverage run -m pytest && uv run coverage report
 The suite runs offline and needs no API key. One live integration test is skipped unless
 `TYPESAFE_API_KEY` is set. See [CONTRIBUTING.md](CONTRIBUTING.md) and [DECISIONS.md](DECISIONS.md).
 
+Writing `gut` code with a coding agent? Point it at [`skills/gut/SKILL.md`](skills/gut/SKILL.md) —
+the short version, with the traps — or at [`llms.txt`](llms.txt) for the index. Both are checked
+against the code by the test suite, so they cannot drift.
+
 ## License
 
 Apache-2.0

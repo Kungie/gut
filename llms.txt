@@ -1,0 +1,42 @@
+# gut
+
+> A gut feeling that knows when to ask. Judgment as a programming primitive for Python: write a
+> decision that is judgment rather than logic as one readable line, say how careful to be in words
+> instead of thresholds, and get back YES, NO or UNSURE.
+
+`pip install "gut[jev]"`. Runs on TypeSafe AI's Jev; the backend is a protocol, not a hard
+dependency. Python 3.10+, Apache-2.0.
+
+## Start here
+
+- [SKILL.md](skills/gut/SKILL.md): the compact usage guide. Correct spellings, the traps, and the
+  rules of thumb. Read this one if you are writing code that uses gut.
+- [README.md](README.md): the full guide, in the order the ideas build.
+
+## Reference
+
+- [DECISIONS.md](DECISIONS.md): every design decision with its reasoning, including the measured
+  findings about model calibration that shaped the API.
+- [examples/support_tickets/](examples/support_tickets/): 101 labelled tickets, the same handler
+  written with and without gut, a posture sweep, and committed recordings so it all runs offline.
+- [CONTRIBUTING.md](CONTRIBUTING.md): how to run the suite.
+
+## The parts, in one line each
+
+- `likely(subject, question)` — a yes/no judgment. `classify(subject, EnumClass)` — which one.
+  `rate(subject, levels)` — how much.
+- `stakes` / `lean` / `ask_human` — how careful to be, in words. Maps onto a cost model.
+- `cost_false_yes` / `cost_false_no` / `cost_human` — the same thing in numbers, when you know them.
+- `@semantic` and `judge()` — every judgment about one subject in a single request.
+- `gut eval` — accuracy, Brier score and calibration error on your own examples.
+- `gut calibrate` — fit a correction to a model's probabilities, reported out of fold.
+- `FakeBackend`, `CassetteBackend` — develop and test with no API key.
+- `JSONLSink` and `decision.resolve(actual=...)` — record every decision and how it turned out.
+
+## Traps worth knowing before you write any code
+
+- `case gut.YES:` must be dotted. A bare `case YES:` is a capture pattern and does not compile.
+- `ask_human=True` is required for `UNSURE` to be possible at all.
+- Posture words and exact costs cannot be mixed in one call.
+- `cost_human` above `cfy * cfn / (cfy + cfn)` makes `UNSURE` unreachable; gut warns.
+- `confidence` is a spread statistic, not a probability of being correct. Measure it.

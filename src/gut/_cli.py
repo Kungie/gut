@@ -22,7 +22,7 @@ import os
 import sys
 from collections.abc import Iterable, Sequence
 from pathlib import Path
-from typing import Any
+from typing import Any, Final
 
 import yaml
 
@@ -33,6 +33,9 @@ from gut._errors import GutError
 from gut._evals import EvalResult, load_suite, looks_like_suite, run_suite
 
 SUFFIXES = (".yaml", ".yml")
+
+COMMANDS: Final[tuple[str, ...]] = ("eval", "calibrate")
+"""Every subcommand `gut` offers, so documentation can be checked against it."""
 
 OVERFIT_GAP = 0.02
 """How much better in-sample has to look than out-of-fold before the gap is called out."""
@@ -353,7 +356,7 @@ def build_parser() -> argparse.ArgumentParser:
     subcommands = parser.add_subparsers(dest="command", required=True)
 
     evaluate = subcommands.add_parser(
-        "eval", help="run predicate files and measure accuracy and calibration"
+        COMMANDS[0], help="run predicate files and measure accuracy and calibration"
     )
     evaluate.add_argument("paths", nargs="*", default=["."], help="files or directories")
     evaluate.add_argument("--cassette", help="record/replay file, so this can run offline")
@@ -370,7 +373,7 @@ def build_parser() -> argparse.ArgumentParser:
     evaluate.set_defaults(handler=run_eval)
 
     calibrate_command = subcommands.add_parser(
-        "calibrate", help="fit corrections to a model's probabilities from predicate files"
+        COMMANDS[1], help="fit corrections to a model's probabilities from predicate files"
     )
     calibrate_command.add_argument("paths", nargs="*", default=["."], help="files or directories")
     calibrate_command.add_argument("--cassette", help="record/replay file, so this can run offline")
