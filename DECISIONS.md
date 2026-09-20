@@ -254,6 +254,24 @@ mypy rejects an implementation that exposes it as a property — which `FakeBack
 An in-memory bounded LRU is the default, `SQLiteCache` persists across restarts, and `NullCache`
 turns caching off.
 
+## D13 — A backend is inferred only when the environment names an API key
+
+**Date:** 2026-09-20
+
+The quickstart reads `export TYPESAFE_API_KEY=...` and then calls `likely(...)` with no setup, so
+`gut` has to produce a backend from nothing. Building one implicitly is a real side effect — it
+starts billable calls — so the trigger has to be something nobody sets by accident.
+
+`TYPESAFE_API_KEY` being present is exactly that: an explicit statement of intent, and the same
+signal the vendor SDK already uses. With it set, `current_backend()` builds a `JevBackend` once and
+keeps it. Without it, `gut` raises and names both ways forward — `FakeBackend` for offline work, or
+configuring `JevBackend` explicitly. A whitespace-only value does not count.
+
+`JevBackend` itself is resolved through a module `__getattr__` on both `gut` and `gut._backends`, so
+`import gut` never pulls in `typesafe-sdk`. That matters more than it looks: the `pytest11` entry
+point means `import gut` runs in every pytest session of every project that installs it (D8), and
+none of those should drag in a vendor SDK nobody asked for.
+
 ---
 
 ## Implementation order

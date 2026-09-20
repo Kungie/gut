@@ -53,6 +53,14 @@ pip install "gut[jev]"   # with the Jev backend
 export TYPESAFE_API_KEY=...
 ```
 
+With the key set, `gut` builds a Jev backend the first time you ask something. Nothing is inferred
+without it — offline work is explicit:
+
+```python
+gut.configure(backend=gut.FakeBackend(answers={"is a bug report": 0.91}))
+gut.configure(backend=gut.JevBackend(model="jev-1.13.0"))   # or pin a version yourself
+```
+
 Three primitives:
 
 ```python

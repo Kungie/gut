@@ -7,6 +7,7 @@ and raises instead. See D9 in DECISIONS.md.
 
 from __future__ import annotations
 
+import os
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from contextvars import ContextVar
@@ -76,18 +77,34 @@ def configure(
 
 
 def current_backend() -> Backend:
-    """The configured backend.
+    """The configured backend, falling back to Jev when the environment names a key.
+
+    Building a `JevBackend` implicitly is a real side effect -- it starts billable calls -- so it
+    only happens when `TYPESAFE_API_KEY` is set, which is an explicit statement of intent. See D13.
 
     Raises:
-        ConfigurationError: No backend has been configured.
+        ConfigurationError: No backend is configured and none can be inferred.
     """
+    global _backend
     if _backend is None:
+        _backend = _infer_backend()
+    return _backend
+
+
+def _infer_backend() -> Backend:
+    """Build a `JevBackend` if the environment names a key, otherwise say what to configure."""
+    if not os.environ.get("TYPESAFE_API_KEY", "").strip():
         raise ConfigurationError(
             "No backend is configured. For offline work use "
-            "gut.configure(backend=gut.FakeBackend(answers={...})); for real answers install "
-            "gut[jev], set TYPESAFE_API_KEY, and configure gut.JevBackend()."
+            "gut.configure(backend=gut.FakeBackend(answers={...})). For real answers, install "
+            'pip install "gut[jev]" and set TYPESAFE_API_KEY, or configure gut.JevBackend() '
+            "yourself."
         )
-    return _backend
+    # The module imports without the SDK; a missing extra surfaces from the constructor, with
+    # an install hint attached.
+    from gut._backends.jev import JevBackend
+
+    return JevBackend()
 
 
 def current_on_unsure() -> UnsurePolicy:
