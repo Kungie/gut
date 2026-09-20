@@ -174,6 +174,41 @@ This is worth knowing beyond coverage: **the entry point means `import gut` happ
 run of every project that installs it.** Keeping `gut/__init__.py` cheap to import is a real
 constraint, not a nicety.
 
+## D9 — `on_unsure` defaults to `"raise"`
+
+**Date:** 2026-09-20
+
+`bool(decision)` has no honest answer for UNSURE, and the three candidate defaults are not equally
+safe. Coercing to `False` is the most dangerous option available: it is what a developer's existing
+`if` already does, so an UNSURE decision would flow silently down the "no" branch — precisely the
+bug `gut` exists to prevent, reintroduced as a default. Coercing to `True` is the same failure
+pointed at the more expensive branch.
+
+So the default raises `UnsureDecision`, and the error message names the three ways out: handle the
+branch with `match`, coerce process-wide with `configure(on_unsure=...)`, or coerce locally with the
+`on_unsure()` context manager. Loud at development time, and never silent in production.
+
+The scoped override lives in a `ContextVar` rather than a module global, so it follows `async` tasks
+and does not leak across threads; both are covered by tests.
+
+## D10 — `Decision` compares equal to its `Outcome`
+
+**Date:** 2026-09-20
+
+`match d: case gut.YES:` requires `d == gut.YES` to be true, because a value pattern is an equality
+test. So `Decision.__eq__` returns `True` when compared against the matching `Outcome`, and
+`__hash__` hashes the outcome so that the equal-implies-equal-hash contract holds.
+
+The cost is that equality is **not transitive across decisions**: two different decisions can both
+equal `gut.YES` without equalling each other. Decisions of the same kind still compare field by
+field, so the surprise is confined to comparisons against outcomes, which is exactly where it is
+wanted. The alternative — requiring `match d.outcome:` — keeps equality clean but makes the common
+path noisier, and the handoff's API is explicit about matching the decision itself.
+
+Comparing a decision against anything else returns `NotImplemented` rather than `False`, so Python's
+reflected-comparison fallback still works. A test asserts `Outcome.YES == decision` in that
+direction specifically.
+
 ---
 
 ## Implementation order

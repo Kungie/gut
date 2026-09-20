@@ -10,7 +10,9 @@ The public API is re-exported here. Everything else is private and may move betw
 
 from __future__ import annotations
 
-from gut._errors import GutError, PolicyError
+from gut._config import configure, on_unsure
+from gut._decision import BaseDecision, ChoiceDecision, Decision, ScoreDecision
+from gut._errors import ConfigurationError, GutError, PolicyError, UnsureDecision
 from gut._outcomes import NO, UNSURE, YES, Outcome
 from gut._rule import DEFAULT_POLICY, Policy, policy
 
@@ -21,10 +23,18 @@ __all__ = [
     "NO",
     "UNSURE",
     "YES",
+    "BaseDecision",
+    "ChoiceDecision",
+    "ConfigurationError",
+    "Decision",
     "GutError",
     "Outcome",
     "Policy",
     "PolicyError",
+    "ScoreDecision",
+    "UnsureDecision",
     "__version__",
+    "configure",
+    "on_unsure",
     "policy",
 ]
