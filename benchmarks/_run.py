@@ -42,6 +42,7 @@ from benchmarks._metrics import (
     sweep_choice,
     threshold_binary,
 )
+from gut._backends.base import NoulAnswer
 from gut._calibration import Calibration
 from gut._calibrators import Calibrator, fit
 from gut._cassette import Cassette, CassetteBackend
@@ -97,10 +98,10 @@ def run(bench: Benchmark, *, record: bool = False) -> Result:
 
     backend = backend_for(bench.name, record=record)
     if record:
-        check_budget([*split.dev, *split.test], bench.spec)
+        check_budget([*split.dev, *split.test], bench.spec, text_limit=bench.text_limit)
 
-    dev, dev_stats = ask_all(split.dev, bench.spec, backend)
-    test, test_stats = ask_all(split.test, bench.spec, backend)
+    dev, dev_stats = ask_all(split.dev, bench.spec, backend, text_limit=bench.text_limit)
+    test, test_stats = ask_all(split.test, bench.spec, backend, text_limit=bench.text_limit)
     backend.save()
 
     stats = RunStats(
@@ -115,6 +116,23 @@ def run(bench: Benchmark, *, record: bool = False) -> Result:
     calibrator = fit(dev_pairs, minimum=0)
 
     return _score(bench, test, calibrator, stats, split)
+
+
+def _correct(bench: Benchmark, asked: list[Asked]) -> list[bool]:
+    """Whether each answer agreed with the label, at the default boundary.
+
+    For a yes/no question that is `p > 0.5`; for a classification it is whether the chosen member
+    is the labelled one. Distinct from the calibration pairs, where for a yes/no question the
+    second element is the *label* rather than whether the model was right.
+    """
+    if bench.kind == "binary":
+        assert bench.positive is not None
+        return [
+            (item.answer.p > 0.5) == (item.example.label == bench.positive)
+            for item in asked
+            if isinstance(item.answer, NoulAnswer)
+        ]
+    return [event for _, event in pairs_choice(asked)]
 
 
 def _pairs(bench: Benchmark, asked: list[Asked]) -> list[tuple[float, bool]]:
@@ -191,15 +209,16 @@ def probe(bench: Benchmark, *, record: bool = False) -> str:
     split = stratified_split(examples, quota=bench.quota)
     backend = backend_for(bench.name, record=record)
     if record:
-        check_budget(split.dev, bench.spec)
+        check_budget(split.dev, bench.spec, text_limit=bench.text_limit)
 
-    dev, stats = ask_all(split.dev, bench.spec, backend)
+    dev, stats = ask_all(split.dev, bench.spec, backend, text_limit=bench.text_limit)
     backend.save()
 
     pairs = _pairs(bench, dev)
     calibration = measure(pairs)
-    accuracy = sum(1 for _, event in pairs if event) / len(pairs)
-    wrong = [item for item, (_, event) in zip(dev, pairs, strict=True) if not event]
+    right = _correct(bench, dev)
+    accuracy = sum(right) / len(right)
+    wrong = [item for item, ok in zip(dev, right, strict=True) if not ok]
 
     lines = [
         f"\n{bench.name} — dev only ({len(dev)} examples)",
@@ -276,6 +295,124 @@ def render(result: Result) -> str:
             f"   p95 {stats.percentile(0.95):.0f} ms   ~${stats.cost_usd:.4f}",
         ]
     )
+    return "\n".join(lines)
+
+
+@dataclass(frozen=True, slots=True)
+class Batching:
+    """What asking two questions about one subject costs, separately and together."""
+
+    subjects: int
+    judgments: int
+    separate_requests: int
+    batched_requests: int
+    median_ms: float
+
+    def render(self) -> str:
+        """The comparison as text."""
+        saved = self.separate_requests - self.batched_requests
+        return "\n".join(
+            [
+                "",
+                "=== batching, on the NLBSE issues",
+                f"  {self.judgments} judgments about {self.subjects} issues",
+                f"  asked separately   {self.separate_requests} requests",
+                f"  asked together     {self.batched_requests} requests"
+                f"   ({saved} fewer, {saved / self.separate_requests:.0%})",
+                f"  at a median {self.median_ms:.0f} ms per request, that is "
+                f"{saved * self.median_ms / 1000:.0f} s of serial latency not spent.",
+                "  The subject is billed once per request, so the tokens are saved too:",
+                "  the issue text is sent once instead of twice.",
+            ]
+        )
+
+
+def measure_batching(median_ms: float) -> Batching:
+    """Count the requests two judgments about one issue take, together and apart.
+
+    Replayed from the cassette, because the request *count* is structural: it depends on how the
+    questions are grouped, not on what came back. Latency is quoted from the live run's median
+    rather than measured here, where every answer is already on disk.
+    """
+    from benchmarks._datasets import benchmarks as registry
+
+    available = registry()
+    bug, kind = available["nlbse-bug"], available["nlbse-kind"]
+    split = stratified_split(bug.load(), quota=bug.quota)
+    backend = backend_for("nlbse-bug", record=False)
+    kind_backend = backend_for("nlbse-kind", record=False)
+
+    separate = 0
+    for example in split.test:
+        backend.ask(example.truncated(bug.text_limit), {"q": bug.spec})
+        kind_backend.ask(example.truncated(kind.text_limit), {"q": kind.spec})
+        separate += 2
+
+    # The same two questions about the same subject in one call, which is what `@semantic` and
+    # `judge()` do. Both cassettes hold the answers, so this regroups rather than re-asks.
+    merged = Cassette(CASSETTE_DIR / "nlbse-bug.json")
+    for key, entry in Cassette(CASSETTE_DIR / "nlbse-kind.json").entries.items():
+        merged.entries.setdefault(key, entry)
+    together = CassetteBackend(merged, record=False, model=MODEL)
+
+    batched = 0
+    for example in split.test:
+        together.ask(example.truncated(bug.text_limit), {"bug": bug.spec, "kind": kind.spec})
+        batched += 1
+
+    return Batching(
+        subjects=len(split.test),
+        judgments=separate,
+        separate_requests=separate,
+        batched_requests=batched,
+        median_ms=median_ms,
+    )
+
+
+CONSISTENCY_POSTURE = "stakes=medium lean=none"
+"""The posture the cross-dataset comparison uses. Chosen before any results: the middle one."""
+
+
+def render_consistency(results: list[Result]) -> str:
+    """Does `stakes="medium", ask_human=True` mean the same thing on four different tasks?
+
+    This is `gut`'s most distinctive claim and the easiest one to get wrong. A posture is a
+    statement about probabilities, so it travels between tasks only as far as the probabilities do.
+    If the realized error rates are all over the place, the words are a local convention rather
+    than a shared vocabulary -- and calibration is what should pull them together.
+    """
+    lines = [
+        "",
+        f"=== does `{CONSISTENCY_POSTURE.strip()}` mean the same thing everywhere?",
+        "",
+        f"  {'dataset':<14} {'raw cov':>8} {'raw err':>8} {'cal cov':>8} {'cal err':>8}",
+    ]
+    raw_errors: list[float] = []
+    calibrated_errors: list[float] = []
+    for result in results:
+        try:
+            raw = result.posture(CONSISTENCY_POSTURE, calibrated=False)
+            calibrated = result.posture(CONSISTENCY_POSTURE, calibrated=True)
+        except StopIteration:  # pragma: no cover - every sweep contains this posture
+            continue
+        raw_errors.append(raw.error_rate)
+        calibrated_errors.append(calibrated.error_rate)
+        lines.append(
+            f"  {result.benchmark.name:<14} {raw.coverage:>7.0%} {raw.error_rate:>8.1%}"
+            f" {calibrated.coverage:>8.0%} {calibrated.error_rate:>8.1%}"
+        )
+
+    if raw_errors:
+        raw_spread = max(raw_errors) - min(raw_errors)
+        calibrated_spread = max(calibrated_errors) - min(calibrated_errors)
+        lines.extend(
+            [
+                "",
+                f"  spread in automatic error rate across datasets:"
+                f"  raw {raw_spread:.1%}   calibrated {calibrated_spread:.1%}",
+                "  a posture is a claim about probabilities; it travels only as far as they do.",
+            ]
+        )
     return "\n".join(lines)
 
 

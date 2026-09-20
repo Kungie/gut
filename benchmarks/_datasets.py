@@ -52,6 +52,9 @@ class Benchmark:
     """A trained-model result from the dataset's own paper or competition, for context."""
     quota: dict[str, tuple[int, int]] | None = None
     """Labels sampled to a fixed `(dev, test)` count instead of their natural share."""
+    text_limit: int = 4000
+    """How much of each input to send. Jev's documented weakness is that irrelevant state acts as
+    a distractor, and a GitHub issue is mostly template."""
 
 
 # --------------------------------------------------------------------------- CLINC150
@@ -130,15 +133,23 @@ def load_nlbse() -> list[Example]:
 
 
 class IssueKind(enum.Enum):
-    """What a GitHub issue is asking for. The labels the dataset uses."""
+    """Why a GitHub issue was opened.
 
-    BUG = "reports that something is broken or behaving incorrectly"
-    FEATURE = "asks for something new, or for an existing behaviour to change"
-    QUESTION = "asks how to do something, or for an explanation"
+    Worded around the author's *purpose* after a dev run showed the first attempt losing to issue
+    templates: a feature request whose form says "Type: Bug", a question that pastes an error.
+    What is in the text and what the issue is for are different things. See D33.
+    """
+
+    BUG = "the author is reporting a defect: the software does something wrong and should be fixed"
+    FEATURE = "the author is asking for something new, or for existing behaviour to change"
+    QUESTION = "the author is asking for help or an explanation, not reporting anything"
 
 
-NLBSE_BUG_QUESTION: Final = "this issue reports that something is broken or behaving incorrectly"
-NLBSE_KIND_QUESTION: Final = "what kind of issue is this"
+NLBSE_BUG_QUESTION: Final = (
+    "the author opened this issue to report a defect: they are saying the software does something "
+    "wrong and should be fixed, rather than asking for a new feature or for help"
+)
+NLBSE_KIND_QUESTION: Final = "why did the author open this issue"
 
 BUG_WORDS: Final = re.compile(
     r"\b(bug|error|crash|crashes|crashed|exception|traceback|stack ?trace|fails?|failing|"
@@ -224,6 +235,7 @@ def benchmarks() -> dict[str, Benchmark]:
             licence="none declared; not redistributable",
             citation="NLBSE'24 issue report classification tool competition",
             redistributable=False,
+            text_limit=1500,
             positive="bug",
             keyword=looks_like_a_bug,
             keyword_name="regex: bug/error/crash/...",
@@ -240,6 +252,7 @@ def benchmarks() -> dict[str, Benchmark]:
             licence="none declared; not redistributable",
             citation="NLBSE'24 issue report classification tool competition",
             redistributable=False,
+            text_limit=1500,
             published="NLBSE'24 baselines report ~0.87 F1 for a fine-tuned RoBERTa across repos",
         ),
         "sms": Benchmark(
