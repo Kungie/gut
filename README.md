@@ -355,8 +355,14 @@ GUT_RECORD=1 pytest --gut-evals predicates/   # 4.05s, against the real model
 pytest --gut-evals predicates/                # 0.07s, offline, identical
 ```
 
-Commit the cassette. Entries are keyed by the state and the question, not by the request they
-travelled in, so regrouping questions — adding `@semantic`, say — does not invalidate a recording.
+Entries are keyed by the state and the question, not by the request they travelled in, so regrouping
+questions — adding `@semantic`, say — does not invalidate a recording.
+
+> ⚠️ **A cassette holds whatever you asked about, verbatim.** That is deliberate: a reviewer should
+> be able to read a diff and see what changed about the model's behaviour, which a file of hashes
+> cannot show. But it means recording against real customer tickets and committing the file commits
+> customer text to your repository. Record against fixtures you are happy to publish, or keep the
+> cassette out of version control and regenerate it.
 In replay mode an unrecorded question is an error that names itself; quietly reaching for the network
 would turn one forgotten re-record into a suite that passes on your laptop, fails in CI, and bills
 you either way.
@@ -411,21 +417,36 @@ resolved automatically               40  40%
 sent to a human                      61  60%
 wrong automatic decisions             0
 
+churn detection
+  precision                         100%  of automatic escalations
+  recall                            100%  of threats it decided itself
+  reached a person at all          15/15  escalated or reviewed
+
+calibration
+  Brier score                      0.029  0 is perfect, 0.25 is a coin flip
+  calibration error                0.100  gap between claimed and observed
+    p 0.0-0.2   n=85   said 0.07   happened 0.00
+    p 0.2-0.4   n=3    said 0.28   happened 0.67
+    p 0.4-0.6   n=6    said 0.52   happened 1.00
+    p 0.8-1.0   n=7    said 0.95   happened 1.00
+
 requests                            101  1.0 per ticket
 judgments                           505  5.0 per request
-
-the ambiguous ones
-  marked hard                        26
-  sent to a human                    22  85% of them
 
 same answers, a hard 0.7 threshold and no third branch
   churn risks missed                  8  vs 0
   total cost                        160  vs 61
-  requests                          505  vs 101
 ```
 
 The model is uncertain in almost exactly the places the dataset marks ambiguous. Without a third
 branch that uncertainty has nowhere to go and becomes a confident guess.
+
+The calibration table is the part worth staring at. At the extremes the model is close to perfect —
+`0.07` happened 0% of the time, `0.95` happened 100%. **In the middle it is systematically
+under-confident on this data**: every ticket it rated around `0.52` turned out to be a real threat.
+Those buckets hold three and six tickets, so this is a hint rather than a result — but it is exactly
+the hint the cost rule depends on, and it is invisible unless you measure it. Hence the log, and
+`resolve()`.
 
 ---
 
@@ -446,6 +467,12 @@ reads those resolutions.
 **`confidence` is not an accuracy estimate.** For `classify` and `rate` it is a statistic computed
 from how peaked the answer's own distribution is. `min_confidence` is a spread filter, not a
 probability of being right. Treat it as a flag for review.
+
+**Costs do not transfer across backends.** A cost model is a claim about *these* probabilities. A
+different model — or a different version of the same one — can be sharper or flatter in the middle
+of the range, and the threshold your costs imply will land somewhere else on its distribution.
+Re-measure calibration when you change backends or unpin a version; `gut` records which model
+answered every decision so you can tell the two populations apart afterwards.
 
 **Probabilities across questions are not comparable.** The vendor's own docs warn that negated
 questions need not sum to 1 and that different primitives yield non-comparable numbers. `gut` never
