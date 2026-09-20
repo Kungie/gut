@@ -31,6 +31,7 @@ from __future__ import annotations
 
 import json
 import os
+import threading
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -67,6 +68,8 @@ class Cassette:
     path: Path
     entries: dict[str, dict[str, Any]] = field(default_factory=dict)
     dirty: bool = False
+    _lock: threading.Lock = field(default_factory=threading.Lock, repr=False, compare=False)
+    """Recording a benchmark fans out across threads, so writes are guarded."""
 
     def __post_init__(self) -> None:
         self.path = Path(self.path)
@@ -106,13 +109,15 @@ class Cassette:
     def put(self, state: State, spec: QuestionSpec, model: str, answer: Answer) -> None:
         """Record an answer."""
         question = spec.canonical()
-        self.entries[_entry_key(state, question, model)] = {
+        entry = {
             "state": state,
             "question": question,
             "model": model,
             "answer": answer_to_json(answer),
         }
-        self.dirty = True
+        with self._lock:
+            self.entries[_entry_key(state, question, model)] = entry
+            self.dirty = True
 
     def __len__(self) -> int:
         return len(self.entries)

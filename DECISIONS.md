@@ -701,6 +701,69 @@ Two checks exist to stop the README growing back: it must stay under 120 lines, 
 `cost_false_yes`, `on_unsure`, `GUT_RECORD` or `SQLiteCache` in it is a failure that names the page
 each belongs to.
 
+## D31 — The three benchmark datasets, and what may be committed
+
+**Date:** 2026-09-20
+
+Every number in this repository was measured against 101 tickets written for it. These three are
+not. Each was verified — link, licence, size, label set — before use, and pinned.
+
+| dataset | source | licence | may we redistribute? |
+|---|---|---|---|
+| **CLINC150** | `clinc/oos-eval` at `828f8093`, `data/data_full.json`, SHA-256 `36923c37…` | CC BY 3.0 per the HuggingFace dataset card; **the upstream repository declares none** | yes, with attribution |
+| **NLBSE'24 issues** | `nlbse2024/issue-report-classification` at `2927bc67`, `data/issues_{train,test}.csv`, SHA-256 `18dc42a3…` / `4f7d8619…` | **none declared**, and the text is third-party GitHub content | **no** |
+| **SMS Spam Collection** | UCI dataset 228, SHA-256 `1587ea43…` | CC BY 4.0 (UCI is authoritative; the HuggingFace mirror says "unknown") | yes, with attribution |
+
+Nothing is downloaded without a SHA-256 check. A benchmark whose inputs can change underneath it is
+not a benchmark, and "the upstream file moved" should be a loud failure rather than a quiet shift in
+the results.
+
+**Cassettes follow the licence.** CLINC and SMS recordings are committed, so those numbers reproduce
+offline from a clean clone. The NLBSE cassette contains issue text under no licence and is therefore
+**not** committed; `docs/benchmarks.md` says how to regenerate it, and that is the honest cost of
+using it.
+
+The NLBSE'24 competition data was used rather than NLBSE'23: 2023 ships 1.4 M issues as external
+tarballs, while 2024 has 3,000 balanced issues in-repo. Three thousand real issues is plenty for a
+500-example test sample, and the smaller download is the difference between a benchmark someone runs
+and one they read about.
+
+CLINC's 150 intent descriptions are the label names with underscores removed — mechanical, not
+hand-written. Writing 150 descriptions by hand would be tuning the prompt against the labels, which
+is the exact thing the dev/test split exists to prevent.
+
+Banking77, TweetEval and GoEmotions were skipped. The first three cover a binary judgment, a
+multiway classification and out-of-scope detection, which is what the claims need; GoEmotions would
+have re-tested D23's finding about `rate` confidence and is the most interesting of the three to
+add next.
+
+## D32 — The method, and why each part of it is there
+
+**Date:** 2026-09-20
+
+Numbers from a model you are also tuning against are worthless. The protocol is ordinary and the
+discipline is the point.
+
+- **One split, fixed seed `20260920`,** stratified by label. Dev ≈ 200, test ≈ 500. Dev is drawn
+  first and removed, so they cannot overlap. The sampling code is `stratified_split`, and a test
+  asserts the split is deterministic, that the two halves are disjoint, and that proportions hold.
+- **CLINC's out-of-scope share is set deliberately** to 100 of 550 test examples (18.2%), matching
+  the canonical CLINC test split, rather than the 5% its natural share in the corpus would give.
+  The departure is a `quota` argument, and it is reported rather than hidden.
+- **Question wording is written against dev and then frozen.** `python -m benchmarks --dev-only`
+  exists so that judging the wording cannot accidentally show a test result. The wording lives in
+  `benchmarks/_datasets.py` as constants for the same reason.
+- **Calibrators are fitted on dev, applied to test.** Never fitted on what they are scored on.
+- **The model is pinned** to `jev-1.13.0` and recorded in every result.
+- **The budget is checked before spending.** The estimate is printed and a run that would exceed
+  five dollars refuses to start. The real figure is around six cents.
+
+Each example is asked **exactly once**. A posture changes how an answer is acted on, never what was
+asked — a property of the design that the test suite already asserts — so the whole posture sweep is
+computed afterwards from those probabilities. Ten postures therefore cost what one costs, and more
+importantly every posture is scored on *identical* model answers, which is the only thing that makes
+comparing them meaningful.
+
 ## Next steps, noted and not started
 
 - A native `async` backend, so batched judgments need no worker thread, and an `async` `judge()`.
