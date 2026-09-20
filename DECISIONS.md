@@ -382,6 +382,31 @@ fails loudly on the first run and gets lowered deliberately, while a bar that is
 accepts a predicate that was already wrong about a case you wrote down. Lowering it should be
 something you decided.
 
+## D19 — `gut` warns when the human branch is unreachable
+
+**Date:** 2026-09-20
+
+Found while building the demo, and worth recording because the example it invalidates is the
+handoff's own: `cost_false_yes=2, cost_false_no=50, cost_human=5` **can never return UNSURE.**
+
+The expected cost of asking a person is flat in `p`, while the cheaper of yes and no peaks where
+those two lines cross, at `cost_false_yes · cost_false_no / (cost_false_yes + cost_false_no)` —
+`1.92` for those numbers. A `cost_human` of `5` sits above the peak, so at every probability either
+yes or no is cheaper, and the third branch the developer carefully wrote is dead code. Nothing
+errors. The `UNSURE` case simply never runs, and a queue that was supposed to route hard cases to a
+person routes none.
+
+`policy()` now warns, naming the ceiling. `Policy.unsure_reachable` and
+`Policy.max_useful_cost_human` expose the same fact for anyone who wants to check it themselves.
+
+The boundary is reachable, not unreachable: exactly at the peak all three options tie, and the tie
+rule prefers `UNSURE`. A test pins that, because the off-by-one here is the difference between a
+warning that is right and one that cries wolf on a working configuration.
+
+The demo's own costs were wrong in exactly this way on the first run: 101 tickets, zero sent to a
+human. That is the report doing its job, and the reason the demo is in the repository rather than in
+a README.
+
 ---
 
 ## Implementation order

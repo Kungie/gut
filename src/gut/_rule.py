@@ -21,6 +21,7 @@ which for ``cost_false_yes=2, cost_false_no=50`` is ``0.038`` -- a number nobody
 from __future__ import annotations
 
 import math
+import warnings
 from dataclasses import dataclass
 from typing import Final
 
@@ -187,6 +188,36 @@ class Policy:
         raise AssertionError("unreachable: costs always contains YES and NO")  # pragma: no cover
 
     @property
+    def max_useful_cost_human(self) -> float | None:
+        """The largest `cost_human` at which asking a person is ever the cheapest option.
+
+        Expected cost of a human is flat, while the cheaper of YES and NO peaks where the two
+        cross, at `cost_false_yes * cost_false_no / (cost_false_yes + cost_false_no)`. Above that
+        peak there is no probability at which asking a person is worth it, and UNSURE becomes
+        unreachable. Exactly *at* the peak all three options tie, and the tie rule prefers UNSURE,
+        so the boundary is still reachable.
+
+        `None` for a policy that is not cost-based.
+        """
+        if self.cost_false_yes is None or self.cost_false_no is None:
+            return None
+        total = self.cost_false_yes + self.cost_false_no
+        if total == 0:
+            return 0.0
+        return self.cost_false_yes * self.cost_false_no / total
+
+    @property
+    def unsure_reachable(self) -> bool:
+        """Whether any probability at all would send this decision to a human."""
+        if self.unsure_band is not None:
+            return True
+        if self.cost_human is None:
+            return False
+        ceiling = self.max_useful_cost_human
+        # `<=`: at the peak all three tie, and ties prefer UNSURE.
+        return ceiling is not None and self.cost_human <= ceiling
+
+    @property
     def implied_threshold(self) -> float | None:
         """The probability above which this policy says YES, when that is a single number.
 
@@ -250,11 +281,22 @@ def policy(
         # Nothing specified at all: symmetric costs, which is plain p > 0.5.
         cost_false_yes = cost_false_no = DEFAULT_COST
     # A half-specified cost model is left as-is; Policy rejects it with a targeted message.
-    return Policy(
+    rule = Policy(
         cost_false_yes=cost_false_yes,
         cost_false_no=cost_false_no,
         cost_human=cost_human,
     )
+    if cost_human is not None and not rule.unsure_reachable:
+        ceiling = rule.max_useful_cost_human
+        warnings.warn(
+            f"cost_human={rule.cost_human!r} can never be the cheapest option, so this decision "
+            f"will never return UNSURE. Asking a person only pays off below "
+            f"{ceiling:.4g}, where the cheaper of yes and no peaks. Lower cost_human, or drop it "
+            f"and accept a two-way decision.",
+            UserWarning,
+            stacklevel=3,
+        )
+    return rule
 
 
 DEFAULT_POLICY: Final = policy()

@@ -19,6 +19,10 @@ from gut._errors import PolicyError
 from gut._outcomes import Outcome
 from gut._rule import DEFAULT_POLICY, Policy, policy
 
+# The property tests sweep arbitrary cost combinations, many of which make UNSURE unreachable.
+# That is the point of those runs, not a problem with them; the warning has its own tests below.
+pytestmark = pytest.mark.filterwarnings("ignore:cost_human=.*never be the cheapest")
+
 probabilities = st.floats(min_value=0.0, max_value=1.0, allow_nan=False, allow_infinity=False)
 costs = st.floats(min_value=0.0, max_value=1e6, allow_nan=False, allow_infinity=False)
 positive_costs = st.floats(min_value=1e-3, max_value=1e6, allow_nan=False, allow_infinity=False)
@@ -119,6 +123,7 @@ def test_the_readme_example_threshold() -> None:
     assert pol.decide(0.02) is Outcome.NO
 
 
+@pytest.mark.filterwarnings("ignore:cost_human=.*never be the cheapest")
 def test_expected_costs_match_the_formulas() -> None:
     pol = policy(cost_false_yes=2, cost_false_no=50, cost_human=5)
     assert pol.expected_costs(0.25) == {
@@ -128,6 +133,7 @@ def test_expected_costs_match_the_formulas() -> None:
     }
 
 
+@pytest.mark.filterwarnings("ignore:cost_human=.*never be the cheapest")
 def test_a_human_is_asked_only_where_it_is_genuinely_cheapest() -> None:
     pol = policy(cost_false_yes=2, cost_false_no=50, cost_human=5)
     # p=0.5: yes costs 1.0, no costs 25.0, human costs 5.0 -> yes is still cheapest.
@@ -157,6 +163,60 @@ def test_zero_costs_never_say_yes() -> None:
     assert pol.decide(0.0) is Outcome.NO
     assert pol.decide(1.0) is Outcome.NO
     assert pol.implied_threshold == 1.0
+
+
+def test_unsure_is_unreachable_when_a_human_costs_more_than_the_peak() -> None:
+    """Expected cost of a human is flat; the cheaper of yes and no peaks where they cross."""
+    rule = policy(cost_false_yes=2, cost_false_no=50)
+    assert rule.max_useful_cost_human == pytest.approx(2 * 50 / 52)
+
+    # Above the peak, no probability sends it to a person.
+    with pytest.warns(UserWarning, match="never be the cheapest option"):
+        unreachable = policy(cost_false_yes=2, cost_false_no=50, cost_human=5)
+    assert unreachable.unsure_reachable is False
+    assert all(unreachable.decide(p / 100) is not Outcome.UNSURE for p in range(101))
+
+
+def test_the_boundary_itself_is_reachable() -> None:
+    """At the peak all three tie, and the tie rule prefers UNSURE."""
+    rule = policy(cost_false_yes=2, cost_false_no=2, cost_human=1.0)
+    assert rule.max_useful_cost_human == 1.0
+    assert rule.unsure_reachable is True
+    assert rule.decide(0.5) is Outcome.UNSURE
+
+
+def test_a_workable_human_cost_is_not_warned_about(
+    recwarn: pytest.WarningsRecorder,
+) -> None:
+    rule = policy(cost_false_yes=2, cost_false_no=20, cost_human=1)
+    assert rule.unsure_reachable is True
+    assert len(recwarn) == 0
+    assert [rule.decide(p) for p in (0.01, 0.2, 0.9)] == [
+        Outcome.NO,
+        Outcome.UNSURE,
+        Outcome.YES,
+    ]
+
+
+def test_no_human_option_means_no_warning_and_no_unsure(
+    recwarn: pytest.WarningsRecorder,
+) -> None:
+    rule = policy(cost_false_yes=2, cost_false_no=50)
+    assert rule.unsure_reachable is False
+    assert len(recwarn) == 0
+
+
+def test_reachability_is_undefined_for_the_escape_hatches() -> None:
+    assert policy(threshold=0.5).max_useful_cost_human is None
+    assert policy(threshold=0.5).unsure_reachable is False
+    assert policy(unsure_band=(0.2, 0.8)).unsure_reachable is True
+
+
+def test_free_mistakes_leave_no_room_for_a_human() -> None:
+    rule = policy(cost_false_yes=0, cost_false_no=0, cost_human=0)
+    assert rule.max_useful_cost_human == 0.0
+    assert rule.unsure_reachable is True  # a free human ties with two free mistakes
+    assert rule.decide(0.5) is Outcome.UNSURE
 
 
 def test_implied_threshold_is_none_when_unsure_is_possible() -> None:
