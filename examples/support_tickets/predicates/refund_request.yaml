@@ -1,0 +1,210 @@
+# Generated from tickets.json by build_predicates.py. The labels are the answer key that
+# ships with the dataset; the questions are worded the way after.py asks them.
+#
+# min_accuracy was set before measuring anything: 0.85 is a defensible bar for triage where a
+# wrong call is recoverable. It was not adjusted afterwards to make the numbers look better.
+question: "the customer is asking for money back or a credit"
+min_accuracy: 0.85
+examples:
+  - state: {subject: "Third outage this month", body: "This is the third time this month the dashboard has gone down during business hours. Our renewal is in six weeks and at this point I'm recommending we don't sign."}
+    expected: no
+  - state: {subject: "Cancelling unless this is fixed", body: "If the CSV export is still broken on Monday we're cancelling. We've been waiting two weeks."}
+    expected: no
+  - state: {subject: "Done with this", body: "Honestly I'm done. Charged me twice, support took four days to answer, and it's still wrong. Close my account."}
+    expected: yes
+  - state: {subject: "Evaluating alternatives", body: "We've started a trial with a competitor. Before we commit, is there any plan to fix the permissions model? That's the blocker for us."}
+    expected: no
+  - state: {subject: "Not renewing", body: "Please note we will not be renewing in March. The product hasn't kept up with what we need."}
+    expected: no
+  - state: {subject: "Last chance", body: "I've raised this ticket three times now. Fix it this week or we move our 40 seats elsewhere."}
+    expected: no
+  - state: {subject: "Losing patience", body: "Two months of promises about the API rate limits. My team has stopped using the integration entirely. I'm putting the renewal on hold."}
+    expected: no
+  - state: {subject: "Refund and close", body: "I want a full refund for this month and my account closed. This has been a waste of time."}
+    expected: yes
+  - state: {subject: "How do I cancel?", body: "Hi - where in the settings do I cancel my subscription? I'm switching to the annual plan and want to end the monthly one first."}
+    expected: no
+  - state: {subject: "Cancel one seat", body: "One of our team members left. How do I cancel just her seat without affecting the others?"}
+    expected: no
+  - state: {subject: "Cancellation policy", body: "Before we sign the annual contract - what's your cancellation policy if we need to stop mid-term?"}
+    expected: no
+  - state: {subject: "Cancelled by mistake", body: "I cancelled my plan last night by accident and now I can't get back in. Can you restore it?"}
+    expected: no
+  - state: {subject: "Did my cancellation go through?", body: "I requested cancellation two weeks ago but I was charged again today. Can you check?"}
+    expected: yes
+  - state: {subject: "This is really frustrating", body: "Every time I upload a file over 50MB it fails silently. No error, nothing. I've lost an afternoon to this."}
+    expected: no
+  - state: {subject: "Come on", body: "The search has been returning stale results for a week. How is this not fixed yet?"}
+    expected: no
+  - state: {subject: "Disappointed", body: "I expected better for the price. The reporting is very basic compared to what the sales page implied."}
+    expected: no
+  - state: {subject: "Fourth time asking", body: "Fourth time asking about SSO. Is it on the roadmap or not? A straight answer would be nice."}
+    expected: no
+  - state: {subject: "Charged twice", body: "I was charged twice for October. Same amount, two days apart. Invoice numbers 88123 and 88140."}
+    expected: yes
+  - state: {subject: "Invoice for accounting", body: "Could you send last month's invoice as a PDF? Our accountant needs it for the quarter close."}
+    expected: no
+  - state: {subject: "VAT number missing", body: "Our invoices don't show our VAT number. We need it there for reclaim. Where do I add it?"}
+    expected: no
+  - state: {subject: "Card declined", body: "Got an email saying my payment failed but the card works everywhere else. What's going on?"}
+    expected: no
+  - state: {subject: "Unexpected charge", body: "There's a 240 EUR charge I don't recognise. We're on the 99/month plan. Can you explain it?"}
+    expected: no
+  - state: {subject: "Prorated refund?", body: "We downgraded halfway through the month. Do we get a prorated refund for the difference?"}
+    expected: yes
+  - state: {subject: "Switch to annual billing", body: "We'd like to move to annual billing to get the discount. What's the process?"}
+    expected: no
+  - state: {subject: "Receipt email going to the wrong person", body: "Receipts are going to a colleague who left. How do I change the billing contact?"}
+    expected: no
+  - state: {subject: "502 on every request", body: "Since about 09:00 CET every API call returns 502. Nothing on your status page. This is blocking our whole pipeline."}
+    expected: no
+  - state: {subject: "Webhooks stopped", body: "Webhooks stopped firing around midnight. No config changes on our side. Endpoint is up and responding 200 to manual posts."}
+    expected: no
+  - state: {subject: "Slow queries", body: "Reports that used to load in 2s now take 40s. Same filters, same data volume. Started Tuesday."}
+    expected: no
+  - state: {subject: "Export produces empty file", body: "Steps: open Reports, select last 30 days, click Export CSV. File downloads but is 0 bytes. Chrome 141, macOS. Happens every time."}
+    expected: no
+  - state: {subject: "Timezone wrong in digest", body: "The daily digest email says 09:00 but arrives at 06:00. Our workspace is set to Europe/Berlin."}
+    expected: no
+  - state: {subject: "Mobile app crashes on login", body: "iOS app crashes immediately after entering the password. Reinstalled twice. iPhone 15, iOS 19.2."}
+    expected: no
+  - state: {subject: "Duplicate notifications", body: "We're getting every notification three times since the last release. Started Thursday."}
+    expected: no
+  - state: {subject: "Search ignores filters", body: "When I filter by owner and then search, the filter is ignored and I get everything back."}
+    expected: no
+  - state: {subject: "Data looks wrong", body: "The totals on the overview don't match the detail view. Overview says 1,204, detail adds to 1,197. Which one is right?"}
+    expected: no
+  - state: {subject: "Locked out", body: "MFA device died and the backup codes are on it. I can't get into the admin account and nobody else has admin."}
+    expected: no
+  - state: {subject: "Add five seats", body: "We're onboarding five people on Monday. Can you add the seats now and bill us on the next cycle?"}
+    expected: no
+  - state: {subject: "Transfer ownership", body: "The account owner has left the company. How do we transfer ownership to me? I'm CC'ing our IT lead."}
+    expected: no
+  - state: {subject: "Remove ex-employee", body: "Please remove j.walsh@ immediately, he left today. I've already revoked his SSO but he still shows as active."}
+    expected: no
+  - state: {subject: "SSO setup", body: "We're rolling out Okta. Is there a SAML metadata URL we should point at, or do we upload a certificate?"}
+    expected: no
+  - state: {subject: "Password reset loop", body: "Reset link says expired the moment I click it. Tried three times, different browsers."}
+    expected: no
+  - state: {subject: "Two accounts merged?", body: "We seem to have two workspaces with the same domain. Can they be merged, and what happens to the data?"}
+    expected: no
+  - state: {subject: "Student discount?", body: "Do you have a student discount? I'm doing a masters and paying out of pocket."}
+    expected: no
+  - state: {subject: "Is there an API for this?", body: "Is there an API endpoint to list all projects with their owners? I can only find the per-project one."}
+    expected: no
+  - state: {subject: "Keyboard shortcuts", body: "Is there a list of keyboard shortcuts anywhere? The help centre doesn't seem to have one."}
+    expected: no
+  - state: {subject: "Dark mode", body: "Any chance of a dark mode? My team works late and the white background is rough."}
+    expected: no
+  - state: {subject: "GDPR / data location", body: "Where is our data stored physically? Our legal team needs to know before we expand usage."}
+    expected: no
+  - state: {subject: "Partnership enquiry", body: "We build integrations for logistics companies and would like to discuss listing on your marketplace. Who should I talk to?"}
+    expected: no
+  - state: {subject: "Bulk import template", body: "Is there a CSV template for bulk importing contacts? I want to get the columns right before I try."}
+    expected: no
+  - state: {subject: "Training for new hires", body: "We have eight new people starting. Do you run onboarding sessions or is it all self-serve?"}
+    expected: no
+  - state: {subject: "Billing bug?", body: "Our invoice shows 12 seats but we only have 9 users. Either the billing is wrong or the seat count is buggy. Either way we're being overcharged."}
+    expected: yes
+  - state: {subject: "Slow and expensive", body: "Reports take 30 seconds and we just got upgraded to the next pricing tier without warning. Both of these are problems."}
+    expected: no
+  - state: {subject: "Might have to reconsider", body: "The integration has been unreliable all quarter. I'm not threatening anything, but I do have to justify this spend internally."}
+    expected: no
+  - state: {subject: "Just venting", body: "Ignore me, I'm just venting - but the new navigation is awful and everyone on my team hates it."}
+    expected: no
+  - state: {subject: "Asking for a friend", body: "A colleague is having trouble with exports. He's on a different workspace. Can you help him or does he need to write in himself?"}
+    expected: no
+  - state: {subject: "Renewal question", body: "Our renewal quote came in 22% higher than last year. Can you explain the increase? We budgeted for flat."}
+    expected: no
+  - state: {subject: "Escalating internally", body: "I've escalated this to our CTO. The data discrepancy from last week is still unexplained and he wants an answer before the board meeting."}
+    expected: no
+  - state: {subject: "Competitor comparison", body: "Your competitor does incremental sync. Do you? It came up in our review and I want to give an accurate answer."}
+    expected: no
+  - state: {subject: "Trial ending", body: "Our trial ends Friday. We haven't managed to get the import working so we can't really evaluate it. What now?"}
+    expected: no
+  - state: {subject: "down?", body: "is it down"}
+    expected: no
+  - state: {subject: "invoice", body: "need invoice pls"}
+    expected: no
+  - state: {subject: "broken", body: "export broken again"}
+    expected: no
+  - state: {subject: "?", body: "why was i charged"}
+    expected: no
+  - state: {subject: "cancel", body: "cancel"}
+    expected: no
+  - state: {subject: "Problem with payment", body: "Hello, we have make the payment but system say not paid. Please to check. Thank you."}
+    expected: no
+  - state: {subject: "Not working since update", body: "After last update the report is not more working. Before was ok. We need this for the client urgent."}
+    expected: no
+  - state: {subject: "Request for stop service", body: "We want stop the service at end of month, please confirm what we must do."}
+    expected: no
+  - state: {subject: "Question about the users", body: "How many users we can add in our plan? We are 14 persons now and maybe 20 next month."}
+    expected: no
+  - state: {subject: "Thanks", body: "Just wanted to say the new filters are great. Saved us a lot of clicking."}
+    expected: no
+  - state: {subject: "Quick win suggestion", body: "Small thing: it would help if the date picker remembered the last range. Not urgent at all."}
+    expected: no
+  - state: {subject: "Working now", body: "Ignore my last ticket, it started working again after I cleared the cache. Sorry for the noise."}
+    expected: no
+  - state: {subject: "Renewed", body: "We've renewed for another year. Could you send the updated contract to legal@?"}
+    expected: no
+  - state: {subject: "Refund for the failed month", body: "The service was unusable for eleven days in November. We'd like that month credited."}
+    expected: yes
+  - state: {subject: "Double charge refund", body: "Please refund the duplicate charge from the 3rd. Happy otherwise, just need the money back."}
+    expected: yes
+  - state: {subject: "Refund policy", body: "If we cancel mid-year do we get the unused months back, or is it non-refundable?"}
+    expected: no
+  - state: {subject: "Charged after cancelling", body: "I cancelled in August and was charged in September and October. I want both refunded."}
+    expected: yes
+  - state: {subject: "Accidental annual purchase", body: "I clicked annual instead of monthly. Can I get the difference back or switch it?"}
+    expected: yes
+  - state: {subject: "Suspicious login", body: "We got an alert about a login from a country none of our team is in. Can you confirm and show us the session log?"}
+    expected: no
+  - state: {subject: "SOC 2 report", body: "Our security review needs your latest SOC 2 Type II. Where do we request it?"}
+    expected: no
+  - state: {subject: "API key leaked", body: "One of our engineers committed an API key to a public repo. We've rotated it but can you confirm no calls were made with the old one?"}
+    expected: no
+  - state: {subject: "Data deletion request", body: "A former customer has asked us to delete their records. Is there a hard-delete, or is it soft only?"}
+    expected: no
+  - state: {subject: "Ongoing issues - summary", body: "I want to lay out everything that has happened since September because I don't think anyone has the full picture. First, the migration tool lost about 400 records - we caught it ourselves. Then the API limits changed without notice and broke our nightly job for four days. Support closed that ticket as resolved when it wasn't. Last week the dashboard was down twice. I have spent more time managing this vendor relationship than using the product. I'd like someone senior to call me this week."}
+    expected: no
+  - state: {subject: "Feature request with context", body: "Some background: we run about 200 campaigns a quarter and each needs approval from two people. Right now we track that in a spreadsheet next to your tool, which is obviously silly. What we want is a simple two-step approval on records. I know you have workflows on the enterprise tier but we can't justify that jump for one feature. Is there anything in between, or on the roadmap?"}
+    expected: no
+  - state: {subject: "Migration gone wrong", body: "We migrated 12,000 records on Saturday following your guide exactly. About 900 came through with empty custom fields, and a handful have the wrong owner. The rest look fine. I have the import log if that helps. We need this resolved before Thursday when the team comes back."}
+    expected: no
+  - state: {subject: "(no subject)", body: "see attached"}
+    expected: no
+  - state: {subject: "Fwd: Fwd: RE: issue", body: "Any update on this?"}
+    expected: no
+  - state: {subject: "test", body: "test ticket please ignore"}
+    expected: no
+  - state: {subject: "Rate limited unexpectedly", body: "We're getting 429s at around 40 requests a second, but our plan says 100. Has the limit changed?"}
+    expected: no
+  - state: {subject: "Attachments not loading", body: "Attachments show as broken images in the activity feed. Downloading them directly works fine."}
+    expected: no
+  - state: {subject: "Sync stuck", body: "The Salesforce sync has said 'in progress' for 18 hours. Restarting it does nothing."}
+    expected: no
+  - state: {subject: "Emails going to spam", body: "Our notification emails from your domain are landing in spam for everyone at our company since Monday."}
+    expected: no
+  - state: {subject: "Wrong currency", body: "Prices show in USD even though our workspace is set to EUR. The invoice is in EUR, so it's just the UI."}
+    expected: no
+  - state: {subject: "Bulk delete removed too much", body: "I bulk-deleted 30 archived records and it took out 300. Is there any way to restore? This is bad."}
+    expected: no
+  - state: {subject: "Permissions leak", body: "A viewer-role user can see the billing page. That shouldn't be possible and our compliance team is asking."}
+    expected: no
+  - state: {subject: "Downgrade before renewal", body: "We want to drop from 30 seats to 18 before the renewal date. Can that be done now or only at renewal?"}
+    expected: no
+  - state: {subject: "Pause the account", body: "Can we pause our subscription for three months? We're between funding rounds and need to cut costs."}
+    expected: no
+  - state: {subject: "PO number on invoices", body: "Our finance system needs a PO number on every invoice. Can that be added to the template?"}
+    expected: no
+  - state: {subject: "Change billing country", body: "We've incorporated in Ireland now. How do we update the billing entity and country?"}
+    expected: no
+  - state: {subject: "Annual invoice early", body: "Could we get next year's invoice issued in December rather than January? It helps our budget cycle."}
+    expected: no
+  - state: {subject: "Seat count wrong after removal", body: "I removed two users a week ago but we're still being billed for them. Does it only take effect at renewal?"}
+    expected: no
+  - state: {subject: "Nothing works and nobody answers", body: "Ticket 4412 - no reply in six days. Ticket 4398 - closed without a fix. Meanwhile the sync is still broken. I don't know what else to do here."}
+    expected: no
+  - state: {subject: "Small typo", body: "There's a typo on the billing page - 'recieve' should be 'receive'. Whenever you get a chance."}
+    expected: no

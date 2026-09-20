@@ -33,10 +33,19 @@ import yaml
 
 from gut._backends.base import Backend, ChoiceAnswer, NoulAnswer, ScoreAnswer
 from gut._batching import fetch
+from gut._calibration import DEFAULT_BINS, Calibration, calibrate
 from gut._errors import EvalError
 from gut._questions import ChoiceSpec, NoulSpec, QuestionSpec, ScoreSpec, State
 
 Kind: TypeAlias = Literal["noul", "choice", "score"]
+
+CalibrationKind: TypeAlias = Literal["probability", "confidence"]
+"""What the number being calibrated claims to be.
+
+A yes/no answer's `p` is a claim about the event. A choice or score answer's `confidence` is a
+statistic over its own distribution, which nobody claimed was a probability of being right --
+measuring it against correctness is how you find out whether treating it as one holds up.
+"""
 
 DEFAULT_MIN_ACCURACY = 1.0
 DEFAULT_THRESHOLD = 0.5
@@ -68,6 +77,8 @@ class EvalSuite:
     spec: QuestionSpec
     examples: tuple[Example, ...]
     min_accuracy: float = DEFAULT_MIN_ACCURACY
+    max_ece: float | None = None
+    """Optional: fail the file if its expected calibration error exceeds this."""
     threshold: float = DEFAULT_THRESHOLD
     """Noul files only: the probability above which the predicate counts as yes."""
     tolerance: float = DEFAULT_TOLERANCE
@@ -87,6 +98,10 @@ class ExampleResult:
     correct: bool
     actual: str
     """What the model said, rendered for a report."""
+    probability: float
+    """The number the model attached to its answer: `p` for yes/no, confidence otherwise."""
+    event: bool
+    """What that number was a claim about, so the two can be calibrated against each other."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -107,9 +122,32 @@ class EvalResult:
         return self.correct / len(self.results) if self.results else 0.0
 
     @property
+    def calibration(self) -> Calibration:
+        """How well the model's numbers matched what happened."""
+        return self.calibration_with()
+
+    def calibration_with(self, bins: int = DEFAULT_BINS) -> Calibration:
+        """The same, at a chosen number of buckets."""
+        return calibrate([(r.probability, r.event) for r in self.results], bins=bins)
+
+    @property
+    def calibration_kind(self) -> CalibrationKind:
+        """Whether the calibrated number is a probability of the event or a confidence."""
+        return "probability" if self.suite.kind == "noul" else "confidence"
+
+    @property
+    def ece_exceeded(self) -> bool:
+        """Whether the file declared a calibration bar and missed it."""
+        return self.suite.max_ece is not None and self.calibration.ece > self.suite.max_ece
+
+    @property
     def passed(self) -> bool:
-        """Whether the file met its own bar."""
-        return self.accuracy >= self.suite.min_accuracy
+        """Whether the file met its own bars.
+
+        Accuracy always. Calibration only if the file opted in with `max_ece`, because a file
+        written before anyone measured calibration should not start failing.
+        """
+        return self.accuracy >= self.suite.min_accuracy and not self.ece_exceeded
 
     @property
     def failures(self) -> tuple[ExampleResult, ...]:
@@ -247,6 +285,11 @@ def load_suite(path: str | Path) -> EvalSuite:
         min_accuracy=_number(
             document.get("min_accuracy", DEFAULT_MIN_ACCURACY), "min_accuracy", path
         ),
+        max_ece=(
+            None
+            if document.get("max_ece") is None
+            else _number(document["max_ece"], "max_ece", path)
+        ),
         threshold=_number(document.get("threshold", DEFAULT_THRESHOLD), "threshold", path),
         tolerance=_number(document.get("tolerance", DEFAULT_TOLERANCE), "tolerance", path),
     )
@@ -265,20 +308,28 @@ def _judge_example(suite: EvalSuite, example: Example, backend: Backend) -> Exam
             example=example,
             correct=said_yes == example.expected,
             actual=f"{'yes' if said_yes else 'no'} (p={answer.p:.3f})",
+            probability=answer.p,
+            event=bool(example.expected),
         )
     if isinstance(answer, ChoiceAnswer):
+        correct = answer.choice == example.expected
         return ExampleResult(
             example=example,
-            correct=answer.choice == example.expected,
+            correct=correct,
             actual=f"{answer.choice} (confidence={answer.confidence:.2f})",
+            probability=answer.confidence,
+            event=correct,
         )
     if isinstance(answer, ScoreAnswer):
         tolerance = suite.tolerance if example.tolerance is None else example.tolerance
         expected = float(example.expected)  # type: ignore[arg-type]
+        correct = abs(answer.score - expected) <= tolerance
         return ExampleResult(
             example=example,
-            correct=abs(answer.score - expected) <= tolerance,
+            correct=correct,
             actual=f"{answer.score:.2f} (tolerance {tolerance})",
+            probability=answer.confidence,
+            event=correct,
         )
     raise EvalError(  # pragma: no cover - the answer kind always matches the question kind
         f"{suite.path}: unexpected answer type {type(answer).__name__}."
@@ -296,12 +347,17 @@ def run_suite(suite: EvalSuite, backend: Backend) -> EvalResult:
 def format_failures(result: EvalResult) -> str:
     """A readable account of what went wrong, for a test report."""
     suite = result.suite
-    lines = [
+    headline = (
         f"{suite.name}: accuracy {result.accuracy:.0%} "
-        f"({result.correct}/{len(result.results)}), below min_accuracy {suite.min_accuracy:.0%}",
-        f"  question: {suite.spec.instructions or suite.spec.canonical()}",
-        "",
-    ]
+        f"({result.correct}/{len(result.results)}), below min_accuracy {suite.min_accuracy:.0%}"
+    )
+    if result.ece_exceeded:
+        assert suite.max_ece is not None
+        headline = (
+            f"{suite.name}: calibration error {result.calibration.ece:.3f}, "
+            f"above max_ece {suite.max_ece:.3f}"
+        )
+    lines = [headline, f"  question: {suite.spec.instructions or suite.spec.canonical()}", ""]
     for failure in result.failures:
         lines.append(f"  expected {failure.example.expected!r}, got {failure.actual}")
         lines.append(f"    {failure.example.label}")

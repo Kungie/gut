@@ -118,6 +118,24 @@ def test_a_malformed_predicate_file_fails_the_test(pytester: pytest.Pytester) ->
     result.stdout.fnmatch_lines(["*needs a 'question'*"])
 
 
+def test_a_calibration_miss_is_explained(pytester: pytest.Pytester) -> None:
+    """Opt-in via max_ece, and when it bites it has to say which bar was missed."""
+    pytester.makeconftest(CONFTEST.format(default=0.9))
+    pytester.makefile(".yaml", cancel=PASSING + "max_ece: 0.01\n")
+
+    result = pytester.runpytest("--gut-evals")
+    result.assert_outcomes(failed=1)
+    result.stdout.fnmatch_lines(["*calibration error*above max_ece 0.010*"])
+
+
+def test_the_summary_reports_calibration(pytester: pytest.Pytester) -> None:
+    pytester.makeconftest(CONFTEST.format(default=0.9))
+    pytester.makefile(".yaml", cancel=PASSING)
+
+    result = pytester.runpytest("--gut-evals")
+    result.stdout.fnmatch_lines(["*brier*ece*too few to trust*"])
+
+
 def test_the_test_is_named_after_the_file(pytester: pytest.Pytester) -> None:
     pytester.makeconftest(CONFTEST.format(default=0.9))
     pytester.makefile(".yaml", cancel_threat=PASSING)

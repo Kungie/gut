@@ -106,14 +106,23 @@ def pytest_collect_file(file_path: Path, parent: pytest.Collector) -> pytest.Col
 
 
 def pytest_terminal_summary(terminalreporter: Any) -> None:
-    """Report accuracy per file, including the ones that passed."""
+    """Report accuracy and calibration per file, including the ones that passed.
+
+    Pass and fail still hang on `min_accuracy` alone, unless a file opted into `max_ece`. Brier
+    and calibration error are shown because they are the numbers that say whether the
+    probabilities behind those answers are worth building a cost model on -- but a file written
+    before anyone measured calibration should not start failing because of it.
+    """
     if not _results:
         return
     terminalreporter.write_sep("-", "gut evals")
     for result in sorted(_results, key=lambda item: item.suite.name):
         mark = "PASS" if result.passed else "FAIL"
+        calibration = result.calibration
+        shaky = "" if calibration.reliable else f"  (n={calibration.count}, too few to trust)"
         terminalreporter.write_line(
-            f"{mark}  {result.suite.name:<32} "
-            f"{result.accuracy:>6.0%}  ({result.correct}/{len(result.results)}) "
-            f"min {result.suite.min_accuracy:.0%}"
+            f"{mark}  {result.suite.name:<26} "
+            f"{result.accuracy:>6.0%} ({result.correct}/{len(result.results)}) "
+            f"min {result.suite.min_accuracy:.0%}   "
+            f"brier {calibration.brier:.3f}  ece {calibration.ece:.3f}{shaky}"
         )
