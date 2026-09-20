@@ -206,6 +206,36 @@ def test_no_human_option_means_no_warning_and_no_unsure(
     assert len(recwarn) == 0
 
 
+def test_an_explicit_band_describes_itself() -> None:
+    rule = policy(unsure_band=(0.3, 0.7))
+    assert rule.implied_unsure_band == (0.3, 0.7)
+    assert rule.describe() == "no below 0.3, ask a person from 0.3 to 0.7, yes above 0.7"
+
+
+def test_a_cost_policy_reports_the_band_it_implies() -> None:
+    rule = policy(cost_false_yes=4, cost_false_no=4, cost_human=1)
+    assert rule.implied_unsure_band == pytest.approx((0.25, 0.75))
+    assert "ask a person from 0.25 to 0.75" in rule.describe()
+
+
+def test_a_policy_with_no_human_describes_a_threshold() -> None:
+    rule = policy(cost_false_yes=2, cost_false_no=50)
+    assert rule.implied_unsure_band is None
+    assert rule.describe() == "yes above 0.0385, no at or below it"
+
+
+def test_an_unreachable_human_describes_no_band() -> None:
+    with pytest.warns(UserWarning, match="never be the cheapest"):
+        rule = policy(cost_false_yes=2, cost_false_no=50, cost_human=5)
+    assert rule.implied_unsure_band is None
+    assert "ask a person" not in rule.describe()
+
+
+def test_free_mistakes_describe_the_whole_range() -> None:
+    rule = policy(cost_false_yes=0, cost_false_no=0, cost_human=0)
+    assert rule.implied_unsure_band == (0.0, 1.0)
+
+
 def test_reachability_is_undefined_for_the_escape_hatches() -> None:
     assert policy(threshold=0.5).max_useful_cost_human is None
     assert policy(threshold=0.5).unsure_reachable is False

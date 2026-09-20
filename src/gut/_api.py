@@ -18,9 +18,10 @@ from gut._backends.base import Answer, Backend, ChoiceAnswer, NoulAnswer, ScoreA
 from gut._cache import CacheEntry, cache_key
 from gut._config import current_backend, current_cache, current_sink, recording
 from gut._decision import ChoiceDecision, Decision, DecisionSource, ScoreDecision
-from gut._errors import BackendError, QuestionError
+from gut._errors import BackendError, PolicyError, QuestionError
 from gut._log import DecisionRecord, _now, emit_decision, policy_to_json, site_to_json
 from gut._outcomes import Outcome
+from gut._posture import Lean, Stakes, min_confidence_for, policy_for
 from gut._questions import ChoiceSpec, NoulSpec, QuestionSpec, ScoreSpec, State
 from gut._rule import Policy, policy
 from gut._scope import current_prefetch
@@ -89,6 +90,65 @@ def _expect(answer: Answer, kind: type[A], spec: QuestionSpec) -> A:
             f"{spec.fingerprint}, got {type(answer).__name__}."
         )
     return answer
+
+
+def _resolve_policy(
+    *,
+    stakes: Stakes | None,
+    lean: Lean | None,
+    ask_human: bool,
+    cost_false_yes: float | None,
+    cost_false_no: float | None,
+    cost_human: float | None,
+    threshold: float | None,
+    unsure_band: tuple[float, float] | None,
+) -> Policy:
+    """Pick the layer the caller asked for, and refuse a call that asks for both."""
+    exact = {
+        "cost_false_yes": cost_false_yes,
+        "cost_false_no": cost_false_no,
+        "cost_human": cost_human,
+        "threshold": threshold,
+        "unsure_band": unsure_band,
+    }
+    posture = {"stakes": stakes, "lean": lean, "ask_human": ask_human or None}
+    given_exact = sorted(name for name, value in exact.items() if value is not None)
+    given_posture = sorted(name for name, value in posture.items() if value is not None)
+
+    if given_exact and given_posture:
+        raise PolicyError(
+            f"Describe the posture or give the costs, not both: got "
+            f"{', '.join(given_posture)} alongside {', '.join(given_exact)}. "
+            f"stakes/lean/ask_human are shorthand for exactly these costs -- use "
+            f"gut.presets() to see which -- so mixing them leaves it ambiguous which wins."
+        )
+    if given_posture:
+        return policy_for(stakes=stakes, lean=lean, ask_human=ask_human)
+    return policy(
+        cost_false_yes=cost_false_yes,
+        cost_false_no=cost_false_no,
+        cost_human=cost_human,
+        threshold=threshold,
+        unsure_band=unsure_band,
+    )
+
+
+def _resolve_min_confidence(
+    *,
+    stakes: Stakes | None,
+    ask_human: bool,
+    min_confidence: float | None,
+    kind: str,
+) -> float | None:
+    """The same choice for `classify` and `rate`, where the gate is confidence, not cost."""
+    if min_confidence is not None and (stakes is not None or ask_human):
+        raise PolicyError(
+            f"Describe the posture or give min_confidence, not both. For {kind} the posture is "
+            f"shorthand for a confidence floor; gut.presets() shows the mapping."
+        )
+    if stakes is not None or ask_human:
+        return min_confidence_for(stakes, ask_human)
+    return min_confidence
 
 
 def _min_confidence_outcome(confidence: float, min_confidence: float | None) -> Outcome:
@@ -218,6 +278,9 @@ def likely(
     subject: State,
     question: str,
     *,
+    stakes: Stakes | None = None,
+    lean: Lean | None = None,
+    ask_human: bool = False,
     cost_false_yes: float | None = None,
     cost_false_no: float | None = None,
     cost_human: float | None = None,
@@ -229,9 +292,18 @@ def likely(
 ) -> Decision:
     """Judge whether `question` is true of `subject`.
 
+    With nothing but a subject and a question it answers yes or no, above and below `0.5`. The
+    keyword arguments come in two layers and you pick one: words, or numbers.
+
     Args:
         subject: What to judge: text, a JSON-shaped dict, or a list of strings.
         question: The claim to evaluate, written as a statement or a question.
+        stakes: `"low"`, `"medium"` or `"high"` -- how costly an automatic mistake is next to a
+            person deciding instead. Only widens the range where a person is asked, so it needs
+            `ask_human=True` to do anything.
+        lean: `"yes"` or `"no"` -- which way to err when in doubt, meaning which mistake is worse.
+            Moves the point where yes overtakes no to `0.25` or `0.75`.
+        ask_human: Whether `UNSURE` is a possible outcome at all. Off by default.
         cost_false_yes: What it costs to act on a yes that turns out wrong.
         cost_false_no: What it costs to act on a no that turns out wrong.
         cost_human: What it costs to ask a person instead. Omit it and `UNSURE` is impossible.
@@ -245,13 +317,22 @@ def likely(
     Returns:
         A `Decision` whose `outcome` is YES, NO or UNSURE.
 
+    Raises:
+        PolicyError: Posture words and exact costs were both given.
+
     Example:
         ```python
+        if gut.likely(email, "the customer threatens to cancel"):
+            escalate()
+
         d = gut.likely(email, "the customer threatens to cancel",
-                       cost_false_yes=2, cost_false_no=50, cost_human=1)
+                       stakes="high", lean="yes", ask_human=True)
         ```
     """
-    rule = policy(
+    rule = _resolve_policy(
+        stakes=stakes,
+        lean=lean,
+        ask_human=ask_human,
         cost_false_yes=cost_false_yes,
         cost_false_no=cost_false_no,
         cost_human=cost_human,
@@ -298,6 +379,8 @@ def classify(
     enum_class: type[E],
     *,
     question: str | None = None,
+    stakes: Stakes | None = None,
+    ask_human: bool = False,
     min_confidence: float | None = None,
     backend: Backend | None = None,
 ) -> ChoiceDecision[E]:
@@ -317,6 +400,10 @@ def classify(
         subject: What to classify.
         enum_class: The categories, as an `Enum` whose values are descriptions.
         question: What the model should decide. Omit it and the descriptions speak for themselves.
+        stakes: `"low"`, `"medium"` or `"high"` -- how peaked the answer must be before it is acted
+            on. Needs `ask_human=True`. There is no `lean` here: a four-way choice has no direction
+            to err in.
+        ask_human: Whether `UNSURE` is a possible outcome at all. Off by default.
         min_confidence: Below this confidence the outcome is UNSURE and `value` is `UNSURE`.
             Confidence is how peaked the distribution is, **not** a probability of being right.
         backend: Override the configured backend for this call.
@@ -327,6 +414,9 @@ def classify(
     Warns:
         UserWarning: `enum_class` has no catch-all member, so nothing can be "none of these".
     """
+    min_confidence = _resolve_min_confidence(
+        stakes=stakes, ask_human=ask_human, min_confidence=min_confidence, kind="classify"
+    )
     criteria = _criteria_from_enum(enum_class)
     _warn_without_catch_all(enum_class)
     spec = ChoiceSpec(instructions=question, criteria=criteria)
@@ -341,6 +431,8 @@ def rate(
     levels: Sequence[str],
     *,
     question: str | None = None,
+    stakes: Stakes | None = None,
+    ask_human: bool = False,
     min_confidence: float | None = None,
     backend: Backend | None = None,
 ) -> ScoreDecision:
@@ -350,6 +442,9 @@ def rate(
         subject: What to rate.
         levels: Between 2 and 10 level descriptions, in order; the first is level 0.
         question: What the model should rate. Omit it and the rubric speaks for itself.
+        stakes: `"low"`, `"medium"` or `"high"` -- how peaked the answer must be before it is acted
+            on. Needs `ask_human=True`.
+        ask_human: Whether `UNSURE` is a possible outcome at all. Off by default.
         min_confidence: Below this confidence the outcome is UNSURE.
         backend: Override the configured backend for this call.
 
@@ -361,6 +456,9 @@ def rate(
         r = gut.rate(ticket, ["calm", "annoyed", "angry", "threatening to leave"])
         ```
     """
+    min_confidence = _resolve_min_confidence(
+        stakes=stakes, ask_human=ask_human, min_confidence=min_confidence, kind="rate"
+    )
     spec = ScoreSpec(instructions=question, criteria=levels)
     site = caller_site()
     return build_score_decision(

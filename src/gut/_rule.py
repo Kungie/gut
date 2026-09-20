@@ -188,6 +188,42 @@ class Policy:
         raise AssertionError("unreachable: costs always contains YES and NO")  # pragma: no cover
 
     @property
+    def implied_unsure_band(self) -> tuple[float, float] | None:
+        """The probabilities at which this policy asks a person, as `(lo, hi)` inclusive.
+
+        For a cost policy this falls out of the three expected costs: asking a person is cheapest
+        exactly when `cost_human` is below both lines, which is `ch/cost_false_no` up to
+        `1 - ch/cost_false_yes`. `None` when no probability sends the decision to a human.
+        """
+        if self.unsure_band is not None:
+            return self.unsure_band
+        if self.cost_human is None or self.cost_false_yes is None or self.cost_false_no is None:
+            return None
+        lo = 0.0 if self.cost_false_no == 0 else min(1.0, self.cost_human / self.cost_false_no)
+        hi = (
+            1.0
+            if self.cost_false_yes == 0
+            else max(0.0, 1.0 - self.cost_human / self.cost_false_yes)
+        )
+        return (lo, hi) if lo <= hi else None
+
+    def describe(self) -> str:
+        """One line saying what this policy does, in probabilities rather than costs.
+
+        The costs are the thing you configure; the boundaries are the thing you can check against a
+        model's behaviour. Printing them is how you find out that `stakes="high"` means what you
+        thought it did.
+        """
+        band = self.implied_unsure_band
+        if band is None:
+            threshold = self.implied_threshold
+            if threshold is None:  # pragma: no cover - only a band policy, handled above
+                return "no boundary"
+            return f"yes above {threshold:.3g}, no at or below it"
+        lo, hi = band
+        return f"no below {lo:.3g}, ask a person from {lo:.3g} to {hi:.3g}, yes above {hi:.3g}"
+
+    @property
     def max_useful_cost_human(self) -> float | None:
         """The largest `cost_human` at which asking a person is ever the cheapest option.
 
