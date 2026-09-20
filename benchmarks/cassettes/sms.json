@@ -1,0 +1,2405 @@
+{
+  "entries": [
+    {
+      "answer": {
+        "p": 0.02,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "* You gonna ring this weekend or wot?"
+    },
+    {
+      "answer": {
+        "p": 0.04,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": ", ,  and  picking them up from various points | going 2 yeovil | and they will do the motor project 4 3 hours | and then u take them home. || 12 2 5.30 max. || Very easy"
+    },
+    {
+      "answer": {
+        "p": 0.99,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "1000's of girls many local 2 u who r virgins 2 this & r ready 2 4fil ur every sexual need. Can u 4fil theirs? text CUTE to 69911(£1.50p. m)"
+    },
+    {
+      "answer": {
+        "p": 0.03,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "7 wonders in My WORLD 7th You 6th Ur style 5th Ur smile 4th Ur Personality 3rd Ur Nature 2nd Ur SMS and 1st \"Ur Lovely Friendship\"... good morning dear"
+    },
+    {
+      "answer": {
+        "p": 0.96,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "85233 FREE>Ringtone!Reply REAL"
+    },
+    {
+      "answer": {
+        "p": 0.15,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "ALRITE"
+    },
+    {
+      "answer": {
+        "p": 0.01,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "And stop being an old man. You get to build snowman snow angels and snowball fights."
+    },
+    {
+      "answer": {
+        "p": 0.04,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "And very importantly, all we discuss is between u and i only."
+    },
+    {
+      "answer": {
+        "p": 0.19,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Ard 4 lor..."
+    },
+    {
+      "answer": {
+        "p": 0.04,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Are you free now?can i call now?"
+    },
+    {
+      "answer": {
+        "p": 0.07,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Are you willing to go for apps class."
+    },
+    {
+      "answer": {
+        "p": 0.14,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Are you willing to go for aptitude class."
+    },
+    {
+      "answer": {
+        "p": 0.97,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "As a SIM subscriber, you are selected to receive a Bonus! Get it delivered to your door, Txt the word OK to No: 88600 to claim. 150p/msg, EXP. 30Apr"
+    },
+    {
+      "answer": {
+        "p": 0.01,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Awesome, lemme know whenever you're around"
+    },
+    {
+      "answer": {
+        "p": 0.01,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Babe? You said 2 hours and it's been almost 4 ... Is your internet down ?"
+    },
+    {
+      "answer": {
+        "p": 0.05,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Blank is Blank. But wat is blank? Lol"
+    },
+    {
+      "answer": {
+        "p": 0.89,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Bought one ringtone and now getting texts costing 3 pound offering more tones etc"
+    },
+    {
+      "answer": {
+        "p": 0.1,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Buzzzz! *grins* Did I buzz your ass? Buzz your chest ? Buzz your cock ? Where do you keep your phone ? Is the vibrator on ? Did you feel it shake ?"
+    },
+    {
+      "answer": {
+        "p": 0.99,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Call 09095350301 and send our girls into erotic ecstacy. Just 60p/min. To stop texts call 08712460324 (nat rate)"
+    },
+    {
+      "answer": {
+        "p": 0.07,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Can you do online transaction?"
+    },
+    {
+      "answer": {
+        "p": 0.02,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Can ü all decide faster cos my sis going home liao.."
+    },
+    {
+      "answer": {
+        "p": 0.1,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Can... I'm free..."
+    },
+    {
+      "answer": {
+        "p": 0.01,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Carlos took a while (again), we leave in a minute"
+    },
+    {
+      "answer": {
+        "p": 0.99,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Congratulations - Thanks to a good friend U have WON the £2,000 Xmas prize. 2 claim is easy, just call 08712103738 NOW! Only 10p per minute. BT-national-rate"
+    },
+    {
+      "answer": {
+        "p": 0.98,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Congratulations U can claim 2 VIP row A Tickets 2 C Blu in concert in November or Blu gift guaranteed Call 09061104276 to claim TS&Cs www.smsco.net cost£3.75max "
+    },
+    {
+      "answer": {
+        "p": 0.02,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Dear where you will be when i reach there"
+    },
+    {
+      "answer": {
+        "p": 0.97,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "December only! Had your mobile 11mths+? You are entitled to update to the latest colour camera mobile for Free! Call The Mobile Update Co FREE on 08002986906"
+    },
+    {
+      "answer": {
+        "p": 0.1,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Dip's cell dead. So i m coming with him. U better respond else we shall come back."
+    },
+    {
+      "answer": {
+        "p": 0.05,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Do u konw waht is rael FRIENDSHIP Im gving yuo an exmpel: Jsut ese tihs msg.. Evrey splleing of tihs msg is wrnog.. Bt sitll yuo can raed it wihtuot ayn mitsake.. GOODNIGHT &amp; HAVE A NICE SLEEP..SWEET DREAMS.."
+    },
+    {
+      "answer": {
+        "p": 0.06,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Do well :)all will for little time. Thing of good times ahead:"
+    },
+    {
+      "answer": {
+        "p": 0.02,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Dont let studying stress you out. L8r."
+    },
+    {
+      "answer": {
+        "p": 0.02,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Dont think so. It turns off like randomlly within 5min of opening"
+    },
+    {
+      "answer": {
+        "p": 0.11,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Dunno da next show aft 6 is 850. Toa payoh got 650."
+    },
+    {
+      "answer": {
+        "p": 0.02,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Eat at old airport road... But now 630 oredi... Got a lot of pple..."
+    },
+    {
+      "answer": {
+        "p": 0.97,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "FREE RING TONE just text \"POLYS\" to 87131. Then every week get a new tone. 0870737910216yrs only £1.50/wk."
+    },
+    {
+      "answer": {
+        "p": 0.98,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "For ur chance to win a £250 cash every wk TXT: ACTION to 80608. T's&C's www.movietrivia.tv custcare 08712405022, 1x150p/wk."
+    },
+    {
+      "answer": {
+        "p": 0.98,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Free entry to the gr8prizes wkly comp 4 a chance to win the latest Nokia 8800, PSP or £250 cash every wk.TXT GREAT to 80878 http//www.gr8prizes.com 08715705022"
+    },
+    {
+      "answer": {
+        "p": 0.03,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Friendship is not a game to play, It is not a word to say, It doesn\\'t start on March and ends on May, It is tomorrow, yesterday, today and e"
+    },
+    {
+      "answer": {
+        "p": 0.01,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Fwiw the reason I'm only around when it's time to smoke is that because of gas I can only afford to be around when someone tells me to be and that apparently only happens when somebody wants to light up"
+    },
+    {
+      "answer": {
+        "p": 0.99,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "GENT! We are trying to contact you. Last weekends draw shows that you won a £1000 prize GUARANTEED. Call 09064012160. Claim Code K52. Valid 12hrs only. 150ppm "
+    },
+    {
+      "answer": {
+        "p": 0.03,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Geeeee ... Your internet is really bad today, eh ?"
+    },
+    {
+      "answer": {
+        "p": 0.98,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Get ur 1st RINGTONE FREE NOW! Reply to this msg with TONE. Gr8 TOP 20 tones to your phone every week just £1.50 per wk 2 opt out send STOP 08452810071 16"
+    },
+    {
+      "answer": {
+        "p": 0.39,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Gibbs unsold.mike hussey"
+    },
+    {
+      "answer": {
+        "p": 0.02,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Going thru a very different feeling.wavering decisions and coping up with the same is the same individual.time will heal everything i believe."
+    },
+    {
+      "answer": {
+        "p": 0.03,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Good Morning my Dear........... Have a great &amp; successful day."
+    },
+    {
+      "answer": {
+        "p": 0.17,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Good Morning plz call me sir"
+    },
+    {
+      "answer": {
+        "p": 0.13,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Good sleep is about rhythm. The person has to establish a rhythm that the body will learn and use. If you want to know more :-)"
+    },
+    {
+      "answer": {
+        "p": 0.98,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "HMV BONUS SPECIAL 500 pounds of genuine HMV vouchers to be won. Just answer 4 easy questions. Play Now! Send HMV to 86688 More info:www.100percent-real.com"
+    },
+    {
+      "answer": {
+        "p": 0.05,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Had the money issue weigh me down but thanks to you, I can breathe easier now. I.ll make sure you dont regret it. Thanks."
+    },
+    {
+      "answer": {
+        "p": 0.02,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Have you had a good day? Mine was really busy are you up to much tomorrow night?"
+    },
+    {
+      "answer": {
+        "p": 0.01,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "He said i look pretty wif long hair wat. But i thk he's cutting quite short 4 me leh."
+    },
+    {
+      "answer": {
+        "p": 0.01,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Heehee that was so funny tho"
+    },
+    {
+      "answer": {
+        "p": 0.02,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Hey gals.. Anyone of u going down to e driving centre tmr?"
+    },
+    {
+      "answer": {
+        "p": 0.01,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Hey... Thk we juz go accordin to wat we discussed yest lor, except no kb on sun... Cos there's nt much lesson to go if we attend kb on sat..."
+    },
+    {
+      "answer": {
+        "p": 0.41,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Hi babe its Chloe, how r u? I was smashed on saturday night, it was great! How was your weekend? U been missing me? SP visionsms.com Text stop to stop 150p/text"
+    },
+    {
+      "answer": {
+        "p": 0.01,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Hi babe its me thanks for coming even though it didnt go that well!i just wanted my bed! Hope to see you soon love and kisses xxx"
+    },
+    {
+      "answer": {
+        "p": 0.02,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Hi hope u get this txt~journey hasnt been gd,now about 50 mins late I think."
+    },
+    {
+      "answer": {
+        "p": 0.01,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Hmm ok, i'll stay for like an hour cos my eye is really sore!"
+    },
+    {
+      "answer": {
+        "p": 0.02,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Ho ho - big belly laugh! See ya tomo"
+    },
+    {
+      "answer": {
+        "p": 0.02,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Hurry home. Soup is DONE!"
+    },
+    {
+      "answer": {
+        "p": 0.01,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "I actually did for the first time in a while. I went to bed not too long after i spoke with you. Woke up at 7. How was your night?"
+    },
+    {
+      "answer": {
+        "p": 0.03,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "I am in tirupur da, once you started from office call me."
+    },
+    {
+      "answer": {
+        "p": 0.06,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "I bought the test yesterday. Its something that lets you know the exact day u ovulate.when will get 2u in about 2 to 3wks. But pls pls dont fret. I know u r worried. Pls relax. Also is there anything in ur past history u need to tell me?"
+    },
+    {
+      "answer": {
+        "p": 0.02,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "I can't speak, bcaz mobile have problem. I can listen you but you cann't listen my voice. So i calls you later."
+    },
+    {
+      "answer": {
+        "p": 0.04,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "I dont. Can you send it to me. Plus how's mode."
+    },
+    {
+      "answer": {
+        "p": 0.01,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "I forgot 2 ask ü all smth.. There's a card on da present lei... How? Ü all want 2 write smth or sign on it?"
+    },
+    {
+      "answer": {
+        "p": 0.02,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "I had askd u a question some hours before. Its answer"
+    },
+    {
+      "answer": {
+        "p": 0.02,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "I jus hope its true that  missin me cos i'm really missin him! You haven't done anything to feel guilty about, yet."
+    },
+    {
+      "answer": {
+        "p": 0.01,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "I jus reached home. I go bathe first. But my sis using net tell u when she finishes k..."
+    },
+    {
+      "answer": {
+        "p": 0.03,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "I know but you need to get hotel now. I just got my invitation but i had to apologise. Cali is to sweet for me to come to some english bloke's weddin"
+    },
+    {
+      "answer": {
+        "p": 0.03,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "I see the letter B on my car"
+    },
+    {
+      "answer": {
+        "p": 0.01,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "I shall book chez jules for half eight, if that's ok with you?"
+    },
+    {
+      "answer": {
+        "p": 0.02,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "I tot u outside cos darren say u come shopping. Of course we nice wat. We jus went sim lim look at mp3 player."
+    },
+    {
+      "answer": {
+        "p": 0.01,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "I wan but too early lei... Me outside now wun b home so early... Neva mind then..."
+    },
+    {
+      "answer": {
+        "p": 0.05,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "I want to see your pretty pussy..."
+    },
+    {
+      "answer": {
+        "p": 0.01,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "I wanted to wish you a Happy New Year and I wanted to talk to you about some legal advice to do with when Gary and I split but in person. I'll make a trip to Ptbo for that. I hope everything is good with you babe and I love ya :)"
+    },
+    {
+      "answer": {
+        "p": 0.01,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "I wasn't well babe, i have swollen glands at my throat ... What did you end up doing ?"
+    },
+    {
+      "answer": {
+        "p": 0.99,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "I'd like to tell you my deepest darkest fantasies. Call me 09094646631 just 60p/min. To stop texts call 08712460324 (nat rate)"
+    },
+    {
+      "answer": {
+        "p": 0.01,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "I'll meet you in the lobby"
+    },
+    {
+      "answer": {
+        "p": 0.01,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "I'm freezing and craving ice. Fml"
+    },
+    {
+      "answer": {
+        "p": 0.01,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "I'm going 4 lunch now wif my family then aft dat i go str 2 orchard lor."
+    },
+    {
+      "answer": {
+        "p": 0.01,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "I'm going for bath will msg you next  &lt;#&gt;  min.."
+    },
+    {
+      "answer": {
+        "p": 0.01,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "I'm home. Doc gave me pain meds says everything is fine."
+    },
+    {
+      "answer": {
+        "p": 0.03,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "I'm in solihull, | do you want anything?"
+    },
+    {
+      "answer": {
+        "p": 0.01,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "I'm nt goin, got somethin on, unless they meetin 4 dinner lor... Haha, i wonder who will go tis time..."
+    },
+    {
+      "answer": {
+        "p": 0.03,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "I've been barred from all B and Q stores for life!?This twat in orange dungerees came up to me and asked if I wanted decking? So I got the first punch in!!"
+    },
+    {
+      "answer": {
+        "p": 0.02,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "I.ll get there tomorrow and send it to you"
+    },
+    {
+      "answer": {
+        "p": 0.01,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "IM GONNAMISSU SO MUCH!!I WOULD SAY IL SEND U A POSTCARD BUTTHERES ABOUTAS MUCH CHANCE OF MEREMEMBERIN ASTHERE IS OFSI NOT BREAKIN HIS CONTRACT!! LUV Yaxx"
+    },
+    {
+      "answer": {
+        "p": 0.06,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "If you are not coughing then its nothing"
+    },
+    {
+      "answer": {
+        "p": 0.02,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Im in inperialmusic listening2the weirdest track ever byleafcutter john-sounds like insects being molested&someone plumbing,remixed by evil men on acid!"
+    },
+    {
+      "answer": {
+        "p": 0.02,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "In the end she might still vomit but its okay. Not everything will come out."
+    },
+    {
+      "answer": {
+        "p": 0.02,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "In xam hall boy asked girl Tell me the starting term for dis answer I can den manage on my own After lot of hesitation n lookin around silently she said THE! intha ponnungale ipaditan;)"
+    },
+    {
+      "answer": {
+        "p": 0.12,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Is it your yahoo boys that bring in the perf? Or legal."
+    },
+    {
+      "answer": {
+        "p": 0.02,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Is there a reason we've not spoken this year? Anyways have a great week and all the best in your exam"
+    },
+    {
+      "answer": {
+        "p": 0.03,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "It took Mr owl 3 licks"
+    },
+    {
+      "answer": {
+        "p": 0.04,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "It vl bcum more difficult.."
+    },
+    {
+      "answer": {
+        "p": 0.06,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Its a site to simulate the test. It just gives you very tough questions to test your readiness."
+    },
+    {
+      "answer": {
+        "p": 0.03,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Its just the effect of irritation. Just ignore it"
+    },
+    {
+      "answer": {
+        "p": 0.97,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Jamster! To get your free wallpaper text HEART to 88888 now! T&C apply. 16 only. Need Help? Call 08701213186."
+    },
+    {
+      "answer": {
+        "p": 0.03,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "K give me a sec, breaking a  &lt;#&gt;  at cstore"
+    },
+    {
+      "answer": {
+        "p": 0.22,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "K ill drink.pa then what doing. I need srs model pls send it to my mail id pa."
+    },
+    {
+      "answer": {
+        "p": 0.04,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "K:)k.are you in college?"
+    },
+    {
+      "answer": {
+        "p": 0.02,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Kallis wont bat in 2nd innings."
+    },
+    {
+      "answer": {
+        "p": 0.01,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "LOL .. *grins* .. I'm not babe, but thanks for thinking of me!"
+    },
+    {
+      "answer": {
+        "p": 0.04,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Ladies first and genus second k ."
+    },
+    {
+      "answer": {
+        "p": 0.02,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Lmao ok I wont be needing u to do my hair anymore."
+    },
+    {
+      "answer": {
+        "p": 0.01,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Love that holiday Monday feeling even if I have to go to the dentists in an hour"
+    },
+    {
+      "answer": {
+        "p": 0.01,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Love you aathi..love u lot.."
+    },
+    {
+      "answer": {
+        "p": 0.04,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Ma head dey swell oh. Thanks for making my day"
+    },
+    {
+      "answer": {
+        "p": 0.02,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Maybe i could get book out tomo then return it immediately ..? Or something."
+    },
+    {
+      "answer": {
+        "p": 0.01,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Me too. Mark is taking forever to pick up my prescription and the pain is coming back."
+    },
+    {
+      "answer": {
+        "p": 0.03,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Me, i dont know again oh"
+    },
+    {
+      "answer": {
+        "p": 0.02,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "My battery is low babe"
+    },
+    {
+      "answer": {
+        "p": 0.01,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "My birthday is on feb  &lt;#&gt;  da. ."
+    },
+    {
+      "answer": {
+        "p": 0.01,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Nah im goin 2 the wrks with j wot bout u?"
+    },
+    {
+      "answer": {
+        "p": 0.97,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "New TEXTBUDDY Chat 2 horny guys in ur area 4 just 25p Free 2 receive Search postcode or at gaytextbuddy.com. TXT ONE name to 89693. 08715500022 rpl Stop 2 cnl"
+    },
+    {
+      "answer": {
+        "p": 0.03,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "New Theory: Argument wins d SITUATION, but loses the PERSON. So dont argue with ur friends just.. . . . kick them &amp; say, I'm always correct.!"
+    },
+    {
+      "answer": {
+        "p": 0.02,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "No plm i will come da. On the way."
+    },
+    {
+      "answer": {
+        "p": 0.05,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "No. Its not specialisation. Can work but its slave labor. Will look for it this month sha cos no shakara 4 beggar."
+    },
+    {
+      "answer": {
+        "p": 0.01,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Nope thats fine. I might have a nap tho! "
+    },
+    {
+      "answer": {
+        "p": 0.01,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Not yet chikku..going to room nw, i'm in bus.."
+    },
+    {
+      "answer": {
+        "p": 0.02,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "OK i'm waliking ard now... Do u wan me 2 buy anything go ur house?"
+    },
+    {
+      "answer": {
+        "p": 0.03,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Oh ho. Is this the first time u use these type of words"
+    },
+    {
+      "answer": {
+        "p": 0.06,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Ok can..."
+    },
+    {
+      "answer": {
+        "p": 0.01,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Ok i msg u b4 i leave my house."
+    },
+    {
+      "answer": {
+        "p": 0.01,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Ok lor but not too early. Me still having project meeting now."
+    },
+    {
+      "answer": {
+        "p": 0.01,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Ok lor... Or u wan me go look 4 u?"
+    },
+    {
+      "answer": {
+        "p": 0.01,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Okay but i thought you were the expert"
+    },
+    {
+      "answer": {
+        "p": 0.02,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Oops, I'll let you know when my roommate's done"
+    },
+    {
+      "answer": {
+        "p": 0.96,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "PRIVATE! Your 2003 Account Statement for shows 800 un-redeemed S. I. M. points. Call 08715203694 Identifier Code: 40533 Expires 31/10/04"
+    },
+    {
+      "answer": {
+        "p": 0.04,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "PS U no ur a grown up now right?"
+    },
+    {
+      "answer": {
+        "p": 0.29,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Pathaya enketa maraikara pa'"
+    },
+    {
+      "answer": {
+        "p": 0.02,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Piggy, r u awake? I bet u're still sleeping. I'm going 4 lunch now..."
+    },
+    {
+      "answer": {
+        "p": 0.02,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Remember all those whom i hurt during days of satanic imposter in me.need to pay a price,so be it.may destiny keep me going and as u said pray that i get the mind to get over the same."
+    },
+    {
+      "answer": {
+        "p": 0.98,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Reply with your name and address and YOU WILL RECEIVE BY POST a weeks completely free accommodation at various global locations www.phb1.com ph:08700435505150p"
+    },
+    {
+      "answer": {
+        "p": 0.03,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Shall i come to get pickle"
+    },
+    {
+      "answer": {
+        "p": 0.12,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "She is our sister.. She belongs 2 our family.. She is d hope of tomorrow.. Pray 4 her,who was fated 4 d Shoranur train incident. Lets hold our hands together &amp; fuelled by love &amp; concern prior 2 her grief &amp; pain. Pls join in dis chain &amp; pass it. STOP VIOLENCE AGAINST WOMEN."
+    },
+    {
+      "answer": {
+        "p": 0.02,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "She said,'' do u mind if I go into the bedroom for a minute ? '' ''OK'', I sed in a sexy mood. She came out 5 minuts latr wid a cake...n My Wife,"
+    },
+    {
+      "answer": {
+        "p": 0.02,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "She went to attend another two rounds today..but still did't reach home.."
+    },
+    {
+      "answer": {
+        "p": 0.02,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Sian... Aft meeting supervisor got work 2 do liao... U working now?"
+    },
+    {
+      "answer": {
+        "p": 0.05,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Sir, Waiting for your mail."
+    },
+    {
+      "answer": {
+        "p": 0.23,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Sir, hope your day is going smoothly. i really hoped i wont have to bother you about this. I have some bills that i can't settle this month. I am out of all extra cash. I know this is a challenging time for you also but i have to let you know."
+    },
+    {
+      "answer": {
+        "p": 0.01,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "So anyways, you can just go to your gym or whatever, my love *smiles* I hope your ok and having a good day babe ... I miss you so much already"
+    },
+    {
+      "answer": {
+        "p": 0.02,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "So why didnt you holla?"
+    },
+    {
+      "answer": {
+        "p": 0.98,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Someone U know has asked our dating service 2 contact you! Cant Guess who? CALL 09058091854 NOW all will be revealed. PO BOX385 M6 6WU"
+    },
+    {
+      "answer": {
+        "p": 0.12,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Sorry man my account's dry or I would, if you want we could trade back half or I could buy some shit with my credit card"
+    },
+    {
+      "answer": {
+        "p": 0.04,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Sorry pa, i dont knw who ru pa?"
+    },
+    {
+      "answer": {
+        "p": 0.02,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Sorry, I'll call later"
+    },
+    {
+      "answer": {
+        "p": 0.01,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Sorry, was in the bathroom, sup"
+    },
+    {
+      "answer": {
+        "p": 0.03,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Superb Thought- \"Be grateful that u dont have everything u want. That means u still have an opportunity to be happier tomorrow than u are today.\":-)"
+    },
+    {
+      "answer": {
+        "p": 0.01,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Sure, I'll see if I can come by in a bit"
+    },
+    {
+      "answer": {
+        "p": 0.97,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Thanks 4 your continued support Your question this week will enter u in2 our draw 4 £100 cash. Name the NEW US President? txt ans to 80082"
+    },
+    {
+      "answer": {
+        "p": 0.74,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Thanks for your ringtone order, ref number K718. Your mobile will be charged £4.50. Should your tone not arrive please call customer services on 09065069120"
+    },
+    {
+      "answer": {
+        "p": 0.04,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "That's cause your old. I live to be high."
+    },
+    {
+      "answer": {
+        "p": 0.03,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "The guy (kadeem) hasn't been selling since the break, I know one other guy but he's paranoid as fuck and doesn't like selling without me there and I can't be up there til late tonight"
+    },
+    {
+      "answer": {
+        "p": 0.04,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "The house is on the water with a dock, a boat rolled up with a newscaster who dabbles in jazz flute behind the wheel"
+    },
+    {
+      "answer": {
+        "p": 0.04,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "The sign of maturity is not when we start saying big things.. But actually it is, when we start understanding small things... *HAVE A NICE EVENING* BSLVYL"
+    },
+    {
+      "answer": {
+        "p": 0.02,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "The world is running and i am still.maybe all are feeling the same,so be it.or i have to admit,i am mad.then where is the correction?or let me call this is life.and keep running with the world,may be u r also running.lets run."
+    },
+    {
+      "answer": {
+        "p": 0.04,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "There is a first time for everything :)"
+    },
+    {
+      "answer": {
+        "p": 0.13,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "This pay is  &lt;DECIMAL&gt;  lakhs:)"
+    },
+    {
+      "answer": {
+        "p": 0.01,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Thk some of em find wtc too far... Weiyi not goin... E rest i dunno yet... R ur goin 4 dinner den i might b able to join..."
+    },
+    {
+      "answer": {
+        "p": 0.97,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Todays Voda numbers ending 1225 are selected to receive a £50award. If you have a match please call 08712300220 quoting claim code 3100 standard rates app "
+    },
+    {
+      "answer": {
+        "p": 0.98,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "U have a Secret Admirer who is looking 2 make contact with U-find out who they R*reveal who thinks UR so special-call on 09065171142-stopsms-08718727870150ppm"
+    },
+    {
+      "answer": {
+        "p": 0.99,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "URGENT! We are trying to contact U. Todays draw shows that you have won a £800 prize GUARANTEED. Call 09050001295 from land line. Claim A21. Valid 12hrs only"
+    },
+    {
+      "answer": {
+        "p": 0.02,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Uncle Abbey! Happy New Year. Abiola"
+    },
+    {
+      "answer": {
+        "p": 0.99,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Urgent! Please call 0906346330. Your ABTA complimentary 4* Spanish Holiday or £10,000 cash await collection SAE T&Cs BOX 47 PO19 2EZ 150ppm 18+"
+    },
+    {
+      "answer": {
+        "p": 0.04,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Wah lucky man... Then can save money... Hee..."
+    },
+    {
+      "answer": {
+        "p": 0.01,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Wat makes some people dearer is not just de happiness dat u feel when u meet them but de pain u feel when u miss dem!!!"
+    },
+    {
+      "answer": {
+        "p": 0.03,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Watch lor. I saw a few swatch one i thk quite ok. Ard 116 but i need 2nd opinion leh..."
+    },
+    {
+      "answer": {
+        "p": 0.02,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Watching tv lor... Y she so funny we bluff her 4 wat. Izzit because she thk it's impossible between us?"
+    },
+    {
+      "answer": {
+        "p": 0.01,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "We stopped to get ice cream and will go back after"
+    },
+    {
+      "answer": {
+        "p": 0.02,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Well there's a pattern emerging of my friends telling me to drive up and come smoke with them and then telling me that I'm a weed fiend/make them smoke too much/impede their doing other things so you see how I'm hesitant"
+    },
+    {
+      "answer": {
+        "p": 0.02,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Well, I have to leave for my class babe ... You never came back to me ... :-( ... Hope you have a nice sleep, my love"
+    },
+    {
+      "answer": {
+        "p": 0.02,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Went fast asleep dear.take care."
+    },
+    {
+      "answer": {
+        "p": 0.02,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "What Today-sunday..sunday is holiday..so no work.."
+    },
+    {
+      "answer": {
+        "p": 0.05,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "What is your record for one night? :)"
+    },
+    {
+      "answer": {
+        "p": 0.03,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "What type of stuff do you sing?"
+    },
+    {
+      "answer": {
+        "p": 0.01,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "When are you going to ride your bike?"
+    },
+    {
+      "answer": {
+        "p": 0.02,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Where did u go? My phone is gonna die you have to stay in here"
+    },
+    {
+      "answer": {
+        "p": 0.06,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Where's mummy's boy ? Is he being good or bad ? Is he being positive or negative ? Why is mummy being made to wait? Hmmmm?"
+    },
+    {
+      "answer": {
+        "p": 0.01,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Wow. I never realized that you were so embarassed by your accomodations. I thought you liked it, since i was doing the best i could and you always seemed so happy about \"the cave\". I'm sorry I didn't and don't have more to give. I'm sorry i offered. I'm sorry your room was so embarassing."
+    },
+    {
+      "answer": {
+        "p": 0.02,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Ya:)going for restaurant.."
+    },
+    {
+      "answer": {
+        "p": 0.02,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Yeah right! I'll bring my tape measure fri!"
+    },
+    {
+      "answer": {
+        "p": 0.02,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Yeah sure, give me a couple minutes to track down my wallet"
+    },
+    {
+      "answer": {
+        "p": 0.04,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Yes baby! We can study all the positions of the kama sutra ;)"
+    },
+    {
+      "answer": {
+        "p": 0.02,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Yo you guys ever figure out how much we need for alcohol? Jay and I are trying to figure out how much we can safely spend on weed"
+    },
+    {
+      "answer": {
+        "p": 0.02,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "You made my day. Do have a great day too."
+    },
+    {
+      "answer": {
+        "p": 0.12,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "You will be in the place of that man"
+    },
+    {
+      "answer": {
+        "p": 0.16,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "\"ER, ENJOYIN INDIANS AT THE MO..yeP. SaLL gOoD HehE ;> hows bout u shexy? Pete Xx\""
+    },
+    {
+      "answer": {
+        "p": 0.15,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "\"NONE!NOWHERE IKNO DOESDISCOUNT!SHITINNIT\""
+    },
+    {
+      "answer": {
+        "p": 0.02,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "\"OH FUCK. JUSWOKE UP IN A BED ON A BOATIN THE DOCKS. SLEPT WID 25 YEAR OLD. SPINOUT! GIV U DA GOSSIP L8R. XXX\""
+    },
+    {
+      "answer": {
+        "p": 0.03,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "do u think that any girl will propose u today by seing ur bloody funky shit fucking face...............asssssholeeee................"
+    },
+    {
+      "answer": {
+        "p": 0.01,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "i dnt wnt to tlk wid u"
+    },
+    {
+      "answer": {
+        "p": 0.02,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "is your hamster dead? Hey so tmr i meet you at 1pm orchard mrt? "
+    },
+    {
+      "answer": {
+        "p": 0.01,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "no, i *didn't* mean to post it. I wrote it, and like so many other times i've ritten stuff to you, i let it sit there. it WAS what i was feeling at the time. I was angry. Before i left, i hit send, then stop. It wasn't there. I checked on my phone when i got to my car. It wasn't there. You said you didn't sleep, you were bored. So why wouldn't THAT be the time to clean, fold laundry, etc.? At least make the bed?"
+    },
+    {
+      "answer": {
+        "p": 0.01,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "sorry, no, have got few things to do. may be in pub later."
+    },
+    {
+      "answer": {
+        "p": 0.01,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "that would be good … I'll phone you tomo lunchtime, shall I, to organise something?"
+    },
+    {
+      "answer": {
+        "p": 0.01,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "when you and derek done with class?"
+    },
+    {
+      "answer": {
+        "p": 0.01,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "Ü eatin later but i'm eatin wif my frens now lei... Ü going home first? "
+    },
+    {
+      "answer": {
+        "p": 0.01,
+        "type": "noul"
+      },
+      "model": "jev-1.13.0",
+      "question": {
+        "instructions": "this message is spam: unsolicited marketing, a prize or competition claim, or an attempt to get the reader to call a premium number or send money",
+        "type": "noul"
+      },
+      "state": "… we r stayin here an extra week, back next wed. How did we do in the rugby this weekend? Hi to and and , c u soon \""
+    }
+  ],
+  "version": 1
+}

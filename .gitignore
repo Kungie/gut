@@ -32,3 +32,4 @@ decisions.jsonl
 .idea/
 .vscode/
 .DS_Store
+benchmarks/.data/
