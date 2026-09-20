@@ -28,9 +28,9 @@ dependencies = [
 jev = ["typesafe-sdk>=0.7"]
 
 [project.urls]
-Homepage = "https://github.com/OWNER/gut"
-Repository = "https://github.com/OWNER/gut"
-Issues = "https://github.com/OWNER/gut/issues"
+Homepage = "https://github.com/Kungie/gut"
+Repository = "https://github.com/Kungie/gut"
+Issues = "https://github.com/Kungie/gut/issues"
 
 [project.entry-points.pytest11]
 gut = "gut.pytest_plugin"
