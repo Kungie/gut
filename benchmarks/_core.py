@@ -210,25 +210,33 @@ class RunStats:
         return ordered[index]
 
 
-def estimate_tokens(examples: Sequence[Example], spec: QuestionSpec) -> int:
+def estimate_tokens(
+    examples: Sequence[Example], spec: QuestionSpec, *, text_limit: int = 4000
+) -> int:
     """Roughly how many input tokens asking every example would cost.
 
     A character count over four, the same crude estimate `gut` uses for splitting batches. It only
     has to be good enough to refuse a run that would cost real money.
     """
     question = len(canonical_json(spec.canonical()))
-    return sum((len(example.truncated()) + question) // CHARS_PER_TOKEN for example in examples)
+    return sum(
+        (len(example.truncated(text_limit)) + question) // CHARS_PER_TOKEN for example in examples
+    )
 
 
 def check_budget(
-    examples: Sequence[Example], spec: QuestionSpec, *, budget: float = BUDGET_USD
+    examples: Sequence[Example],
+    spec: QuestionSpec,
+    *,
+    budget: float = BUDGET_USD,
+    text_limit: int = 4000,
 ) -> float:
     """Print what a run will cost, and refuse if it is more than expected.
 
     Raises:
         RuntimeError: The estimate exceeds the budget.
     """
-    tokens = estimate_tokens(examples, spec)
+    tokens = estimate_tokens(examples, spec, text_limit=text_limit)
     cost = tokens / 1_000_000 * PRICE_PER_MTOK
     print(f"  {len(examples)} examples, ~{tokens:,} input tokens, ~${cost:.4f}")
     if cost > budget:
@@ -245,6 +253,7 @@ def ask_all(
     backend: Backend,
     *,
     workers: int = WORKERS,
+    text_limit: int = 4000,
 ) -> tuple[list[Asked], RunStats]:
     """Ask one question about every example, concurrently, preserving order.
 
@@ -257,7 +266,7 @@ def ask_all(
     def ask_one(index: int) -> None:
         example = examples[index]
         started = time.perf_counter()
-        response = backend.ask(example.truncated(), {"q": spec})
+        response = backend.ask(example.truncated(text_limit), {"q": spec})
         latency = (time.perf_counter() - started) * 1000.0
         results[index] = Asked(example=example, answer=response.answers["q"], latency_ms=latency)
 
@@ -266,7 +275,7 @@ def ask_all(
         list(pool.map(ask_one, range(len(examples))))
     stats.wall_seconds = time.perf_counter() - started
     stats.requests = len(examples)
-    stats.input_tokens_estimate = estimate_tokens(examples, spec)
+    stats.input_tokens_estimate = estimate_tokens(examples, spec, text_limit=text_limit)
     stats.latencies_ms = [asked.latency_ms for asked in results if asked is not None]
 
     return [asked for asked in results if asked is not None], stats

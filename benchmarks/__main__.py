@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 
 from benchmarks._datasets import benchmarks
-from benchmarks._run import probe, render, run, save
+from benchmarks._run import measure_batching, probe, render, render_consistency, run, save
 
 RESULTS = Path(__file__).parent / "results.json"
 
@@ -56,6 +56,13 @@ def main(argv: list[str] | None = None) -> int:
             print(f"\n{name}: failed — {type(error).__name__}: {error}", file=sys.stderr)
             return 1
         print(render(results[-1]))
+
+    if len(results) > 1:
+        print(render_consistency(results))
+
+    if {"nlbse-bug", "nlbse-kind"} <= set(chosen):
+        median = next(r.stats.percentile(0.5) for r in results if r.benchmark.name == "nlbse-bug")
+        print(measure_batching(median).render())
 
     save(results, arguments.json)
     total = sum(result.stats.cost_usd for result in results)

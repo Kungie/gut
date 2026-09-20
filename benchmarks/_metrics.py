@@ -25,7 +25,6 @@ from dataclasses import dataclass
 from typing import Final
 
 from benchmarks._core import Asked
-
 from gut._backends.base import ChoiceAnswer, NoulAnswer
 from gut._calibration import Calibration, calibrate
 from gut._calibrators import Calibrator, Identity
@@ -193,10 +192,10 @@ def sweep_choice(
             chosen = _chosen(item)
             if floor is not None and score < floor:
                 continue
-            if abstain_label is not None and chosen == abstain_label:
+            if abstain_label is not None and _same(chosen, abstain_label):
                 continue
             automatic += 1
-            if chosen != item.example.label:
+            if not _same(chosen, item.example.label):
                 wrong += 1
         rows.append(Row(label=label, total=len(asked), automatic=automatic, wrong=wrong))
     return rows
@@ -208,9 +207,19 @@ def _chosen(item: Asked) -> str:
     return answer.choice
 
 
+def _same(left: str, right: str) -> bool:
+    """Compare a chosen enum member name against a dataset label.
+
+    `classify` returns the Enum *member name*, which is conventionally upper case, while these
+    datasets label in lower case. Comparing them literally scored every classification wrong, which
+    is how this was found -- so the comparison is explicit rather than incidental.
+    """
+    return left.casefold() == right.casefold()
+
+
 def forced_choice(asked: Sequence[Asked]) -> Row:
     """The baseline: take the top choice every time, as a classifier without an abstain option."""
-    wrong = sum(1 for item in asked if _chosen(item) != item.example.label)
+    wrong = sum(1 for item in asked if not _same(_chosen(item), item.example.label))
     return Row(label="always answer", total=len(asked), automatic=len(asked), wrong=wrong)
 
 
@@ -260,12 +269,12 @@ def out_of_scope(
     counts = dict.fromkeys(("oos", "other", "unsure", "confident", "in_scope", "in_scope_lost"), 0)
     for score, item in zip(scores, asked, strict=True):
         chosen = _chosen(item)
-        declined = (floor is not None and score < floor) or chosen == abstain_label
-        if item.example.label == oos_label:
+        declined = (floor is not None and score < floor) or _same(chosen, abstain_label)
+        if _same(item.example.label, oos_label):
             counts["oos"] += 1
             if floor is not None and score < floor:
                 counts["unsure"] += 1
-            elif chosen == abstain_label:
+            elif _same(chosen, abstain_label):
                 counts["other"] += 1
             else:
                 counts["confident"] += 1
@@ -300,7 +309,7 @@ def pairs_binary(asked: Sequence[Asked], positive: str) -> list[tuple[float, boo
 
 def pairs_choice(asked: Sequence[Asked]) -> list[tuple[float, bool]]:
     """`(confidence, was the pick right)` for a classification."""
-    return [(_confidence(item), _chosen(item) == item.example.label) for item in asked]
+    return [(_confidence(item), _same(_chosen(item), item.example.label)) for item in asked]
 
 
 def measure(

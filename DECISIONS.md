@@ -764,6 +764,52 @@ computed afterwards from those probabilities. Ten postures therefore cost what o
 importantly every posture is scored on *identical* model answers, which is the only thing that makes
 comparing them meaningful.
 
+## D33 — The question wording, and the one time it was revised
+
+**Date:** 2026-09-20
+
+Wording was written against the dev samples and frozen before any test set was scored. It was
+revised **once**, on dev evidence, and this is the record of it.
+
+The first attempt at the two NLBSE questions asked what the issue *was about*: "this issue reports
+that something is broken or behaving incorrectly". On dev that agreed with the label 63.2% of the
+time, and the failures said why. GitHub issue templates put the category in the body — a feature
+request whose form reads `Type: <b>Bug</b>`, a question that pastes a stack trace. What an issue
+*contains* and what it is *for* are different things, and the question was asking about the wrong
+one.
+
+Rewritten around the author's purpose — "the author opened this issue to report a defect: they are
+saying the software does something wrong and should be fixed, rather than asking for a new feature
+or for help" — and the input truncated from 4,000 to 1,500 characters, since Jev's documented
+weakness is that irrelevant state acts as a distractor and a GitHub issue is mostly boilerplate.
+
+| dev | before | after |
+|---|---|---|
+| nlbse-bug agreement | 63.2% | **81.6%** |
+| nlbse-bug Brier | 0.294 | **0.142** |
+| nlbse-kind agreement | 70.6% | **72.6%** |
+| nlbse-kind Brier | 0.217 | **0.187** |
+
+CLINC (72.6% overall, 92% in-scope) and SMS (99.5%) were left alone. No wording was touched after a
+test set was scored.
+
+## D34 — CLINC's out-of-scope set overlaps its in-scope intents
+
+**Date:** 2026-09-20
+
+Worth recording because it caps what any system can score, and reporting an out-of-scope number
+without it would be misleading.
+
+Of the four out-of-scope dev queries answered confidently, two are near-duplicates of in-scope
+intents. `"give me the weather forecast for today"` is labelled out-of-scope, while `"give me the
+7 day forecast"` and `"what is the weather going to be like today"` are labelled `weather`.
+Likewise `"how many calories does jumping up and down burn"` against the `calories` intent.
+
+Nothing is wrong with the model's answer there, and nothing is wrong with `gut`. The dataset's
+out-of-scope set was collected separately from its in-scope one and they touch. So the measured
+out-of-scope recall is a floor, not a ceiling, and the two-or-so percent it costs should be read as
+label noise rather than as a failure to abstain.
+
 ## Next steps, noted and not started
 
 - A native `async` backend, so batched judgments need no worker thread, and an `async` `judge()`.
