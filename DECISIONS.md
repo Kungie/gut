@@ -304,6 +304,29 @@ reasons other than tokens, keep it out of a decorated function.
 Async functions are returned unchanged. The fetch is blocking, and quietly blocking an event loop is
 worse than not batching.
 
+## D15 — `judge()` hands back a handle typed as the decision it will become
+
+**Date:** 2026-09-20
+
+`j.likely(...)` returns a `Lazy` proxy but is annotated as returning `Decision`. The alternative —
+annotating it honestly as `Lazy[Decision]` and making callers write `handle.decision.p` — would make
+the common path worse for a distinction that does not matter at the call site: the handle is truthy,
+matchable, comparable and readable exactly like the decision, because every one of those operations
+resolves it first.
+
+The cost is contained and worth naming. `isinstance(handle, Decision)` is `False`, and the two
+members that belong to the handle rather than the decision — `.decision` and `.pending` — are
+reachable at runtime but invisible to a type checker until you narrow with
+`isinstance(handle, Lazy)`. Nothing in the documented API needs them.
+
+`repr()` is the one operation that deliberately does **not** resolve. A handle printed in a debugger
+or a log line must not issue a billable request as a side effect, so it reports whether it is pending
+instead.
+
+Leaving the `with` block resolves nothing either. Forcing resolution on exit would bill for questions
+nobody read, which is the opposite of what an explicit API should do. The block only stops further
+registration; existing handles still resolve afterwards.
+
 ---
 
 ## Implementation order
