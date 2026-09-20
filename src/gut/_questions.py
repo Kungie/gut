@@ -31,8 +31,18 @@ def canonical_json(value: object) -> str:
 
     Keys are sorted and whitespace removed, so cache keys and decision-site ids stay stable across
     runs, dict ordering and Python versions.
+
+    Raises:
+        QuestionError: `value` contains something JSON cannot hold. Coercing it instead -- with
+            `default=str`, say -- would let two different subjects hash identically and share a
+            cached answer, and the backend would reject the original anyway.
     """
-    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    try:
+        return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    except (TypeError, ValueError) as error:
+        raise QuestionError(
+            f"A subject must be JSON-compatible -- text, numbers, lists and dicts of those. {error}"
+        ) from error
 
 
 def _fingerprint(payload: object) -> str:

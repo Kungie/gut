@@ -12,13 +12,14 @@ import warnings
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from enum import Enum
-from typing import TypeVar
+from typing import Any, TypeVar
 
 from gut._backends.base import Answer, Backend, ChoiceAnswer, NoulAnswer, ScoreAnswer
 from gut._cache import CacheEntry, cache_key
-from gut._config import current_backend, current_cache
+from gut._config import current_backend, current_cache, current_sink, recording
 from gut._decision import ChoiceDecision, Decision, DecisionSource, ScoreDecision
 from gut._errors import BackendError, QuestionError
+from gut._log import DecisionRecord, _now, emit_decision, policy_to_json, site_to_json
 from gut._outcomes import Outcome
 from gut._questions import ChoiceSpec, NoulSpec, QuestionSpec, ScoreSpec, State
 from gut._rule import Policy, policy
@@ -101,12 +102,36 @@ def _min_confidence_outcome(confidence: float, min_confidence: float | None) -> 
     return Outcome.YES
 
 
+def _record(
+    decision: Decision | ChoiceDecision[Any] | ScoreDecision,
+    spec: QuestionSpec,
+    site: CallSite,
+    **extra: Any,
+) -> None:
+    """Write a decision to the configured sink, if anything is listening."""
+    if not recording():
+        return
+    record = DecisionRecord(
+        id=decision.id,
+        kind=str(spec.canonical()["type"]),  # type: ignore[arg-type]
+        timestamp=_now(),
+        outcome=decision.outcome.value,
+        model=decision.model,
+        source=decision.source,
+        question=spec.canonical(),
+        site=site_to_json(site),
+        latency_ms=decision.latency_ms,
+        **extra,
+    )
+    emit_decision(record, current_sink())
+
+
 def build_decision(
     spec: NoulSpec, resolved: _Resolved, site: CallSite, *, rule: Policy
 ) -> Decision:
     """Assemble a yes/no decision from a raw answer."""
     noul = _expect(resolved.answer, NoulAnswer, spec)
-    return Decision(
+    decision = Decision(
         outcome=rule.decide(noul.p),
         id=decision_id(spec.fingerprint, site),
         model=resolved.model,
@@ -115,6 +140,8 @@ def build_decision(
         p=noul.p,
         policy=rule,
     )
+    _record(decision, spec, site, p=noul.p, costs=policy_to_json(rule))
+    return decision
 
 
 def build_choice_decision(
@@ -133,7 +160,7 @@ def build_choice_decision(
             f"Backend chose {choice.choice!r}, which is not a member of {enum_class.__name__}."
         )
     outcome = _min_confidence_outcome(choice.confidence, min_confidence)
-    return ChoiceDecision(
+    decision = ChoiceDecision(
         outcome=outcome,
         id=decision_id(spec.fingerprint, site),
         model=resolved.model,
@@ -146,6 +173,16 @@ def build_choice_decision(
         confidence=choice.confidence,
         min_confidence=min_confidence,
     )
+    _record(
+        decision,
+        spec,
+        site,
+        value=decision.value.name if outcome is Outcome.YES else None,
+        confidence=choice.confidence,
+        probabilities=dict(choice.probabilities),
+        min_confidence=min_confidence,
+    )
+    return decision
 
 
 def build_score_decision(
@@ -153,7 +190,7 @@ def build_score_decision(
 ) -> ScoreDecision:
     """Assemble an ordinal decision from a raw answer."""
     score = _expect(resolved.answer, ScoreAnswer, spec)
-    return ScoreDecision(
+    decision = ScoreDecision(
         outcome=_min_confidence_outcome(score.confidence, min_confidence),
         id=decision_id(spec.fingerprint, site),
         model=resolved.model,
@@ -165,6 +202,16 @@ def build_score_decision(
         levels=tuple(spec.criteria),
         min_confidence=min_confidence,
     )
+    _record(
+        decision,
+        spec,
+        site,
+        score=score.score,
+        confidence=score.confidence,
+        probabilities={str(level): value for level, value in score.probabilities.items()},
+        min_confidence=min_confidence,
+    )
+    return decision
 
 
 def likely(
