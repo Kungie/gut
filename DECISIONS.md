@@ -463,6 +463,80 @@ answer", not "only act when 80% likely to be correct".
 Mixing a posture with `min_confidence` is an error, on the same reasoning as mixing it with costs:
 one of them would have to win silently.
 
+## D22 — Thirty examples before a calibration number means anything
+
+**Date:** 2026-09-20
+
+`gut eval` reports Brier score and expected calibration error on whatever you give it, and both are
+meaningless on ten examples: one flipped label moves ECE by a tenth. Below `MIN_EXAMPLES = 30` the
+report says so in the output and `Calibration.reliable` is `False`, but the numbers are still
+printed — hiding them would just move the guessing somewhere else.
+
+Thirty is a convention, not a derivation. With the default five buckets it is roughly the point
+where a bucket can hold enough examples for its observed frequency to be more than one or two
+tickets. Larger would be defensible; the important part is that the threshold is stated and visible
+in the output rather than left to the reader.
+
+Pass and fail still hang on `min_accuracy` alone. A file written before anyone measured calibration
+must not start failing because the measurement now exists, so `max_ece` is an opt-in field.
+
+## D23 — What the first real calibration run found
+
+**Date:** 2026-09-20
+
+Five predicates built from the 101-ticket dataset, recorded against `jev-1.13.0`, replayed offline
+in 0.63s. This is the measurement the whole cost rule rests on, so it is recorded here rather than
+summarised away.
+
+| predicate | kind | accuracy | Brier | ECE | |
+|---|---|---|---|---|---|
+| refund_request | noul | 97% | 0.028 | 0.049 | pass |
+| cancel_threat | noul | 96% | 0.029 | 0.100 | pass |
+| owning_team | choice | 84% | 0.110 | 0.037 | fail (accuracy) |
+| bug_report | noul | 83% | 0.126 | 0.156 | fail |
+| urgency | score | 74% | 0.255 | 0.248 | fail |
+
+Three findings, in order of how much they matter.
+
+**`rate` confidence is not usable as a gate on this task.** A Brier score of `0.255` is worse than
+answering `0.5` to everything, and the reliability table is close to inverted:
+
+```
+p 0.2-0.4   n=18   said 0.31   happened 0.89
+p 0.4-0.6   n=24   said 0.51   happened 0.79
+p 0.6-0.8   n=28   said 0.70   happened 0.46
+p 0.8-1.0   n=31   said 0.90   happened 0.87
+```
+
+The bucket where the model was *least* sure was its most accurate, and the `0.6-0.8` bucket was its
+worst. A `min_confidence` floor — which is what `stakes` maps to for `rate` (D21) — would therefore
+route away the answers most likely to be right. **On this task, `stakes` on `rate` is worse than
+useless.** The mechanism is not broken; the assumption that a score's confidence tracks correctness
+does not hold here. It is documented as something to measure, not something to trust, and this is
+the measurement.
+
+**`classify` confidence holds up.** `owning_team` has the lowest ECE of the five (`0.037`) despite
+only 84% accuracy: the model knows when it is guessing. So the same `stakes` → `min_confidence`
+mapping is sound for `classify` on this data and unsound for `rate`, which is exactly why the
+answer has to be measured per task rather than assumed per primitive.
+
+**Noul probabilities are good but not centred.** `cancel_threat` is under-confident in the middle
+(said `0.28`, happened `0.67`; said `0.52`, happened `1.00`) while `bug_report` is over-confident at
+the top (said `0.92`, happened `0.75`). Both rank well; the numbers are stretched. For the cost
+rule this means a preset band drawn at `0.25–0.75` does not sit where you would expect on either
+distribution, and the honest fix is to measure and adjust rather than to trust the defaults.
+
+Fitting calibrators to correct any of this is deliberately out of scope. Measuring it is the
+prerequisite, and it now exists.
+
+## Next steps, noted and not started
+
+- `gut calibrate` — fit and apply a calibrator from resolved outcomes and eval runs. D23 is the
+  argument for it.
+- A written specification separate from the README.
+- Agent skills, so a coding agent can use `gut` without reading the whole README.
+- `async` support in `@semantic`, which today declines rather than blocking an event loop.
+
 ---
 
 ## Implementation order
