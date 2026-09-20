@@ -43,8 +43,6 @@ queue
 
 automatic decisions
   wrong                                 0  0% of automatic
-    churn risk missed                   0  at 20 each
-    escalated needlessly                0  at 2 each
 
 cost
   total                                61  on after.py's scale
@@ -52,12 +50,25 @@ cost
 model
   requests                            101  1.0 per ticket
   judgments                           505  5.0 per request
-  wall clock                       38.90s  385 ms per ticket
+  wall clock                       38.37s  380 ms per ticket
+
+churn detection
+  precision                          100%  of automatic escalations
+  recall                             100%  of threats it decided itself
+  reached a person at all           15/15  escalated or reviewed
+
+calibration
+  Brier score                       0.029  0 is perfect, 0.25 is a coin flip
+  calibration error                 0.100  gap between claimed and observed
+    p 0.0-0.2   n=85   said 0.07   happened 0.00
+    p 0.2-0.4   n=3    said 0.28   happened 0.67
+    p 0.4-0.6   n=6    said 0.52   happened 1.00
+    p 0.8-1.0   n=7    said 0.95   happened 1.00
 
 the ambiguous ones
-  marked hard                          26  26% of the dataset
-    sent to a human                    22  85% of them
-    wrong automatically                 0
+  marked hard                          26
+  sent to a human                      21  81% of them
+  wrong automatically                   0
 
 same answers, before.py's rule
   a hard threshold of 0.7, and no third branch
@@ -66,6 +77,8 @@ same answers, before.py's rule
   total cost                          160  vs 61
   requests                            505  vs 101, one per judgment
 ```
+
+Four things in there are worth more than the rest.
 
 Three things in there are worth more than the rest.
 
@@ -76,6 +89,14 @@ uncertainty has nowhere to go and becomes a confident guess.
 **505 judgments in 101 requests.** One per ticket, five judgments each. `before.py` cannot do that
 without restructuring the function, because nothing in it knows the five questions are about the
 same thing.
+
+**The model is under-confident in the middle of its range, on this data.** At the extremes it is
+close to perfect: `0.07` happened 0% of the time, `0.95` happened 100%. But every ticket it rated
+around `0.52` turned out to be a genuine threat, and two of the three it rated `0.28`. Those buckets
+hold six and three tickets, so treat it as a hint rather than a result — the sample is far too small
+to correct against. It is still exactly the hint the cost rule depends on, and completely invisible
+unless something measures it. That is what the decision log and `resolve()` are for, and why a
+calibration table is in this report rather than on a roadmap.
 
 **The same answers under a hard `0.7` miss eight churn risks.** Not because the model was wrong —
 it is the same model and the same probabilities — but because `0.7` encodes a claim nobody checked:

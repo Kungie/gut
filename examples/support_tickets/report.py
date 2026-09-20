@@ -37,6 +37,9 @@ import gut
 BEFORE_THRESHOLD = 0.7
 """The number `before.py` hard-codes."""
 
+RELIABILITY_BINS = 5
+"""How many probability buckets the calibration table uses."""
+
 
 @dataclass
 class Outcome:
@@ -134,6 +137,54 @@ def _line(label: str, value: object, note: str = "") -> str:
     return f"  {label:<28} {value!s:>10}  {note}"
 
 
+def _ratio(numerator: int, denominator: int) -> str:
+    """A percentage, or a dash when there is nothing to divide by."""
+    return f"{numerator / denominator:.0%}" if denominator else "-"
+
+
+def brier_score(outcomes: list[Outcome]) -> float:
+    """Mean squared error of the probabilities against what actually happened.
+
+    Zero is perfect. It rewards being both right *and* confident, so a model that hedges at 0.5 on
+    everything scores 0.25 however well it ranks.
+    """
+    return statistics.fmean((o.churn_p - float(o.truth)) ** 2 for o in outcomes)
+
+
+def reliability(outcomes: list[Outcome]) -> list[tuple[str, int, float, float]]:
+    """Predicted probability against observed frequency, bucketed.
+
+    This is the question the cost rule quietly depends on: when the model says 0.9, does it happen
+    nine times out of ten? Only non-empty buckets come back.
+    """
+    table: list[tuple[str, int, float, float]] = []
+    for index in range(RELIABILITY_BINS):
+        low = index / RELIABILITY_BINS
+        high = (index + 1) / RELIABILITY_BINS
+        last = index == RELIABILITY_BINS - 1
+        bucket = [o for o in outcomes if low <= o.churn_p < high or (last and o.churn_p == 1.0)]
+        if not bucket:
+            continue
+        table.append(
+            (
+                f"{low:.1f}-{high:.1f}",
+                len(bucket),
+                statistics.fmean(o.churn_p for o in bucket),
+                statistics.fmean(float(o.truth) for o in bucket),
+            )
+        )
+    return table
+
+
+def calibration_error(outcomes: list[Outcome]) -> float:
+    """Expected calibration error: the size-weighted gap between predicted and observed."""
+    total = len(outcomes)
+    return sum(
+        count / total * abs(predicted - observed)
+        for _, count, predicted, observed in reliability(outcomes)
+    )
+
+
 def main() -> None:
     """Print the report."""
     parser = argparse.ArgumentParser(description=__doc__)
@@ -171,6 +222,41 @@ def main() -> None:
     print(_line("requests", calls, f"{calls / total:.1f} per ticket"))
     print(_line("judgments", questions, f"{questions / max(calls, 1):.1f} per request"))
     print(_line("wall clock", f"{elapsed:.2f}s", f"{elapsed / total * 1000:.0f} ms per ticket"))
+
+    true_positives = sum(1 for o in automatic if o.escalated and o.truth)
+    false_positives = sum(1 for o in automatic if o.escalated and not o.truth)
+    false_negatives = sum(1 for o in automatic if not o.escalated and o.truth)
+    threats = sum(1 for o in outcomes if o.truth)
+    reached_someone = sum(1 for o in outcomes if o.truth and (o.escalated or o.to_human))
+
+    print("\nchurn detection")
+    print(
+        _line(
+            "precision",
+            _ratio(true_positives, true_positives + false_positives),
+            "of automatic escalations",
+        )
+    )
+    print(
+        _line(
+            "recall",
+            _ratio(true_positives, true_positives + false_negatives),
+            "of threats it decided itself",
+        )
+    )
+    print(_line("reached a person at all", f"{reached_someone}/{threats}", "escalated or reviewed"))
+
+    print("\ncalibration")
+    print(_line("Brier score", f"{brier_score(outcomes):.3f}", "0 is perfect, 0.25 is a coin flip"))
+    print(
+        _line(
+            "calibration error",
+            f"{calibration_error(outcomes):.3f}",
+            "gap between claimed and observed",
+        )
+    )
+    for label, count, predicted, observed in reliability(outcomes):
+        print(f"    p {label}   n={count:<4} said {predicted:.2f}   happened {observed:.2f}")
 
     print("\nside judgments")
     team_right = sum(1 for o in outcomes if o.team == o.team_truth)

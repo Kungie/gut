@@ -21,6 +21,10 @@ into a test suite that passes on someone's laptop, fails in CI, and bills you ei
 
 Cassettes store the state, the question and the answer in full rather than hashes, so a reviewer can
 read a diff and see what changed about the model's behaviour.
+
+**That means a cassette contains whatever you asked about, verbatim.** Record against real customer
+tickets and commit the file, and you have committed customer text to your repository. Record against
+fixtures you are happy to publish, or keep the cassette out of version control and regenerate it.
 """
 
 from __future__ import annotations
