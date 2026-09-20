@@ -351,6 +351,37 @@ for this release, but it is impossible to build retroactively: a decision that w
 cannot be checked against an outcome. Shipping the data path first is the difference between
 answering "is this calibrated on my data?" from existing logs and answering it six months late.
 
+## D17 — Cassettes key per question, and a miss is an error
+
+**Date:** 2026-09-20
+
+Two choices about record/replay, both about what a fixture is for.
+
+**Entries are keyed by state and question, not by the request they travelled in.** The obvious
+implementation keys a whole batch, which means adding `@semantic` — or changing which questions get
+grouped — silently invalidates every recording. Keying per question makes a cassette survive changes
+to how the calls are batched, which is exactly the refactor most likely to happen after the
+recording exists.
+
+**Replay never falls back to the network.** An unrecorded question raises and names itself. Quietly
+making the call instead would mean a suite that passes on the author's laptop, fails in CI where
+there is no key, and bills the account in between — a failure mode that is hard to notice and easy
+to blame on something else.
+
+Cassettes store the state, the question and the answer in full rather than hashes. They are test
+fixtures meant to be committed and reviewed: a diff should show *what the model's behaviour changed
+to*, which a file of hashes cannot.
+
+## D18 — `min_accuracy` defaults to 1.0
+
+**Date:** 2026-09-20
+
+Judgment tasks rarely justify demanding every example, and the handoff's own illustration uses `0.9`.
+The default is `1.0` anyway, because the two failure modes are not symmetric: a bar that is too high
+fails loudly on the first run and gets lowered deliberately, while a bar that is too low silently
+accepts a predicate that was already wrong about a case you wrote down. Lowering it should be
+something you decided.
+
 ---
 
 ## Implementation order

@@ -24,17 +24,21 @@ from gut._backends import (
     deterministic_rule,
 )
 from gut._cache import Cache, CacheEntry, MemoryCache, NullCache, SQLiteCache
+from gut._cassette import Cassette, CassetteBackend, record_requested
 from gut._config import configure, on_unsure
 from gut._decision import BaseDecision, ChoiceDecision, Decision, ScoreDecision
 from gut._errors import (
     BackendError,
+    CassetteMissError,
     ConfigurationError,
+    EvalError,
     GutError,
     JudgeClosedError,
     PolicyError,
     QuestionError,
     UnsureDecision,
 )
+from gut._evals import EvalResult, EvalSuite, load_suite, run_suite
 from gut._judge import Judge, Lazy, judge
 from gut._log import (
     DecisionRecord,
@@ -66,12 +70,18 @@ __all__ = [
     "BaseDecision",
     "Cache",
     "CacheEntry",
+    "Cassette",
+    "CassetteBackend",
+    "CassetteMissError",
     "ChoiceAnswer",
     "ChoiceDecision",
     "ChoiceSpec",
     "ConfigurationError",
     "Decision",
     "DecisionRecord",
+    "EvalError",
+    "EvalResult",
+    "EvalSuite",
     "FakeBackend",
     "GutError",
     "JSONLSink",
@@ -104,9 +114,12 @@ __all__ = [
     "deterministic_rule",
     "judge",
     "likely",
+    "load_suite",
     "on_unsure",
     "policy",
     "rate",
+    "record_requested",
+    "run_suite",
     "semantic",
 ]
 
