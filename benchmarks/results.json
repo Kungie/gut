@@ -1,0 +1,1414 @@
+[
+  {
+    "baselines": [
+      {
+        "automatic": 550,
+        "coverage": 1.0,
+        "error_rate": 0.2618,
+        "false_no": 0,
+        "false_yes": 0,
+        "posture": "always answer",
+        "total": 550,
+        "wrong": 144
+      }
+    ],
+    "calibration": {
+      "fitted": {
+        "bins": [
+          {
+            "count": 31,
+            "high": 0.2,
+            "low": 0.0,
+            "observed": 0.225806,
+            "predicted": 0.076959
+          },
+          {
+            "count": 54,
+            "high": 0.4,
+            "low": 0.2,
+            "observed": 0.37037,
+            "predicted": 0.304414
+          },
+          {
+            "count": 48,
+            "high": 0.6,
+            "low": 0.4,
+            "observed": 0.604167,
+            "predicted": 0.506481
+          },
+          {
+            "count": 217,
+            "high": 0.8,
+            "low": 0.6,
+            "observed": 0.737327,
+            "predicted": 0.695376
+          },
+          {
+            "count": 200,
+            "high": 1.0,
+            "low": 0.8,
+            "observed": 0.95,
+            "predicted": 0.891892
+          }
+        ],
+        "brier": 0.152227,
+        "count": 550,
+        "ece": 0.061072,
+        "reliable": true
+      },
+      "raw": {
+        "bins": [
+          {
+            "count": 7,
+            "high": 0.4,
+            "low": 0.2,
+            "observed": 0.142857,
+            "predicted": 0.344286
+          },
+          {
+            "count": 39,
+            "high": 0.6,
+            "low": 0.4,
+            "observed": 0.307692,
+            "predicted": 0.522564
+          },
+          {
+            "count": 56,
+            "high": 0.8,
+            "low": 0.6,
+            "observed": 0.446429,
+            "predicted": 0.702143
+          },
+          {
+            "count": 448,
+            "high": 1.0,
+            "low": 0.8,
+            "observed": 0.821429,
+            "predicted": 0.970938
+          }
+        ],
+        "brier": 0.183149,
+        "count": 550,
+        "ece": 0.165618,
+        "reliable": true
+      }
+    },
+    "citation": "Larson et al. 2019, An Evaluation Dataset for Intent Classification and Out-of-Scope Prediction (EMNLP-IJCNLP)",
+    "cost": {
+      "median_ms": 0.1,
+      "p95_ms": 0.2,
+      "requests": 740,
+      "usd": 0.03602
+    },
+    "dev_size": 190,
+    "licence": "CC BY 3.0 per the dataset card; the upstream repository declares none",
+    "model": "jev-1.13.0",
+    "name": "clinc",
+    "out_of_scope": {
+      "calibrated": {
+        "by_other": 43,
+        "by_unsure": 55,
+        "confidently_wrong": 2,
+        "in_scope": 450,
+        "in_scope_cost": 0.2378,
+        "in_scope_lost": 107,
+        "out_of_scope": 100,
+        "recall": 0.98
+      },
+      "floor": 0.65,
+      "raw": {
+        "by_other": 68,
+        "by_unsure": 21,
+        "confidently_wrong": 11,
+        "in_scope": 450,
+        "in_scope_cost": 0.0933,
+        "in_scope_lost": 42,
+        "out_of_scope": 100,
+        "recall": 0.89
+      },
+      "stakes": "medium"
+    },
+    "postures": {
+      "calibrated": [
+        {
+          "automatic": 459,
+          "coverage": 0.8345,
+          "error_rate": 0.1155,
+          "false_no": 0,
+          "false_yes": 0,
+          "posture": "no arguments",
+          "total": 550,
+          "wrong": 53
+        },
+        {
+          "automatic": 386,
+          "coverage": 0.7018,
+          "error_rate": 0.0518,
+          "false_no": 0,
+          "false_yes": 0,
+          "posture": "stakes=low    lean=none",
+          "total": 550,
+          "wrong": 20
+        },
+        {
+          "automatic": 345,
+          "coverage": 0.6273,
+          "error_rate": 0.0377,
+          "false_no": 0,
+          "false_yes": 0,
+          "posture": "stakes=medium lean=none",
+          "total": 550,
+          "wrong": 13
+        },
+        {
+          "automatic": 193,
+          "coverage": 0.3509,
+          "error_rate": 0.0155,
+          "false_no": 0,
+          "false_yes": 0,
+          "posture": "stakes=high   lean=none",
+          "total": 550,
+          "wrong": 3
+        }
+      ],
+      "raw": [
+        {
+          "automatic": 459,
+          "coverage": 0.8345,
+          "error_rate": 0.1155,
+          "false_no": 0,
+          "false_yes": 0,
+          "posture": "no arguments",
+          "total": 550,
+          "wrong": 53
+        },
+        {
+          "automatic": 445,
+          "coverage": 0.8091,
+          "error_rate": 0.0966,
+          "false_no": 0,
+          "false_yes": 0,
+          "posture": "stakes=low    lean=none",
+          "total": 550,
+          "wrong": 43
+        },
+        {
+          "automatic": 419,
+          "coverage": 0.7618,
+          "error_rate": 0.0764,
+          "false_no": 0,
+          "false_yes": 0,
+          "posture": "stakes=medium lean=none",
+          "total": 550,
+          "wrong": 32
+        },
+        {
+          "automatic": 390,
+          "coverage": 0.7091,
+          "error_rate": 0.0564,
+          "false_no": 0,
+          "false_yes": 0,
+          "posture": "stakes=high   lean=none",
+          "total": 550,
+          "wrong": 22
+        }
+      ]
+    },
+    "published": "Larson et al. report 96.9% in-scope accuracy for a fine-tuned BERT on the full split, with out-of-scope recall far lower",
+    "split": {
+      "dev": {
+        "accept_reservations": 1,
+        "account_blocked": 1,
+        "alarm": 1,
+        "application_status": 1,
+        "apr": 1,
+        "are_you_a_bot": 1,
+        "balance": 1,
+        "bill_balance": 1,
+        "bill_due": 1,
+        "book_flight": 1,
+        "book_hotel": 1,
+        "calculator": 1,
+        "calendar": 1,
+        "calendar_update": 1,
+        "calories": 1,
+        "cancel": 1,
+        "cancel_reservation": 1,
+        "car_rental": 1,
+        "card_declined": 1,
+        "carry_on": 1,
+        "change_accent": 1,
+        "change_ai_name": 1,
+        "change_language": 1,
+        "change_speed": 1,
+        "change_user_name": 1,
+        "change_volume": 1,
+        "confirm_reservation": 1,
+        "cook_time": 1,
+        "credit_limit": 1,
+        "credit_limit_change": 1,
+        "credit_score": 1,
+        "current_location": 1,
+        "damaged_card": 1,
+        "date": 1,
+        "definition": 1,
+        "direct_deposit": 1,
+        "directions": 1,
+        "distance": 1,
+        "do_you_have_pets": 1,
+        "exchange_rate": 1,
+        "expiration_date": 1,
+        "find_phone": 1,
+        "flight_status": 1,
+        "flip_coin": 1,
+        "food_last": 1,
+        "freeze_account": 1,
+        "fun_fact": 1,
+        "gas": 1,
+        "gas_type": 1,
+        "goodbye": 1,
+        "greeting": 1,
+        "how_busy": 1,
+        "how_old_are_you": 1,
+        "improve_credit_score": 1,
+        "income": 1,
+        "ingredient_substitution": 1,
+        "ingredients_list": 1,
+        "insurance": 1,
+        "insurance_change": 1,
+        "interest_rate": 1,
+        "international_fees": 1,
+        "international_visa": 1,
+        "jump_start": 1,
+        "last_maintenance": 1,
+        "lost_luggage": 1,
+        "make_call": 1,
+        "maybe": 1,
+        "meal_suggestion": 1,
+        "meaning_of_life": 1,
+        "measurement_conversion": 1,
+        "meeting_schedule": 1,
+        "min_payment": 1,
+        "mpg": 1,
+        "new_card": 1,
+        "next_holiday": 1,
+        "next_song": 1,
+        "no": 1,
+        "nutrition_info": 1,
+        "oil_change_how": 1,
+        "oil_change_when": 1,
+        "oos": 40,
+        "order": 1,
+        "order_checks": 1,
+        "order_status": 1,
+        "pay_bill": 1,
+        "payday": 1,
+        "pin_change": 1,
+        "play_music": 1,
+        "plug_type": 1,
+        "pto_balance": 1,
+        "pto_request": 1,
+        "pto_request_status": 1,
+        "pto_used": 1,
+        "recipe": 1,
+        "redeem_rewards": 1,
+        "reminder": 1,
+        "reminder_update": 1,
+        "repeat": 1,
+        "replacement_card_duration": 1,
+        "report_fraud": 1,
+        "report_lost_card": 1,
+        "reset_settings": 1,
+        "restaurant_reservation": 1,
+        "restaurant_reviews": 1,
+        "restaurant_suggestion": 1,
+        "rewards_balance": 1,
+        "roll_dice": 1,
+        "rollover_401k": 1,
+        "routing": 1,
+        "schedule_maintenance": 1,
+        "schedule_meeting": 1,
+        "share_location": 1,
+        "shopping_list": 1,
+        "shopping_list_update": 1,
+        "smart_home": 1,
+        "spelling": 1,
+        "spending_history": 1,
+        "sync_device": 1,
+        "taxes": 1,
+        "tell_joke": 1,
+        "text": 1,
+        "thank_you": 1,
+        "time": 1,
+        "timer": 1,
+        "timezone": 1,
+        "tire_change": 1,
+        "tire_pressure": 1,
+        "todo_list": 1,
+        "todo_list_update": 1,
+        "traffic": 1,
+        "transactions": 1,
+        "transfer": 1,
+        "translate": 1,
+        "travel_alert": 1,
+        "travel_notification": 1,
+        "travel_suggestion": 1,
+        "uber": 1,
+        "update_playlist": 1,
+        "user_name": 1,
+        "vaccines": 1,
+        "w2": 1,
+        "weather": 1,
+        "what_are_your_hobbies": 1,
+        "what_can_i_ask_you": 1,
+        "what_is_your_name": 1,
+        "what_song": 1,
+        "where_are_you_from": 1,
+        "whisper_mode": 1,
+        "who_do_you_work_for": 1,
+        "who_made_you": 1,
+        "yes": 1
+      },
+      "test": {
+        "accept_reservations": 3,
+        "account_blocked": 3,
+        "alarm": 3,
+        "application_status": 3,
+        "apr": 3,
+        "are_you_a_bot": 3,
+        "balance": 3,
+        "bill_balance": 3,
+        "bill_due": 3,
+        "book_flight": 3,
+        "book_hotel": 3,
+        "calculator": 3,
+        "calendar": 3,
+        "calendar_update": 3,
+        "calories": 3,
+        "cancel": 3,
+        "cancel_reservation": 3,
+        "car_rental": 3,
+        "card_declined": 3,
+        "carry_on": 3,
+        "change_accent": 3,
+        "change_ai_name": 3,
+        "change_language": 3,
+        "change_speed": 3,
+        "change_user_name": 3,
+        "change_volume": 3,
+        "confirm_reservation": 3,
+        "cook_time": 3,
+        "credit_limit": 3,
+        "credit_limit_change": 3,
+        "credit_score": 3,
+        "current_location": 3,
+        "damaged_card": 3,
+        "date": 3,
+        "definition": 3,
+        "direct_deposit": 3,
+        "directions": 3,
+        "distance": 3,
+        "do_you_have_pets": 3,
+        "exchange_rate": 3,
+        "expiration_date": 3,
+        "find_phone": 3,
+        "flight_status": 3,
+        "flip_coin": 3,
+        "food_last": 3,
+        "freeze_account": 3,
+        "fun_fact": 3,
+        "gas": 3,
+        "gas_type": 3,
+        "goodbye": 3,
+        "greeting": 3,
+        "how_busy": 3,
+        "how_old_are_you": 3,
+        "improve_credit_score": 3,
+        "income": 3,
+        "ingredient_substitution": 3,
+        "ingredients_list": 3,
+        "insurance": 3,
+        "insurance_change": 3,
+        "interest_rate": 3,
+        "international_fees": 3,
+        "international_visa": 3,
+        "jump_start": 3,
+        "last_maintenance": 3,
+        "lost_luggage": 3,
+        "make_call": 3,
+        "maybe": 3,
+        "meal_suggestion": 3,
+        "meaning_of_life": 3,
+        "measurement_conversion": 3,
+        "meeting_schedule": 3,
+        "min_payment": 3,
+        "mpg": 3,
+        "new_card": 3,
+        "next_holiday": 3,
+        "next_song": 3,
+        "no": 3,
+        "nutrition_info": 3,
+        "oil_change_how": 3,
+        "oil_change_when": 3,
+        "oos": 100,
+        "order": 3,
+        "order_checks": 3,
+        "order_status": 3,
+        "pay_bill": 3,
+        "payday": 3,
+        "pin_change": 3,
+        "play_music": 3,
+        "plug_type": 3,
+        "pto_balance": 3,
+        "pto_request": 3,
+        "pto_request_status": 3,
+        "pto_used": 3,
+        "recipe": 3,
+        "redeem_rewards": 3,
+        "reminder": 3,
+        "reminder_update": 3,
+        "repeat": 3,
+        "replacement_card_duration": 3,
+        "report_fraud": 3,
+        "report_lost_card": 3,
+        "reset_settings": 3,
+        "restaurant_reservation": 3,
+        "restaurant_reviews": 3,
+        "restaurant_suggestion": 3,
+        "rewards_balance": 3,
+        "roll_dice": 3,
+        "rollover_401k": 3,
+        "routing": 3,
+        "schedule_maintenance": 3,
+        "schedule_meeting": 3,
+        "share_location": 3,
+        "shopping_list": 3,
+        "shopping_list_update": 3,
+        "smart_home": 3,
+        "spelling": 3,
+        "spending_history": 3,
+        "sync_device": 3,
+        "taxes": 3,
+        "tell_joke": 3,
+        "text": 3,
+        "thank_you": 3,
+        "time": 3,
+        "timer": 3,
+        "timezone": 3,
+        "tire_change": 3,
+        "tire_pressure": 3,
+        "todo_list": 3,
+        "todo_list_update": 3,
+        "traffic": 3,
+        "transactions": 3,
+        "transfer": 3,
+        "translate": 3,
+        "travel_alert": 3,
+        "travel_notification": 3,
+        "travel_suggestion": 3,
+        "uber": 3,
+        "update_playlist": 3,
+        "user_name": 3,
+        "vaccines": 3,
+        "w2": 3,
+        "weather": 3,
+        "what_are_your_hobbies": 3,
+        "what_can_i_ask_you": 3,
+        "what_is_your_name": 3,
+        "what_song": 3,
+        "where_are_you_from": 3,
+        "whisper_mode": 3,
+        "who_do_you_work_for": 3,
+        "who_made_you": 3,
+        "yes": 3
+      }
+    },
+    "test_size": 550,
+    "what": "151-way intent routing, and whether an out-of-scope request is declined"
+  },
+  {
+    "baselines": [
+      {
+        "automatic": 501,
+        "coverage": 1.0,
+        "error_rate": 0.2116,
+        "false_no": 22,
+        "false_yes": 84,
+        "posture": "threshold=0.7",
+        "total": 501,
+        "wrong": 106
+      },
+      {
+        "automatic": 501,
+        "coverage": 1.0,
+        "error_rate": 0.4411,
+        "false_no": 44,
+        "false_yes": 177,
+        "posture": "regex: bug/error/crash/...",
+        "total": 501,
+        "wrong": 221
+      }
+    ],
+    "calibration": {
+      "fitted": {
+        "bins": [
+          {
+            "count": 251,
+            "high": 0.2,
+            "low": 0.0,
+            "observed": 0.063745,
+            "predicted": 0.028093
+          },
+          {
+            "count": 46,
+            "high": 0.4,
+            "low": 0.2,
+            "observed": 0.326087,
+            "predicted": 0.310903
+          },
+          {
+            "count": 58,
+            "high": 0.6,
+            "low": 0.4,
+            "observed": 0.534483,
+            "predicted": 0.504828
+          },
+          {
+            "count": 68,
+            "high": 0.8,
+            "low": 0.6,
+            "observed": 0.632353,
+            "predicted": 0.703007
+          },
+          {
+            "count": 78,
+            "high": 1.0,
+            "low": 0.8,
+            "observed": 0.794872,
+            "predicted": 0.928661
+          }
+        ],
+        "brier": 0.138322,
+        "count": 501,
+        "ece": 0.053108,
+        "reliable": true
+      },
+      "raw": {
+        "bins": [
+          {
+            "count": 144,
+            "high": 0.2,
+            "low": 0.0,
+            "observed": 0.006944,
+            "predicted": 0.083958
+          },
+          {
+            "count": 53,
+            "high": 0.4,
+            "low": 0.2,
+            "observed": 0.09434,
+            "predicted": 0.280943
+          },
+          {
+            "count": 49,
+            "high": 0.6,
+            "low": 0.4,
+            "observed": 0.204082,
+            "predicted": 0.487959
+          },
+          {
+            "count": 55,
+            "high": 0.8,
+            "low": 0.6,
+            "observed": 0.327273,
+            "predicted": 0.701273
+          },
+          {
+            "count": 200,
+            "high": 1.0,
+            "low": 0.8,
+            "observed": 0.665,
+            "predicted": 0.91575
+          }
+        ],
+        "brier": 0.190243,
+        "count": 501,
+        "ece": 0.210798,
+        "reliable": true
+      }
+    },
+    "citation": "NLBSE'24 issue report classification tool competition",
+    "cost": {
+      "median_ms": 306.1,
+      "p95_ms": 726.7,
+      "requests": 702,
+      "timing_from": "the recording run",
+      "usd": 0.00921
+    },
+    "dev_size": 201,
+    "licence": "none declared; not redistributable",
+    "model": "jev-1.13.0",
+    "name": "nlbse-bug",
+    "out_of_scope": null,
+    "postures": {
+      "calibrated": [
+        {
+          "automatic": 501,
+          "coverage": 1.0,
+          "error_rate": 0.2156,
+          "false_no": 50,
+          "false_yes": 58,
+          "posture": "no arguments",
+          "total": 501,
+          "wrong": 108
+        },
+        {
+          "automatic": 437,
+          "coverage": 0.8723,
+          "error_rate": 0.1579,
+          "false_no": 31,
+          "false_yes": 38,
+          "posture": "stakes=low    lean=none",
+          "total": 501,
+          "wrong": 69
+        },
+        {
+          "automatic": 455,
+          "coverage": 0.9082,
+          "error_rate": 0.1846,
+          "false_no": 16,
+          "false_yes": 68,
+          "posture": "stakes=low    lean=yes",
+          "total": 501,
+          "wrong": 84
+        },
+        {
+          "automatic": 439,
+          "coverage": 0.8762,
+          "error_rate": 0.1845,
+          "false_no": 65,
+          "false_yes": 16,
+          "posture": "stakes=low    lean=no",
+          "total": 501,
+          "wrong": 81
+        },
+        {
+          "automatic": 357,
+          "coverage": 0.7126,
+          "error_rate": 0.1064,
+          "false_no": 20,
+          "false_yes": 18,
+          "posture": "stakes=medium lean=none",
+          "total": 501,
+          "wrong": 38
+        },
+        {
+          "automatic": 381,
+          "coverage": 0.7605,
+          "error_rate": 0.1391,
+          "false_no": 15,
+          "false_yes": 38,
+          "posture": "stakes=medium lean=yes",
+          "total": 501,
+          "wrong": 53
+        },
+        {
+          "automatic": 336,
+          "coverage": 0.6707,
+          "error_rate": 0.1101,
+          "false_no": 25,
+          "false_yes": 12,
+          "posture": "stakes=medium lean=no",
+          "total": 501,
+          "wrong": 37
+        },
+        {
+          "automatic": 295,
+          "coverage": 0.5888,
+          "error_rate": 0.0881,
+          "false_no": 14,
+          "false_yes": 12,
+          "posture": "stakes=high   lean=none",
+          "total": 501,
+          "wrong": 26
+        },
+        {
+          "automatic": 260,
+          "coverage": 0.519,
+          "error_rate": 0.0731,
+          "false_no": 7,
+          "false_yes": 12,
+          "posture": "stakes=high   lean=yes",
+          "total": 501,
+          "wrong": 19
+        },
+        {
+          "automatic": 274,
+          "coverage": 0.5469,
+          "error_rate": 0.073,
+          "false_no": 16,
+          "false_yes": 4,
+          "posture": "stakes=high   lean=no",
+          "total": 501,
+          "wrong": 20
+        }
+      ],
+      "raw": [
+        {
+          "automatic": 501,
+          "coverage": 1.0,
+          "error_rate": 0.2635,
+          "false_no": 12,
+          "false_yes": 120,
+          "posture": "no arguments",
+          "total": 501,
+          "wrong": 132
+        },
+        {
+          "automatic": 451,
+          "coverage": 0.9002,
+          "error_rate": 0.2417,
+          "false_no": 6,
+          "false_yes": 103,
+          "posture": "stakes=low    lean=none",
+          "total": 501,
+          "wrong": 109
+        },
+        {
+          "automatic": 448,
+          "coverage": 0.8942,
+          "error_rate": 0.3214,
+          "false_no": 1,
+          "false_yes": 143,
+          "posture": "stakes=low    lean=yes",
+          "total": 501,
+          "wrong": 144
+        },
+        {
+          "automatic": 445,
+          "coverage": 0.8882,
+          "error_rate": 0.1865,
+          "false_no": 16,
+          "false_yes": 67,
+          "posture": "stakes=low    lean=no",
+          "total": 501,
+          "wrong": 83
+        },
+        {
+          "automatic": 377,
+          "coverage": 0.7525,
+          "error_rate": 0.2016,
+          "false_no": 2,
+          "false_yes": 74,
+          "posture": "stakes=medium lean=none",
+          "total": 501,
+          "wrong": 76
+        },
+        {
+          "automatic": 357,
+          "coverage": 0.7126,
+          "error_rate": 0.2801,
+          "false_no": 1,
+          "false_yes": 99,
+          "posture": "stakes=medium lean=yes",
+          "total": 501,
+          "wrong": 100
+        },
+        {
+          "automatic": 347,
+          "coverage": 0.6926,
+          "error_rate": 0.1441,
+          "false_no": 6,
+          "false_yes": 44,
+          "posture": "stakes=medium lean=no",
+          "total": 501,
+          "wrong": 50
+        },
+        {
+          "automatic": 224,
+          "coverage": 0.4471,
+          "error_rate": 0.1384,
+          "false_no": 0,
+          "false_yes": 31,
+          "posture": "stakes=high   lean=none",
+          "total": 501,
+          "wrong": 31
+        },
+        {
+          "automatic": 207,
+          "coverage": 0.4132,
+          "error_rate": 0.2464,
+          "false_no": 0,
+          "false_yes": 51,
+          "posture": "stakes=high   lean=yes",
+          "total": 501,
+          "wrong": 51
+        },
+        {
+          "automatic": 182,
+          "coverage": 0.3633,
+          "error_rate": 0.0714,
+          "false_no": 1,
+          "false_yes": 12,
+          "posture": "stakes=high   lean=no",
+          "total": 501,
+          "wrong": 13
+        }
+      ]
+    },
+    "published": "NLBSE'24 baselines report ~0.87 F1 for a fine-tuned RoBERTa across repos",
+    "split": {
+      "dev": {
+        "bug": 67,
+        "feature": 67,
+        "question": 67
+      },
+      "test": {
+        "bug": 167,
+        "feature": 167,
+        "question": 167
+      }
+    },
+    "test_size": 501,
+    "what": "is this GitHub issue a bug report"
+  },
+  {
+    "baselines": [
+      {
+        "automatic": 501,
+        "coverage": 1.0,
+        "error_rate": 0.3074,
+        "false_no": 0,
+        "false_yes": 0,
+        "posture": "always answer",
+        "total": 501,
+        "wrong": 154
+      }
+    ],
+    "calibration": {
+      "fitted": {
+        "bins": [
+          {
+            "count": 48,
+            "high": 0.2,
+            "low": 0.0,
+            "observed": 0.354167,
+            "predicted": 0.0793
+          },
+          {
+            "count": 32,
+            "high": 0.4,
+            "low": 0.2,
+            "observed": 0.46875,
+            "predicted": 0.286088
+          },
+          {
+            "count": 36,
+            "high": 0.6,
+            "low": 0.4,
+            "observed": 0.527778,
+            "predicted": 0.517273
+          },
+          {
+            "count": 109,
+            "high": 0.8,
+            "low": 0.6,
+            "observed": 0.66055,
+            "predicted": 0.712573
+          },
+          {
+            "count": 276,
+            "high": 1.0,
+            "low": 0.8,
+            "observed": 0.811594,
+            "predicted": 0.859156
+          }
+        ],
+        "brier": 0.198047,
+        "count": 501,
+        "ece": 0.076277,
+        "reliable": true
+      },
+      "raw": {
+        "bins": [
+          {
+            "count": 3,
+            "high": 0.2,
+            "low": 0.0,
+            "observed": 0.0,
+            "predicted": 0.086667
+          },
+          {
+            "count": 24,
+            "high": 0.4,
+            "low": 0.2,
+            "observed": 0.333333,
+            "predicted": 0.319583
+          },
+          {
+            "count": 45,
+            "high": 0.6,
+            "low": 0.4,
+            "observed": 0.488889,
+            "predicted": 0.487778
+          },
+          {
+            "count": 47,
+            "high": 0.8,
+            "low": 0.6,
+            "observed": 0.489362,
+            "predicted": 0.698936
+          },
+          {
+            "count": 382,
+            "high": 1.0,
+            "low": 0.8,
+            "observed": 0.769634,
+            "predicted": 0.970942
+          }
+        ],
+        "brier": 0.222212,
+        "count": 501,
+        "ece": 0.174431,
+        "reliable": true
+      }
+    },
+    "citation": "NLBSE'24 issue report classification tool competition",
+    "cost": {
+      "median_ms": 312.2,
+      "p95_ms": 714.1,
+      "requests": 702,
+      "timing_from": "the recording run",
+      "usd": 0.01031
+    },
+    "dev_size": 201,
+    "licence": "none declared; not redistributable",
+    "model": "jev-1.13.0",
+    "name": "nlbse-kind",
+    "out_of_scope": null,
+    "postures": {
+      "calibrated": [
+        {
+          "automatic": 501,
+          "coverage": 1.0,
+          "error_rate": 0.3074,
+          "false_no": 0,
+          "false_yes": 0,
+          "posture": "no arguments",
+          "total": 501,
+          "wrong": 154
+        },
+        {
+          "automatic": 410,
+          "coverage": 0.8184,
+          "error_rate": 0.2439,
+          "false_no": 0,
+          "false_yes": 0,
+          "posture": "stakes=low    lean=none",
+          "total": 501,
+          "wrong": 100
+        },
+        {
+          "automatic": 373,
+          "coverage": 0.7445,
+          "error_rate": 0.2225,
+          "false_no": 0,
+          "false_yes": 0,
+          "posture": "stakes=medium lean=none",
+          "total": 501,
+          "wrong": 83
+        },
+        {
+          "automatic": 276,
+          "coverage": 0.5509,
+          "error_rate": 0.1884,
+          "false_no": 0,
+          "false_yes": 0,
+          "posture": "stakes=high   lean=none",
+          "total": 501,
+          "wrong": 52
+        }
+      ],
+      "raw": [
+        {
+          "automatic": 501,
+          "coverage": 1.0,
+          "error_rate": 0.3074,
+          "false_no": 0,
+          "false_yes": 0,
+          "posture": "no arguments",
+          "total": 501,
+          "wrong": 154
+        },
+        {
+          "automatic": 447,
+          "coverage": 0.8922,
+          "error_rate": 0.2662,
+          "false_no": 0,
+          "false_yes": 0,
+          "posture": "stakes=low    lean=none",
+          "total": 501,
+          "wrong": 119
+        },
+        {
+          "automatic": 417,
+          "coverage": 0.8323,
+          "error_rate": 0.2494,
+          "false_no": 0,
+          "false_yes": 0,
+          "posture": "stakes=medium lean=none",
+          "total": 501,
+          "wrong": 104
+        },
+        {
+          "automatic": 382,
+          "coverage": 0.7625,
+          "error_rate": 0.2304,
+          "false_no": 0,
+          "false_yes": 0,
+          "posture": "stakes=high   lean=none",
+          "total": 501,
+          "wrong": 88
+        }
+      ]
+    },
+    "published": "NLBSE'24 baselines report ~0.87 F1 for a fine-tuned RoBERTa across repos",
+    "split": {
+      "dev": {
+        "bug": 67,
+        "feature": 67,
+        "question": 67
+      },
+      "test": {
+        "bug": 167,
+        "feature": 167,
+        "question": 167
+      }
+    },
+    "test_size": 501,
+    "what": "routing a GitHub issue to bug / feature / question"
+  },
+  {
+    "baselines": [
+      {
+        "automatic": 500,
+        "coverage": 1.0,
+        "error_rate": 0.024,
+        "false_no": 11,
+        "false_yes": 1,
+        "posture": "threshold=0.7",
+        "total": 500,
+        "wrong": 12
+      },
+      {
+        "automatic": 500,
+        "coverage": 1.0,
+        "error_rate": 0.07,
+        "false_no": 35,
+        "false_yes": 0,
+        "posture": "keyword filter: free/win/prize/...",
+        "total": 500,
+        "wrong": 35
+      }
+    ],
+    "calibration": {
+      "fitted": {
+        "bins": [
+          {
+            "count": 433,
+            "high": 0.2,
+            "low": 0.0,
+            "observed": 0.009238,
+            "predicted": 0.0
+          },
+          {
+            "count": 67,
+            "high": 1.0,
+            "low": 0.8,
+            "observed": 0.940299,
+            "predicted": 1.0
+          }
+        ],
+        "brier": 0.016,
+        "count": 500,
+        "ece": 0.016,
+        "reliable": true
+      },
+      "raw": {
+        "bins": [
+          {
+            "count": 421,
+            "high": 0.2,
+            "low": 0.0,
+            "observed": 0.002375,
+            "predicted": 0.034371
+          },
+          {
+            "count": 12,
+            "high": 0.4,
+            "low": 0.2,
+            "observed": 0.25,
+            "predicted": 0.321667
+          },
+          {
+            "count": 5,
+            "high": 0.6,
+            "low": 0.4,
+            "observed": 0.4,
+            "predicted": 0.486
+          },
+          {
+            "count": 10,
+            "high": 0.8,
+            "low": 0.6,
+            "observed": 0.9,
+            "predicted": 0.684
+          },
+          {
+            "count": 52,
+            "high": 1.0,
+            "low": 0.8,
+            "observed": 1.0,
+            "predicted": 0.960962
+          }
+        ],
+        "brier": 0.013277,
+        "count": 500,
+        "ece": 0.0379,
+        "reliable": true
+      }
+    },
+    "citation": "Almeida, Gomez Hidalgo & Yamakami 2011, SMS Spam Collection v.1 (UCI, DOI 10.24432/C5CC84)",
+    "cost": {
+      "median_ms": 322.0,
+      "p95_ms": 1002.5,
+      "requests": 700,
+      "timing_from": "the recording run",
+      "usd": 0.0019
+    },
+    "dev_size": 200,
+    "licence": "CC BY 4.0",
+    "model": "jev-1.13.0",
+    "name": "sms",
+    "out_of_scope": null,
+    "postures": {
+      "calibrated": [
+        {
+          "automatic": 500,
+          "coverage": 1.0,
+          "error_rate": 0.016,
+          "false_no": 4,
+          "false_yes": 4,
+          "posture": "no arguments",
+          "total": 500,
+          "wrong": 8
+        },
+        {
+          "automatic": 500,
+          "coverage": 1.0,
+          "error_rate": 0.016,
+          "false_no": 4,
+          "false_yes": 4,
+          "posture": "stakes=low    lean=none",
+          "total": 500,
+          "wrong": 8
+        },
+        {
+          "automatic": 500,
+          "coverage": 1.0,
+          "error_rate": 0.016,
+          "false_no": 4,
+          "false_yes": 4,
+          "posture": "stakes=low    lean=yes",
+          "total": 500,
+          "wrong": 8
+        },
+        {
+          "automatic": 500,
+          "coverage": 1.0,
+          "error_rate": 0.016,
+          "false_no": 4,
+          "false_yes": 4,
+          "posture": "stakes=low    lean=no",
+          "total": 500,
+          "wrong": 8
+        },
+        {
+          "automatic": 500,
+          "coverage": 1.0,
+          "error_rate": 0.016,
+          "false_no": 4,
+          "false_yes": 4,
+          "posture": "stakes=medium lean=none",
+          "total": 500,
+          "wrong": 8
+        },
+        {
+          "automatic": 500,
+          "coverage": 1.0,
+          "error_rate": 0.016,
+          "false_no": 4,
+          "false_yes": 4,
+          "posture": "stakes=medium lean=yes",
+          "total": 500,
+          "wrong": 8
+        },
+        {
+          "automatic": 500,
+          "coverage": 1.0,
+          "error_rate": 0.016,
+          "false_no": 4,
+          "false_yes": 4,
+          "posture": "stakes=medium lean=no",
+          "total": 500,
+          "wrong": 8
+        },
+        {
+          "automatic": 500,
+          "coverage": 1.0,
+          "error_rate": 0.016,
+          "false_no": 4,
+          "false_yes": 4,
+          "posture": "stakes=high   lean=none",
+          "total": 500,
+          "wrong": 8
+        },
+        {
+          "automatic": 500,
+          "coverage": 1.0,
+          "error_rate": 0.016,
+          "false_no": 4,
+          "false_yes": 4,
+          "posture": "stakes=high   lean=yes",
+          "total": 500,
+          "wrong": 8
+        },
+        {
+          "automatic": 500,
+          "coverage": 1.0,
+          "error_rate": 0.016,
+          "false_no": 4,
+          "false_yes": 4,
+          "posture": "stakes=high   lean=no",
+          "total": 500,
+          "wrong": 8
+        }
+      ],
+      "raw": [
+        {
+          "automatic": 500,
+          "coverage": 1.0,
+          "error_rate": 0.014,
+          "false_no": 5,
+          "false_yes": 2,
+          "posture": "no arguments",
+          "total": 500,
+          "wrong": 7
+        },
+        {
+          "automatic": 495,
+          "coverage": 0.99,
+          "error_rate": 0.0101,
+          "false_no": 4,
+          "false_yes": 1,
+          "posture": "stakes=low    lean=none",
+          "total": 500,
+          "wrong": 5
+        },
+        {
+          "automatic": 488,
+          "coverage": 0.976,
+          "error_rate": 0.0102,
+          "false_no": 1,
+          "false_yes": 4,
+          "posture": "stakes=low    lean=yes",
+          "total": 500,
+          "wrong": 5
+        },
+        {
+          "automatic": 490,
+          "coverage": 0.98,
+          "error_rate": 0.0122,
+          "false_no": 6,
+          "false_yes": 0,
+          "posture": "stakes=low    lean=no",
+          "total": 500,
+          "wrong": 6
+        },
+        {
+          "automatic": 475,
+          "coverage": 0.95,
+          "error_rate": 0.0042,
+          "false_no": 1,
+          "false_yes": 1,
+          "posture": "stakes=medium lean=none",
+          "total": 500,
+          "wrong": 2
+        },
+        {
+          "automatic": 464,
+          "coverage": 0.928,
+          "error_rate": 0.0043,
+          "false_no": 1,
+          "false_yes": 1,
+          "posture": "stakes=medium lean=yes",
+          "total": 500,
+          "wrong": 2
+        },
+        {
+          "automatic": 482,
+          "coverage": 0.964,
+          "error_rate": 0.0062,
+          "false_no": 3,
+          "false_yes": 0,
+          "posture": "stakes=medium lean=no",
+          "total": 500,
+          "wrong": 3
+        },
+        {
+          "automatic": 445,
+          "coverage": 0.89,
+          "error_rate": 0.0022,
+          "false_no": 1,
+          "false_yes": 0,
+          "posture": "stakes=high   lean=none",
+          "total": 500,
+          "wrong": 1
+        },
+        {
+          "automatic": 385,
+          "coverage": 0.77,
+          "error_rate": 0.0,
+          "false_no": 0,
+          "false_yes": 0,
+          "posture": "stakes=high   lean=yes",
+          "total": 500,
+          "wrong": 0
+        },
+        {
+          "automatic": 453,
+          "coverage": 0.906,
+          "error_rate": 0.0022,
+          "false_no": 1,
+          "false_yes": 0,
+          "posture": "stakes=high   lean=no",
+          "total": 500,
+          "wrong": 1
+        }
+      ]
+    },
+    "published": "Almeida et al. report ~97.6% accuracy for an SVM trained on this corpus",
+    "split": {
+      "dev": {
+        "ham": 173,
+        "spam": 27
+      },
+      "test": {
+        "ham": 433,
+        "spam": 67
+      }
+    },
+    "test_size": 500,
+    "what": "a single yes/no judgment, the cleanest calibration check available"
+  }
+]

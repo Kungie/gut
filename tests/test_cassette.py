@@ -160,9 +160,55 @@ def test_the_file_is_readable_and_diffable(tmp_path: Path) -> None:
     document = json.loads(path.read_text(encoding="utf-8"))
     (entry,) = document["entries"]
     assert entry["state"] == "a ticket"
-    assert entry["question"] == {"type": "noul", "instructions": "is a bug report"}
     assert entry["answer"] == {"type": "noul", "p": 0.91}
     assert entry["model"] == "fake-1.0"
+    # The question is written once into a table and referred to, so a large one is not repeated
+    # per entry. Still readable: the table is right there in the same file.
+    assert document["questions"][entry["question"]] == {
+        "type": "noul",
+        "instructions": "is a bug report",
+    }
+
+
+def test_a_repeated_question_is_stored_once(tmp_path: Path) -> None:
+    """A 151-option Choice is 11 KB; repeating it per entry made one recording 8 MB."""
+    path = tmp_path / "tape.json"
+    with CassetteBackend(path, FakeBackend(default=0.5), record=True) as r:
+        for index in range(20):
+            r.ask(f"ticket {index}", {"a": BUG})
+
+    document = json.loads(path.read_text(encoding="utf-8"))
+    assert len(document["entries"]) == 20
+    assert len(document["questions"]) == 1
+
+
+def test_a_version_one_cassette_still_loads(tmp_path: Path) -> None:
+    """Questions used to live inside each entry. Those files must keep working."""
+    path = tmp_path / "old.json"
+    path.write_text(
+        json.dumps(
+            {
+                "version": 1,
+                "entries": [
+                    {
+                        "state": "a ticket",
+                        "question": BUG.canonical(),
+                        "model": "fake-1.0",
+                        "answer": {"type": "noul", "p": 0.42},
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    cassette = Cassette(path)
+    assert cassette.get("a ticket", BUG, "fake-1.0") == NoulAnswer(p=0.42)
+
+    # And re-saving migrates it.
+    cassette.put("another", BUG, "fake-1.0", NoulAnswer(p=0.1))
+    cassette.save()
+    assert "questions" in json.loads(path.read_text(encoding="utf-8"))
 
 
 def test_entries_are_written_in_a_stable_order(tmp_path: Path) -> None:

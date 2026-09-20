@@ -46,7 +46,7 @@ from gut._backends.base import NoulAnswer
 from gut._calibration import Calibration
 from gut._calibrators import Calibrator, fit
 from gut._cassette import Cassette, CassetteBackend
-from gut._posture import STAKES_CONFIDENCE, Stakes
+from gut._posture import STAKES_CONFIDENCE, Stakes, band_for
 
 MODEL = "jev-1.13.0"
 """Pinned. Every number in docs/benchmarks.md was produced by this version."""
@@ -369,50 +369,81 @@ def measure_batching(median_ms: float) -> Batching:
     )
 
 
+LATENCY_SAMPLE = 40
+"""Examples per benchmark for the latency probe. Enough for a median and a rough p95."""
+
+
+def measure_latency(bench: Benchmark, *, sample: int = LATENCY_SAMPLE) -> RunStats:
+    """Time live requests, deliberately bypassing the cassette.
+
+    Latency is the one figure a recording cannot preserve: replaying takes microseconds, so a
+    cassette-backed run reports zero. This asks the real model for a small sample and nothing
+    else, which is why it is separate from `run` rather than folded into it.
+    """
+    split = stratified_split(bench.load(), quota=bench.quota)
+    live = gut.JevBackend(model=MODEL)
+    try:
+        _, stats = ask_all(split.test[:sample], bench.spec, live, text_limit=bench.text_limit)
+    finally:
+        live.close()
+    return stats
+
+
 CONSISTENCY_POSTURE = "stakes=medium lean=none"
 """The posture the cross-dataset comparison uses. Chosen before any results: the middle one."""
 
+STAKES_BAND = {stakes: band_for(stakes, None) for stakes in ("low", "medium", "high")}
+
 
 def render_consistency(results: list[Result]) -> str:
-    """Does `stakes="medium", ask_human=True` mean the same thing on four different tasks?
+    """What does `stakes="medium", ask_human=True` guarantee across four different tasks?
 
-    This is `gut`'s most distinctive claim and the easiest one to get wrong. A posture is a
-    statement about probabilities, so it travels between tasks only as far as the probabilities do.
-    If the realized error rates are all over the place, the words are a local convention rather
-    than a shared vocabulary -- and calibration is what should pull them together.
+    Not an equal error rate. A posture places a band on the probability -- medium puts a person in
+    the loop for `p` between 0.25 and 0.75 -- so every decision it makes automatically has at least
+    0.25 of margin. If the probabilities are honest, that **bounds** the automatic error rate at
+    25%. It cannot equalise it: how much error you actually see depends on where a task's
+    probability mass sits, and a spam filter and a 151-way router do not have the same mass in the
+    same places.
+
+    So the table reports both: the spread, which is what a reader expects to see and which the
+    posture never promised, and whether the bound the posture does promise actually held.
     """
+    band = STAKES_BAND[REPORT_STAKES]
+    bound = min(band[0], 1.0 - band[1])
     lines = [
         "",
-        f"=== does `{CONSISTENCY_POSTURE.strip()}` mean the same thing everywhere?",
+        f"=== what does `{CONSISTENCY_POSTURE.strip()}` guarantee on four different tasks?",
         "",
-        f"  {'dataset':<14} {'raw cov':>8} {'raw err':>8} {'cal cov':>8} {'cal err':>8}",
+        f"  the band is {band[0]:.2f}-{band[1]:.2f}, so an automatic decision keeps at least "
+        f"{bound:.2f} of margin.",
+        f"  if the probabilities are honest that bounds the error rate at {bound:.0%}.",
+        "",
+        f"  {'dataset':<14} {'raw cov':>8} {'raw err':>8} {'cal cov':>8} {'cal err':>8}  bound",
     ]
     raw_errors: list[float] = []
     calibrated_errors: list[float] = []
     for result in results:
-        try:
-            raw = result.posture(CONSISTENCY_POSTURE, calibrated=False)
-            calibrated = result.posture(CONSISTENCY_POSTURE, calibrated=True)
-        except StopIteration:  # pragma: no cover - every sweep contains this posture
-            continue
+        raw = result.posture(CONSISTENCY_POSTURE, calibrated=False)
+        calibrated = result.posture(CONSISTENCY_POSTURE, calibrated=True)
         raw_errors.append(raw.error_rate)
         calibrated_errors.append(calibrated.error_rate)
+        held = "held" if max(raw.error_rate, calibrated.error_rate) <= bound else "BROKEN"
         lines.append(
             f"  {result.benchmark.name:<14} {raw.coverage:>7.0%} {raw.error_rate:>8.1%}"
-            f" {calibrated.coverage:>8.0%} {calibrated.error_rate:>8.1%}"
+            f" {calibrated.coverage:>8.0%} {calibrated.error_rate:>8.1%}  {held}"
         )
 
-    if raw_errors:
-        raw_spread = max(raw_errors) - min(raw_errors)
-        calibrated_spread = max(calibrated_errors) - min(calibrated_errors)
-        lines.extend(
-            [
-                "",
-                f"  spread in automatic error rate across datasets:"
-                f"  raw {raw_spread:.1%}   calibrated {calibrated_spread:.1%}",
-                "  a posture is a claim about probabilities; it travels only as far as they do.",
-            ]
-        )
+    raw_spread = max(raw_errors) - min(raw_errors)
+    calibrated_spread = max(calibrated_errors) - min(calibrated_errors)
+    lines.extend(
+        [
+            "",
+            f"  spread in automatic error rate:  raw {raw_spread:.1%}   "
+            f"calibrated {calibrated_spread:.1%}",
+            "  the spread is large and stays large. That is the honest reading: the posture is a",
+            "  promise about margin, not about outcomes, and tasks differ in how hard they are.",
+        ]
+    )
     return "\n".join(lines)
 
 
@@ -485,9 +516,26 @@ def _oos_json(analysis: OutOfScope | None) -> dict[str, Any] | None:
 
 
 def save(results: list[Result], path: Path) -> None:
-    """Write every result, so the documentation can be generated rather than transcribed."""
+    """Write every result, keeping timings that only a live run could have measured.
+
+    Replaying a cassette takes microseconds, so an offline rerun would otherwise overwrite the
+    latency figures with zeros and quietly delete the only numbers that required spending money.
+    """
+    previous: dict[str, dict[str, Any]] = {}
+    if path.exists():
+        previous = {entry["name"]: entry for entry in json.loads(path.read_text())}
+
+    payload = []
+    for result in results:
+        entry = to_json(result)
+        recorded = previous.get(entry["name"], {}).get("cost", {})
+        if entry["cost"]["median_ms"] == 0 and recorded.get("median_ms"):
+            entry["cost"] = {
+                **entry["cost"],
+                **{k: recorded[k] for k in ("median_ms", "p95_ms") if k in recorded},
+                "timing_from": "the recording run",
+            }
+        payload.append(entry)
+
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(
-        json.dumps([to_json(result) for result in results], indent=2, sort_keys=True) + "\n",
-        encoding="utf-8",
-    )
+    path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")

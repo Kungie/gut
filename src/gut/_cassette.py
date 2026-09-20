@@ -20,7 +20,9 @@ names itself. The alternative -- quietly reaching for the network -- turns one f
 into a test suite that passes on someone's laptop, fails in CI, and bills you either way.
 
 Cassettes store the state, the question and the answer in full rather than hashes, so a reviewer can
-read a diff and see what changed about the model's behaviour.
+read a diff and see what changed about the model's behaviour. Questions are written once into a
+table and referenced, which matters more than it sounds: a 151-option `Choice` serialises to about
+11 KB, and repeating it per entry turned one benchmark recording into 8 MB of the same paragraph.
 
 **That means a cassette contains whatever you asked about, verbatim.** Record against real customer
 tickets and commit the file, and you have committed customer text to your repository. Record against
@@ -29,6 +31,7 @@ fixtures you are happy to publish, or keep the cassette out of version control a
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import threading
@@ -40,7 +43,10 @@ from typing import Any
 from gut._backends.base import Answer, Backend, BackendResponse
 from gut._errors import CassetteMissError
 from gut._questions import QuestionSpec, State, canonical_json
-from gut._serde import SERIALISATION_VERSION, answer_from_json, answer_to_json
+from gut._serde import answer_from_json, answer_to_json
+
+CASSETTE_VERSION = 2
+"""Bumped when questions moved into a table. Version 1 files still load."""
 
 RECORD_ENV = "GUT_RECORD"
 """Set this to `1` (or `true`/`yes`) to record instead of replay."""
@@ -55,6 +61,11 @@ def record_requested() -> bool:
 
 def _entry_key(state: State, question: Mapping[str, Any], model: str) -> str:
     return canonical_json({"state": state, "question": dict(question), "model": model})
+
+
+def _question_key(question: Mapping[str, Any]) -> str:
+    """A short, stable handle for one question, used as the table key."""
+    return hashlib.sha256(canonical_json(dict(question)).encode("utf-8")).hexdigest()[:16]
 
 
 @dataclass
@@ -77,23 +88,39 @@ class Cassette:
             self.load()
 
     def load(self) -> None:
-        """Read the cassette from disk, replacing anything held in memory."""
+        """Read the cassette from disk, replacing anything held in memory.
+
+        Understands both layouts: the original, which repeated the question inside every entry,
+        and the current one, which keeps a table of questions and refers to them by fingerprint.
+        """
         document = json.loads(self.path.read_text(encoding="utf-8"))
-        self.entries = {
-            _entry_key(entry["state"], entry["question"], entry["model"]): entry
-            for entry in document.get("entries", [])
-        }
+        questions: dict[str, dict[str, Any]] = document.get("questions", {})
+        self.entries = {}
+        for stored in document.get("entries", []):
+            question = stored["question"]
+            if isinstance(question, str):
+                question = questions[question]
+            entry = {**stored, "question": question}
+            self.entries[_entry_key(entry["state"], question, entry["model"])] = entry
         self.dirty = False
 
     def save(self) -> None:
         """Write the cassette to disk, sorted so that diffs are readable."""
         self.path.parent.mkdir(parents=True, exist_ok=True)
+        questions: dict[str, dict[str, Any]] = {}
+        entries = []
+        for entry in sorted(
+            self.entries.values(),
+            key=lambda entry: canonical_json([entry["question"], entry["state"]]),
+        ):
+            reference = _question_key(entry["question"])
+            questions[reference] = entry["question"]
+            entries.append({**entry, "question": reference})
+
         document = {
-            "version": SERIALISATION_VERSION,
-            "entries": sorted(
-                self.entries.values(),
-                key=lambda entry: canonical_json([entry["question"], entry["state"]]),
-            ),
+            "version": CASSETTE_VERSION,
+            "questions": questions,
+            "entries": entries,
         }
         self.path.write_text(
             json.dumps(document, indent=2, ensure_ascii=False, sort_keys=True) + "\n",

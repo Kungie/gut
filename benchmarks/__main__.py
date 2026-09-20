@@ -3,13 +3,36 @@
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 from pathlib import Path
 
 from benchmarks._datasets import benchmarks
-from benchmarks._run import measure_batching, probe, render, render_consistency, run, save
+from benchmarks._run import (
+    measure_batching,
+    measure_latency,
+    probe,
+    render,
+    render_consistency,
+    run,
+    save,
+)
 
 RESULTS = Path(__file__).parent / "results.json"
+
+
+def _recorded_median(name: str, results: Path) -> float:
+    """The live median latency for one benchmark, from a previous timed run.
+
+    Replaying a cassette measures nothing, so the batching comparison quotes a figure that was
+    measured against the real model rather than one it just made up.
+    """
+    if not results.exists():
+        return 0.0
+    for entry in json.loads(results.read_text()):
+        if entry["name"] == name:
+            return float(entry["cost"].get("median_ms", 0.0))
+    return 0.0
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -30,6 +53,11 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--json", type=Path, default=RESULTS, help="where to write the results")
     parser.add_argument(
+        "--latency",
+        action="store_true",
+        help="time a small live sample per benchmark and merge it into the results",
+    )
+    parser.add_argument(
         "--dev-only",
         action="store_true",
         help="ask the dev sample and stop, for judging question wording before the test set",
@@ -42,6 +70,28 @@ def main(argv: list[str] | None = None) -> int:
             f"unknown benchmark(s): {', '.join(unknown)}. Choose from {', '.join(available)}."
         )
     chosen = arguments.names or list(available)
+
+    if arguments.latency:
+        recorded = json.loads(arguments.json.read_text()) if arguments.json.exists() else []
+        by_name = {entry["name"]: entry for entry in recorded}
+        for name in chosen:
+            stats = measure_latency(available[name])
+            median, p95 = stats.percentile(0.5), stats.percentile(0.95)
+            print(
+                f"  {name:<12} median {median:>6.0f} ms   p95 {p95:>6.0f} ms"
+                f"   ({stats.requests} live requests)"
+            )
+            if name in by_name:
+                by_name[name]["cost"] |= {
+                    "median_ms": round(median, 1),
+                    "p95_ms": round(p95, 1),
+                    "timing_from": f"a live sample of {stats.requests}",
+                }
+        arguments.json.write_text(
+            json.dumps(list(by_name.values()), indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        )
+        print(f"merged into {arguments.json}")
+        return 0
 
     if arguments.dev_only:
         for name in chosen:
@@ -61,8 +111,7 @@ def main(argv: list[str] | None = None) -> int:
         print(render_consistency(results))
 
     if {"nlbse-bug", "nlbse-kind"} <= set(chosen):
-        median = next(r.stats.percentile(0.5) for r in results if r.benchmark.name == "nlbse-bug")
-        print(measure_batching(median).render())
+        print(measure_batching(_recorded_median("nlbse-bug", arguments.json)).render())
 
     save(results, arguments.json)
     total = sum(result.stats.cost_usd for result in results)
