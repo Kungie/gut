@@ -40,11 +40,20 @@ from gut._backends import (
     deterministic_rule,
 )
 from gut._cache import Cache, CacheEntry, MemoryCache, NullCache, SQLiteCache
+from gut._calibrators import (
+    CalibrationSet,
+    Calibrator,
+    Entry,
+    Identity,
+    Isotonic,
+    Platt,
+)
 from gut._cassette import Cassette, CassetteBackend, record_requested
 from gut._config import configure, on_unsure
 from gut._decision import BaseDecision, ChoiceDecision, Decision, ScoreDecision
 from gut._errors import (
     BackendError,
+    CalibrationError,
     CassetteMissError,
     ConfigurationError,
     EvalError,
@@ -87,6 +96,9 @@ __all__ = [
     "BaseDecision",
     "Cache",
     "CacheEntry",
+    "CalibrationError",
+    "CalibrationSet",
+    "Calibrator",
     "Cassette",
     "CassetteBackend",
     "CassetteMissError",
@@ -96,11 +108,14 @@ __all__ = [
     "ConfigurationError",
     "Decision",
     "DecisionRecord",
+    "Entry",
     "EvalError",
     "EvalResult",
     "EvalSuite",
     "FakeBackend",
     "GutError",
+    "Identity",
+    "Isotonic",
     "JSONLSink",
     "JevBackend",
     "Judge",
@@ -116,6 +131,7 @@ __all__ = [
     "Outcome",
     "Plan",
     "PlannedQuestion",
+    "Platt",
     "Policy",
     "PolicyError",
     "Preset",

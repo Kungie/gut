@@ -120,6 +120,41 @@ the middle (said `0.28`, happened `0.67`; said `0.52`, happened `1.00`); `bug_re
 over-confident at the top (said `0.92`, happened `0.75`). Good enough to act on, not good enough to
 read literally.
 
+## Fixing what can be fixed
+
+```bash
+gut calibrate predicates/ --cassette cassettes/predicates.json --model jev-1.13.0 \
+    --out calibration.json
+```
+
+Reported out of fold, so the improvement is not self-graded:
+
+| predicate | Brier | ECE | |
+|---|---|---|---|
+| cancel_threat | 0.029 → 0.006 | 0.100 → **0.004** | shipped |
+| urgency | 0.255 → 0.197 | 0.248 → **0.061** | shipped |
+| bug_report | 0.126 → 0.095 | 0.156 → **0.082** | shipped |
+| refund_request | 0.028 → 0.037 | 0.049 → **0.036** | shipped |
+| owning_team | 0.110 → 0.124 | 0.037 → 0.058 | **dropped** |
+
+`owning_team` was already the best-calibrated of the five, so fitting on a hundred examples only
+added noise; a correction that loses out of fold is worse than none and is not written to the file.
+`bug_report` reads an in-sample ECE of `0.007` against `0.082` out of fold, and the tool prints that
+gap rather than the flattering number.
+
+`urgency`'s calibration error falls by four-fifths and its **accuracy does not move at all**. That
+is the correction doing the only thing it can: flattening a signal that does not rank, so the number
+becomes honestly uninformative instead of confidently wrong.
+
+```bash
+gut eval predicates/ --cassette cassettes/predicates.json --model jev-1.13.0 \
+    --calibration calibration.json
+```
+
+That measures the pipeline rather than the model — and on these same examples it is in-sample, which
+the output says. `cancel_threat` comes back at 100% accuracy and an ECE of exactly `0.000`, which is
+the signature of grading a fit on its own training data, not a result.
+
 ## Re-recording
 
 ```bash

@@ -68,11 +68,15 @@ class DecisionRecord:
     """Where the decision was made: module, function, file and line."""
     latency_ms: float | None = None
     p: float | None = None
-    """Probability of yes, for a yes/no decision."""
+    """Probability of yes, for a yes/no decision, after any correction."""
+    raw_p: float | None = None
+    """What the model said before correction, when a calibrator applied."""
     value: str | None = None
     """The chosen member's name, for a classification."""
     score: float | None = None
     confidence: float | None = None
+    raw_confidence: float | None = None
+    """What the model said before correction, when a calibrator applied."""
     probabilities: dict[str, float] | None = None
     costs: dict[str, Any] | None = None
     """The policy that turned the probability into an outcome."""

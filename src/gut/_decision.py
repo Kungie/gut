@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import dataclasses
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 from typing import Generic, Literal, TypeAlias, TypeVar
 
@@ -23,7 +23,7 @@ from gut._config import current_on_unsure, current_sink
 from gut._errors import UnsureDecision
 from gut._log import ResolutionRecord, _jsonable, _now, emit_resolution
 from gut._outcomes import Outcome
-from gut._rule import Policy
+from gut._rule import DEFAULT_POLICY, Policy
 
 DecisionSource: TypeAlias = Literal["backend", "cache", "prefetch"]
 """Where an answer came from: its own request, the cache, or a batch fetched ahead of it."""
@@ -137,8 +137,13 @@ class Decision(BaseDecision):
     """
 
     p: float
-    """Probability that the answer is yes, as reported by the model."""
-    policy: Policy
+    """Probability that the answer is yes, and the number the cost rule was applied to.
+
+    When a calibrator is configured this is the corrected value; `raw_p` is what the model said.
+    """
+    raw_p: float | None = None
+    """What the model said before correction, or `None` when nothing corrected it."""
+    policy: Policy = field(default_factory=lambda: DEFAULT_POLICY)
     """The cost policy that turned `p` into `outcome`."""
 
 
@@ -157,10 +162,12 @@ class ChoiceDecision(BaseDecision, Generic[E]):
     confidence: float
     """How concentrated `probabilities` is, from 0 to 1.
 
-    This is a spread statistic computed from the distribution the answer already gives, **not** a
-    calibrated probability of being correct. Treat it as a flag for review, not as an accuracy
-    estimate.
+    Uncorrected, this is a spread statistic computed from the distribution the answer already
+    gives, **not** a probability of being correct. A fitted calibrator turns it into one, for the
+    task it was fitted on; `raw_confidence` then holds what the model said.
     """
+    raw_confidence: float | None = None
+    """What the model said before correction, or `None` when nothing corrected it."""
     min_confidence: float | None = None
     """The confidence floor applied, if any."""
 
@@ -178,9 +185,10 @@ class ScoreDecision(BaseDecision):
     probabilities: Mapping[int, float]
     """Probability of each level, keyed by level number."""
     confidence: float
-    """How concentrated `probabilities` is, from 0 to 1. A spread statistic, not an accuracy
-    estimate -- see `ChoiceDecision.confidence`."""
-    levels: tuple[str, ...]
+    """How concentrated `probabilities` is, from 0 to 1 -- see `ChoiceDecision.confidence`."""
+    raw_confidence: float | None = None
+    """What the model said before correction, or `None` when nothing corrected it."""
+    levels: tuple[str, ...] = ()
     """The rubric that was asked, in order, so a stored score stays interpretable."""
     min_confidence: float | None = None
     """The confidence floor applied, if any."""
