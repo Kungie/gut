@@ -130,6 +130,27 @@ The SDK ships `py.typed` and is fully annotated; a probe module using `system_on
 and `Score` passes `mypy --strict` with no `ignore_missing_imports`. The override drafted in the
 initial scaffold was removed so that real type errors against the SDK surface instead of being silenced.
 
+## D7 — Outcomes are `Outcome` enum members, matched via a dotted name
+
+**Date:** 2026-09-20
+
+The handoff's example writes `case YES:` / `case NO:` / `case UNSURE:`. That is not valid Python: a
+bare name in a `case` is a *capture* pattern, not a value pattern, so it matches everything and the
+compiler rejects the rest. Verified on 3.10.21:
+
+```
+SyntaxError: name capture 'YES' makes remaining patterns unreachable
+```
+
+Only a dotted name is a value pattern. So the outcomes are members of an `Outcome` enum, exported at
+package level as `gut.YES` / `gut.NO` / `gut.UNSURE`, and the documented spellings are `case gut.YES:`
+or `case Outcome.YES:`. Both were verified to match, against the `Decision` object and against a bare
+outcome, with `Decision.__eq__` comparing on the outcome.
+
+`YES` / `NO` / `UNSURE` are still importable by bare name — they are useful in ordinary comparisons
+(`if d is gut.YES`) — but the README documents the dotted form for `match`, and the test suite asserts
+that the dotted form works rather than silently testing the capture-pattern spelling that always passes.
+
 ---
 
 ## Implementation order

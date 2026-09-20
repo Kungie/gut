@@ -9,15 +9,15 @@ typed, calibrated decision your control flow can branch on — including the bra
 *we don't know yet, ask a human*.
 
 ```python
-from gut import likely, YES, NO, UNSURE
+import gut
 
-d = likely(email, "the customer threatens to cancel",
-           cost_false_yes=2, cost_false_no=50, cost_human=5)
+d = gut.likely(email, "the customer threatens to cancel",
+               cost_false_yes=2, cost_false_no=50, cost_human=5)
 
 match d:
-    case YES:    escalate()
-    case NO:     auto_reply()
-    case UNSURE: ask_human()
+    case gut.YES:    escalate()
+    case gut.NO:     auto_reply()
+    case gut.UNSURE: ask_human()
 ```
 
 You never wrote a threshold. You wrote what each kind of mistake *costs you* — auto-escalating a calm
@@ -128,6 +128,28 @@ with gut.on_unsure("false"):       # local override
 
 The default is `"raise"` on purpose: an unhandled `UNSURE` silently collapsing to `False` is exactly
 the bug this library exists to prevent.
+
+The outcomes are **dotted on purpose**. A bare `case YES:` is not a value pattern in Python — it is a
+capture pattern that matches anything, and the compiler rejects it outright:
+
+```
+SyntaxError: name capture 'YES' makes remaining patterns unreachable
+```
+
+So `gut` exports the outcomes as members of an `Outcome` enum, and either dotted spelling works:
+
+```python
+import gut
+match d:
+    case gut.YES: ...
+
+from gut import Outcome
+match d:
+    case Outcome.YES: ...
+```
+
+`Decision.__eq__` compares against outcomes, so you can match the decision itself rather than reaching
+for `d.outcome`.
 
 ---
 
