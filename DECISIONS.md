@@ -151,6 +151,29 @@ outcome, with `Decision.__eq__` comparing on the outcome.
 (`if d is gut.YES`) — but the README documents the dotted form for `match`, and the test suite asserts
 that the dotted form works rather than silently testing the capture-pattern spelling that always passes.
 
+## D8 — Coverage runs as `coverage run -m pytest`, not through pytest-cov
+
+**Date:** 2026-09-20
+
+`gut` registers its own pytest plugin through the `pytest11` entry point, so installing the package
+makes `--gut-evals` available everywhere. A consequence: pytest imports `gut.pytest_plugin` — and
+therefore `gut/__init__.py` and everything it re-exports — while loading plugins, which happens
+*before* pytest-cov starts measuring. The whole package then reads as unexecuted. Measured directly:
+
+| | reported coverage |
+|---|---|
+| `pytest --cov` | 71% (`_errors.py` 0%, `__init__.py` 0%) |
+| `coverage run -m pytest` | 100% |
+
+Nothing about the tests differed; only when measurement began. Starting coverage as the process
+entry point puts it ahead of plugin loading, so `coverage run -m pytest` is the project's coverage
+command, `pytest-cov` is not a dependency, and CI runs the two steps separately. `fail_under = 95`
+guards the number.
+
+This is worth knowing beyond coverage: **the entry point means `import gut` happens in every pytest
+run of every project that installs it.** Keeping `gut/__init__.py` cheap to import is a real
+constraint, not a nicety.
+
 ---
 
 ## Implementation order

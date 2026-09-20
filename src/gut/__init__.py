@@ -1,8 +1,30 @@
-"""gut — judgment as a programming primitive.
+"""gut -- judgment as a programming primitive.
 
-Public API lands here as the implementation order in DECISIONS.md is worked through.
+Some decisions in code are not logic but judgment: *is this a cancellation threat?*, *which team
+owns this ticket?*, *how angry is this customer?* `gut` makes those first-class, as decisions that
+can come back YES, NO, or UNSURE, and that you configure by what each kind of mistake costs you
+rather than by a threshold you guessed.
+
+The public API is re-exported here. Everything else is private and may move between releases.
 """
+
+from __future__ import annotations
+
+from gut._errors import GutError, PolicyError
+from gut._outcomes import NO, UNSURE, YES, Outcome
+from gut._rule import DEFAULT_POLICY, Policy, policy
 
 __version__ = "0.0.1"
 
-__all__ = ["__version__"]
+__all__ = [
+    "DEFAULT_POLICY",
+    "NO",
+    "UNSURE",
+    "YES",
+    "GutError",
+    "Outcome",
+    "Policy",
+    "PolicyError",
+    "__version__",
+    "policy",
+]

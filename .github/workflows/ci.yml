@@ -40,5 +40,9 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - run: uv sync --all-extras
       # No TYPESAFE_API_KEY in CI: the whole suite must pass offline.
+      # Coverage runs as `coverage run -m pytest` rather than through pytest-cov, so that it starts
+      # before pytest loads gut's own pytest11 plugin and therefore sees the package import. See D8.
       - name: pytest
-        run: uv run pytest --cov --cov-report=term-missing
+        run: uv run coverage run -m pytest
+      - name: coverage
+        run: uv run coverage report
