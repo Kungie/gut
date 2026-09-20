@@ -108,7 +108,8 @@ def _name(team: gut.ChoiceDecision[Team]) -> str:
 
 def load_tickets() -> list[dict[str, Any]]:
     """The demo dataset, labels included."""
-    return json.loads(TICKETS.read_text(encoding="utf-8"))
+    loaded: list[dict[str, Any]] = json.loads(TICKETS.read_text(encoding="utf-8"))
+    return loaded
 
 
 def state_of(ticket: dict[str, Any]) -> dict[str, str]:
