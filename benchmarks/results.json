@@ -95,9 +95,10 @@
     },
     "citation": "Larson et al. 2019, An Evaluation Dataset for Intent Classification and Out-of-Scope Prediction (EMNLP-IJCNLP)",
     "cost": {
-      "median_ms": 0.1,
-      "p95_ms": 0.2,
+      "median_ms": 310.3,
+      "p95_ms": 1348.0,
       "requests": 740,
+      "timing_from": "a live sample of 40",
       "usd": 0.03602
     },
     "dev_size": 190,
@@ -639,10 +640,10 @@
     },
     "citation": "NLBSE'24 issue report classification tool competition",
     "cost": {
-      "median_ms": 306.1,
-      "p95_ms": 726.7,
+      "median_ms": 295.1,
+      "p95_ms": 730.7,
       "requests": 702,
-      "timing_from": "the recording run",
+      "timing_from": "a live sample of 40",
       "usd": 0.00921
     },
     "dev_size": 201,
@@ -975,10 +976,10 @@
     },
     "citation": "NLBSE'24 issue report classification tool competition",
     "cost": {
-      "median_ms": 312.2,
-      "p95_ms": 714.1,
+      "median_ms": 305.5,
+      "p95_ms": 698.3,
       "requests": 702,
-      "timing_from": "the recording run",
+      "timing_from": "a live sample of 40",
       "usd": 0.01031
     },
     "dev_size": 201,
@@ -1093,6 +1094,350 @@
       {
         "automatic": 500,
         "coverage": 1.0,
+        "error_rate": 0.284,
+        "false_no": 120,
+        "false_yes": 22,
+        "posture": "threshold=0.7",
+        "total": 500,
+        "wrong": 142
+      },
+      {
+        "automatic": 500,
+        "coverage": 1.0,
+        "error_rate": 0.42,
+        "false_no": 197,
+        "false_yes": 13,
+        "posture": "the #irony / #sarcasm hashtag itself",
+        "total": 500,
+        "wrong": 210
+      }
+    ],
+    "calibration": {
+      "fitted": {
+        "bins": [
+          {
+            "count": 113,
+            "high": 0.2,
+            "low": 0.0,
+            "observed": 0.141593,
+            "predicted": 0.098903
+          },
+          {
+            "count": 129,
+            "high": 0.4,
+            "low": 0.2,
+            "observed": 0.372093,
+            "predicted": 0.317764
+          },
+          {
+            "count": 151,
+            "high": 0.6,
+            "low": 0.4,
+            "observed": 0.543046,
+            "predicted": 0.476743
+          },
+          {
+            "count": 36,
+            "high": 0.8,
+            "low": 0.6,
+            "observed": 0.805556,
+            "predicted": 0.712535
+          },
+          {
+            "count": 71,
+            "high": 1.0,
+            "low": 0.8,
+            "observed": 0.915493,
+            "predicted": 0.96209
+          }
+        ],
+        "brier": 0.185785,
+        "count": 500,
+        "ece": 0.057003,
+        "reliable": true
+      },
+      "raw": {
+        "bins": [
+          {
+            "count": 87,
+            "high": 0.2,
+            "low": 0.0,
+            "observed": 0.114943,
+            "predicted": 0.13069
+          },
+          {
+            "count": 116,
+            "high": 0.4,
+            "low": 0.2,
+            "observed": 0.318966,
+            "predicted": 0.291466
+          },
+          {
+            "count": 112,
+            "high": 0.6,
+            "low": 0.4,
+            "observed": 0.464286,
+            "predicted": 0.496786
+          },
+          {
+            "count": 78,
+            "high": 0.8,
+            "low": 0.6,
+            "observed": 0.602564,
+            "predicted": 0.698077
+          },
+          {
+            "count": 107,
+            "high": 1.0,
+            "low": 0.8,
+            "observed": 0.878505,
+            "predicted": 0.899346
+          }
+        ],
+        "brier": 0.182268,
+        "count": 500,
+        "ece": 0.03576,
+        "reliable": true
+      }
+    },
+    "citation": "Van Hee, Lefever & Hoste 2018, SemEval-2018 Task 3 (irony detection), via Barbieri et al. 2020, TweetEval (Findings of EMNLP)",
+    "cost": {
+      "median_ms": 291.6,
+      "p95_ms": 866.1,
+      "requests": 700,
+      "timing_from": "a live sample of 40",
+      "usd": 0.00258
+    },
+    "dev_size": 200,
+    "licence": "none declared; not redistributable",
+    "model": "jev-1.13.0",
+    "name": "irony",
+    "out_of_scope": null,
+    "postures": {
+      "calibrated": [
+        {
+          "automatic": 500,
+          "coverage": 1.0,
+          "error_rate": 0.316,
+          "false_no": 143,
+          "false_yes": 15,
+          "posture": "no arguments",
+          "total": 500,
+          "wrong": 158
+        },
+        {
+          "automatic": 349,
+          "coverage": 0.698,
+          "error_rate": 0.2206,
+          "false_no": 64,
+          "false_yes": 13,
+          "posture": "stakes=low    lean=none",
+          "total": 500,
+          "wrong": 77
+        },
+        {
+          "automatic": 371,
+          "coverage": 0.742,
+          "error_rate": 0.2642,
+          "false_no": 16,
+          "false_yes": 82,
+          "posture": "stakes=low    lean=yes",
+          "total": 500,
+          "wrong": 98
+        },
+        {
+          "automatic": 464,
+          "coverage": 0.928,
+          "error_rate": 0.3276,
+          "false_no": 146,
+          "false_yes": 6,
+          "posture": "stakes=low    lean=no",
+          "total": 500,
+          "wrong": 152
+        },
+        {
+          "automatic": 196,
+          "coverage": 0.392,
+          "error_rate": 0.1224,
+          "false_no": 16,
+          "false_yes": 8,
+          "posture": "stakes=medium lean=none",
+          "total": 500,
+          "wrong": 24
+        },
+        {
+          "automatic": 208,
+          "coverage": 0.416,
+          "error_rate": 0.125,
+          "false_no": 14,
+          "false_yes": 12,
+          "posture": "stakes=medium lean=yes",
+          "total": 500,
+          "wrong": 26
+        },
+        {
+          "automatic": 281,
+          "coverage": 0.562,
+          "error_rate": 0.2171,
+          "false_no": 55,
+          "false_yes": 6,
+          "posture": "stakes=medium lean=no",
+          "total": 500,
+          "wrong": 61
+        },
+        {
+          "automatic": 118,
+          "coverage": 0.236,
+          "error_rate": 0.0847,
+          "false_no": 7,
+          "false_yes": 3,
+          "posture": "stakes=high   lean=none",
+          "total": 500,
+          "wrong": 10
+        },
+        {
+          "automatic": 67,
+          "coverage": 0.134,
+          "error_rate": 0.0896,
+          "false_no": 0,
+          "false_yes": 6,
+          "posture": "stakes=high   lean=yes",
+          "total": 500,
+          "wrong": 6
+        },
+        {
+          "automatic": 161,
+          "coverage": 0.322,
+          "error_rate": 0.1118,
+          "false_no": 16,
+          "false_yes": 2,
+          "posture": "stakes=high   lean=no",
+          "total": 500,
+          "wrong": 18
+        }
+      ],
+      "raw": [
+        {
+          "automatic": 500,
+          "coverage": 1.0,
+          "error_rate": 0.284,
+          "false_no": 73,
+          "false_yes": 69,
+          "posture": "no arguments",
+          "total": 500,
+          "wrong": 142
+        },
+        {
+          "automatic": 385,
+          "coverage": 0.77,
+          "error_rate": 0.2364,
+          "false_no": 47,
+          "false_yes": 44,
+          "posture": "stakes=low    lean=none",
+          "total": 500,
+          "wrong": 91
+        },
+        {
+          "automatic": 384,
+          "coverage": 0.768,
+          "error_rate": 0.2969,
+          "false_no": 10,
+          "false_yes": 104,
+          "posture": "stakes=low    lean=yes",
+          "total": 500,
+          "wrong": 114
+        },
+        {
+          "automatic": 421,
+          "coverage": 0.842,
+          "error_rate": 0.2708,
+          "false_no": 102,
+          "false_yes": 12,
+          "posture": "stakes=low    lean=no",
+          "total": 500,
+          "wrong": 114
+        },
+        {
+          "automatic": 238,
+          "coverage": 0.476,
+          "error_rate": 0.1387,
+          "false_no": 16,
+          "false_yes": 17,
+          "posture": "stakes=medium lean=none",
+          "total": 500,
+          "wrong": 33
+        },
+        {
+          "automatic": 216,
+          "coverage": 0.432,
+          "error_rate": 0.213,
+          "false_no": 6,
+          "false_yes": 40,
+          "posture": "stakes=medium lean=yes",
+          "total": 500,
+          "wrong": 46
+        },
+        {
+          "automatic": 263,
+          "coverage": 0.526,
+          "error_rate": 0.1825,
+          "false_no": 42,
+          "false_yes": 6,
+          "posture": "stakes=medium lean=no",
+          "total": 500,
+          "wrong": 48
+        },
+        {
+          "automatic": 73,
+          "coverage": 0.146,
+          "error_rate": 0.0685,
+          "false_no": 2,
+          "false_yes": 3,
+          "posture": "stakes=high   lean=none",
+          "total": 500,
+          "wrong": 5
+        },
+        {
+          "automatic": 71,
+          "coverage": 0.142,
+          "error_rate": 0.0845,
+          "false_no": 0,
+          "false_yes": 6,
+          "posture": "stakes=high   lean=yes",
+          "total": 500,
+          "wrong": 6
+        },
+        {
+          "automatic": 83,
+          "coverage": 0.166,
+          "error_rate": 0.0723,
+          "false_no": 6,
+          "false_yes": 0,
+          "posture": "stakes=high   lean=no",
+          "total": 500,
+          "wrong": 6
+        }
+      ]
+    },
+    "published": "TweetEval reports 82.1 (irony-class F1) for a fine-tuned BERTweet",
+    "split": {
+      "dev": {
+        "irony": 96,
+        "plain": 104
+      },
+      "test": {
+        "irony": 240,
+        "plain": 260
+      }
+    },
+    "test_size": 500,
+    "what": "reading tone rather than content -- the thing a literal reader is worst at"
+  },
+  {
+    "baselines": [
+      {
+        "automatic": 500,
+        "coverage": 1.0,
         "error_rate": 0.024,
         "false_no": 11,
         "false_yes": 1,
@@ -1180,10 +1525,10 @@
     },
     "citation": "Almeida, Gomez Hidalgo & Yamakami 2011, SMS Spam Collection v.1 (UCI, DOI 10.24432/C5CC84)",
     "cost": {
-      "median_ms": 322.0,
-      "p95_ms": 1002.5,
+      "median_ms": 311.7,
+      "p95_ms": 705.6,
       "requests": 700,
-      "timing_from": "the recording run",
+      "timing_from": "a live sample of 40",
       "usd": 0.0019
     },
     "dev_size": 200,

@@ -3,7 +3,7 @@
 [← docs index](README.md)
 
 Everything else in this repository is measured against 101 tickets written for it. This page is
-not. Three public datasets with published labels, sampled once with a fixed seed, asked once.
+not. Four public datasets with published labels, sampled once with a fixed seed, asked once.
 
 **These are not `gut`'s accuracy figures.** Accuracy, Brier score and calibration error are the
 model's — they belong here as the baseline, and reporting them as `gut`'s result would be taking
@@ -12,7 +12,7 @@ afterwards: how much error it removes from the decisions it makes on its own, at
 coverage, and what it does with an input that fits nothing.
 
 ```bash
-python -m benchmarks                 # all four, offline from the committed recordings
+python -m benchmarks                 # all five, offline from the committed recordings
 python -m benchmarks clinc           # one
 python -m benchmarks --record        # against the live model; needs TYPESAFE_API_KEY
 ```
@@ -37,10 +37,10 @@ The protocol is ordinary. The discipline is the point.
   was asked, so the whole sweep is computed afterwards from those probabilities — which also means
   every posture is scored on identical model answers.
 
-Total: **2,844 requests, $0.057**, median 306–331 ms per request, p95 714–1002 ms.
+Total: **3,544 requests, $0.060**, median 292–312 ms per request, p95 698–1348 ms.
 
-> **Read this before the numbers.** CLINC150, the SMS Spam Collection and the NLBSE issue corpus
-> are well known and public. They may be in the model's training data, and if they are, everything
+> **Read this before the numbers.** CLINC150, the SMS Spam Collection, the NLBSE issue corpus
+> and the TweetEval irony set are well known and public. They may be in the model's training data, and if they are, everything
 > below is optimistic. That is an argument for measuring your own task with
 > [`gut eval`](trusting-it.md), not for trusting these.
 
@@ -49,8 +49,9 @@ Total: **2,844 requests, $0.057**, median 306–331 ms per request, p95 714–10
 | [CLINC150](https://github.com/clinc/oos-eval) — 151-way intent routing with out-of-scope | CC BY 3.0 per the dataset card | yes |
 | [NLBSE'24 issues](https://github.com/nlbse2024/issue-report-classification) — real GitHub issues | none declared | **no** — re-record it |
 | [SMS Spam Collection](https://archive.ics.uci.edu/dataset/228/sms+spam+collection) | CC BY 4.0 | yes |
+| [TweetEval irony](https://github.com/cardiffnlp/tweeteval) — SemEval-2018 Task 3 | none declared | **no** — re-record it |
 
-Banking77, TweetEval and GoEmotions were skipped. See [D31](../DECISIONS.md) for how each licence
+Banking77 and GoEmotions were skipped. See [D31](../DECISIONS.md) for how each licence
 was checked and what follows from it.
 
 ---
@@ -130,6 +131,63 @@ decision you are making, not for the average.**
 
 ---
 
+## Irony — where the model is weakest, and most useful anyway
+
+This one was added to answer a specific question: *should `gut` have a `tone()` function?* The
+answer turned on whether the model can read tone at all, so it was measured rather than argued
+about. 500 tweets from SemEval-2018 Task 3, 48% ironic — near-balanced, so a coin flip errs 50%.
+
+Sarcasm is the hardest thing on this page for a literal reader, and Jev's documented weakness is
+that it reads instructions literally. Note the base rate: at 48% ironic, guessing errs 50%, so
+there is nowhere for a weak result to hide.
+
+| | coverage | error |
+|---|---|---|
+| the `#irony` / `#sarcasm` hashtag itself | 100% | **42.0%** |
+| hard threshold at `0.7` | 100% | 28.4% |
+| `likely(tweet, "…")` with no arguments | 100% | 28.4% |
+| `ask_human=True, stakes="medium"` | 48% | 13.9% |
+| `ask_human=True, stakes="high"` | 15% | **6.8%** |
+
+*Jev: Brier 0.182, ECE 0.036. TweetEval reports 82.1 irony-class F1 for a fine-tuned BERTweet.*
+
+**The model is bad at this and honest about it, and those are different things.** 28.4% error is
+weak — a fine-tuned BERTweet is far better. But ECE 0.036 is the second-best calibration on this
+page, better than the CLINC router that is three times more accurate. The model does not know
+which tweets are ironic; it *does* know which ones it cannot read.
+
+That is the whole mechanism in one result. `gut` cannot make a model accurate. It can spend the
+model's honesty: declining 85% of the queue turns 28.4% error into **6.8%**, a 4× reduction. And
+it does it on the task where the model comes closest to guessing — 28.4% against a chance rate of
+50% is a narrower margin over a coin than anything else here, including `nlbse-kind`'s nominally
+higher 30.7% on a three-way choice.
+
+`nlbse-kind` is the control, and the comparison is the point: the model is about as inaccurate
+there, but *over*confident (ECE 0.174 against 0.036), and the same move only reaches 18.8%.
+Accuracy is not what `gut` spends. Honesty is.
+
+Calibration added nothing here (Brier 0.182 → 0.186) for the same reason: there was little
+dishonesty left to correct.
+
+### The hashtag check
+
+SemEval built this corpus by searching for `#irony` and `#sarcasm`, so before trusting any of the
+above: 14.1% of the ironic tweets still carry one of those tags, against 5.0% of the plain ones.
+The leak is real but small, and the baseline row measures it — reading the tag off the text errs
+**42%**, worse than answering at random on a balanced set. Whatever the model is doing, it is not
+that.
+
+### So, `tone()`?
+
+No. `tone(msg, "sarcastic")` is `likely(msg, "…is sarcastic")` with a narrower vocabulary, and
+adding it invites `sentiment()`, `urgency()` and `intent()` behind it. Tone is a *subject*, not a
+shape of question — and this result is the argument for keeping it that way: the thing worth
+knowing is not a helper name, it is that this question needs `stakes="high"` to be usable at all.
+A `tone()` returning a bare label would have hidden exactly that. See
+[D36](../DECISIONS.md).
+
+---
+
 ## NLBSE'24 GitHub issues
 
 501 real issues from five projects, balanced across bug / feature / question. Two questions about
@@ -179,7 +237,7 @@ The two judgments above are about the *same* issue, so they are a single request
   asked together      501 requests   (50% fewer)
 ```
 
-At the measured median of 306 ms, that is 153 seconds of serial latency not spent, and the issue
+At the measured median of 295 ms, that is 148 seconds of serial latency not spent, and the issue
 text billed once instead of twice.
 
 ---
@@ -200,6 +258,7 @@ places.
 | clinc | 76% | 7.6% | 63% | 3.8% | yes |
 | nlbse-bug | 75% | 20.2% | 71% | 10.6% | yes |
 | nlbse-kind | 83% | 24.9% | 74% | 22.3% | yes |
+| irony | 48% | 13.9% | 39% | 12.2% | yes |
 | sms | 95% | 0.4% | 100% | 1.6% | yes |
 
 **The bound held everywhere.** The spread did not narrow much — 24.5% raw, 20.7% calibrated — and
@@ -216,7 +275,9 @@ it was never going to. `stakes="medium"` is a promise about margin, not about ou
   queue.
 - Letting a classifier say "none of these" is worth more than any tuning: CLINC's error falls from
   26.2% to 11.5% for the price of one extra enum member.
-- No training, no labelled data, no model to host. 2,844 judgments for 5.7 cents.
+- Most clearly where the model is *weakest*: irony goes 28.4% → 6.8%, because being wrong often
+  and being overconfident are independent, and `gut` only needs the second one to be false.
+- No training, no labelled data, no model to host. 3,544 judgments for 6.0 cents.
 - Two judgments about one subject cost one request.
 
 **Where it loses.**
@@ -226,7 +287,10 @@ it was never going to. `stakes="medium"` is a promise about margin, not about ou
   data and volume, train something.
 - On genuinely hard multiway routing, abstention buys less than you would hope: NLBSE's three-way
   task still errs 19% of the time after declining 45% of the queue.
-- Calibration is not a free improvement. On SMS it removed the third branch entirely.
+- Calibration is not a free improvement. On SMS it removed the third branch entirely, and on irony
+  it did nothing at all.
+- Coverage can collapse. Irony's 6.8% is real, but it is 6.8% of the 15% of tweets the model was
+  willing to call. If you need an answer for every input, this page offers you 28.4%.
 
 **What has not been tested.** Every number here comes from one model. The strongest evidence that
 `gut`'s value is in `gut` rather than in Jev would be repeating this against a second backend — an
@@ -244,11 +308,11 @@ CLINC and SMS replay from committed recordings with no API key:
 python -m benchmarks clinc sms
 ```
 
-The NLBSE recordings are not in the repository — the issue text is third-party GitHub content
-under no declared licence. Regenerate them with a key:
+The NLBSE and irony recordings are not in the repository — the issue text and the tweets are
+third-party content under no declared licence. Regenerate them with a key:
 
 ```bash
-TYPESAFE_API_KEY=... python -m benchmarks nlbse-bug nlbse-kind --record
+TYPESAFE_API_KEY=... python -m benchmarks nlbse-bug nlbse-kind irony --record
 ```
 
 Machine-readable results, including the full posture sweeps and reliability tables, are in

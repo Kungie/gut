@@ -836,6 +836,65 @@ The general lesson, and it belongs in the docs rather than only here: **calibrat
 you are making, not for the average.** If abstention matters, check that the corrected
 probabilities still reach the middle.
 
+## D36 — No `tone()`, and the benchmark that settles it
+
+**Date:** 2026-09-20
+
+Asked for directly: *should there be a `tone(msg, "sarcastic")`?*
+
+The API answer is no, and it is the same answer as for `sentiment()`, `spam()` and `intent()`:
+`tone(msg, "sarcastic")` is `likely(msg, "…the author is being sarcastic…")` with a smaller
+vocabulary. Tone is a subject, not a shape of question. `gut` has three shapes — is it true, which
+one, how much — and a fourth entry point that collapses to the first buys nothing and costs the
+library a boundary it currently keeps.
+
+But the question underneath it was real, and not answerable from the armchair: **can the model
+read tone at all?** Jev's documented weakness is literal reading, and sarcasm is exactly what a
+literal reader misses. So TweetEval's irony set was added as a fifth benchmark
+([docs/benchmarks.md](docs/benchmarks.md)), and it turned out to be the clearest demonstration of
+the mechanism on the page:
+
+- 28.4% error with no arguments, against a 48% base rate. The model is genuinely bad at this.
+- ECE **0.036** — the second-best calibration of the five, better than the CLINC router that is
+  three times more accurate.
+- `stakes="high"` reaches **6.8% error at 15% coverage**: a 4× reduction, on the task where the
+  model comes closest to guessing. (Not the highest raw error on the page — `nlbse-kind` is 30.7%
+  — but that is a three-way choice where chance errs 67%; here chance errs 50%.)
+
+Being frequently wrong and being overconfident are independent properties, and `gut` only requires
+the second to be false. `nlbse-kind` is the control: similar accuracy, ECE 0.174, and the same
+posture only reaches 18.8%.
+
+Three wordings were tried on dev before freezing, and they landed within one point of each other
+(66.0–67.0%). Naming the failure mode in the prompt — "dry understatement, fake enthusiasm" —
+bought 0.5 points. The ceiling belongs to the model, not to the prompt, which is worth recording
+because the opposite is usually assumed.
+
+The cassette is not committed: the tweets are third-party content under no declared licence, the
+same call as NLBSE in [D31](#d31).
+
+What the docs get instead of a function: the irony section, and the point that this question is
+only usable at `stakes="high"`. A `tone()` returning a bare label would have hidden precisely that.
+
+## D37 — Running one benchmark deleted the other four
+
+**Date:** 2026-09-20
+
+`save()` wrote the results of the current run and nothing else, so `python -m benchmarks irony`
+replaced a five-entry `results.json` with a one-entry one. It already had a guard for the related
+problem — an offline replay measures ~0 ms, so recorded latencies were protected from being
+overwritten with zeros — and that guard was defeated by this one: the entries were not overwritten,
+they were dropped, and the next full run found nothing to restore from. Four live latency
+measurements were lost and had to be re-measured.
+
+`save()` now merges into the file and keeps entries it did not rerun, and `--latency` says so out
+loud when a benchmark has no scored run to merge into rather than skipping it silently. Three
+tests in `tests/test_benchmarks.py` cover it, named after the failures rather than the functions.
+
+Worth the entry because of the shape: a guard that protects a value against being *changed* does
+nothing about it being *deleted*, and the deletion was invisible — the file was still valid JSON
+and the run still printed a table.
+
 ## Next steps, noted and not started
 
 - **A second backend.** Every benchmark number comes from one model. The strongest evidence that
@@ -846,7 +905,7 @@ probabilities still reach the middle.
 - Fitting calibrators from resolved production decisions (`resolve()`) rather than only from eval
   files, which is where the data actually accumulates.
 - More datasets: GoEmotions would re-test D23's finding about `rate` confidence on real data,
-  which is the one primitive the current three do not exercise.
+  which is the one primitive the current five do not exercise.
 - A written specification separate from the docs.
 - Agent skills, so a coding agent can use `gut` without reading the whole README.
 - `async` support in `@semantic`, which today declines rather than blocking an event loop.

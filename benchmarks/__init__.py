@@ -1,7 +1,7 @@
 """Measuring `gut` on real, public, labelled data.
 
 Everything else in this repository is measured against 101 tickets written for it. These are not.
-Three public datasets with known labels, sampled once with a fixed seed, asked once, and scored
+Four public datasets with known labels, sampled once with a fixed seed, asked once, and scored
 against what a developer would otherwise have written.
 
 The point is not the model's accuracy -- that is Jev's number, and it belongs here only as the

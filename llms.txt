@@ -16,7 +16,7 @@ dependency. Python 3.10+, Apache-2.0.
 
 ## Reference
 
-- [docs/benchmarks.md](docs/benchmarks.md): measurements on three public datasets. Forced to pick
+- [docs/benchmarks.md](docs/benchmarks.md): measurements on four public datasets. Forced to pick
   one of 151 intents a classifier errs 26%; allowed to decline and to ask a person, 7.6% at 76%
   coverage. Also where gut loses to a trained model.
 - [DECISIONS.md](DECISIONS.md): every design decision with its reasoning, including the measured
