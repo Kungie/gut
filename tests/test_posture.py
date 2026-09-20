@@ -199,6 +199,7 @@ def test_unrecognised_words_are_rejected(
 # --------------------------------------------------------------------------- classify and rate
 
 
+@pytest.mark.filterwarnings("ignore:stakes/ask_human on rate")
 @pytest.mark.parametrize(("stakes", "floor"), STAKES_CONFIDENCE.items())
 def test_posture_becomes_a_confidence_floor(
     backend: FakeBackend, stakes: Stakes, floor: float
@@ -207,6 +208,7 @@ def test_posture_becomes_a_confidence_floor(
     assert gut.rate("t", ["a", "b"], stakes=stakes, ask_human=True).min_confidence == floor
 
 
+@pytest.mark.filterwarnings("ignore:stakes/ask_human on rate")
 def test_a_low_confidence_answer_reaches_a_person(backend: FakeBackend) -> None:
     # FakeBackend answers a choice with 0.9 confidence, which clears every floor...
     assert gut.classify("t", Team, stakes="high", ask_human=True).outcome is Outcome.YES
@@ -220,6 +222,7 @@ def test_without_ask_human_nothing_is_gated(backend: FakeBackend) -> None:
     assert gut.rate("t", ["a", "b"]).min_confidence is None
 
 
+@pytest.mark.filterwarnings("ignore:stakes/ask_human on rate")
 def test_classify_cannot_mix_the_layers(backend: FakeBackend) -> None:
     with pytest.raises(PolicyError, match="not both"):
         gut.classify("t", Team, ask_human=True, min_confidence=0.9)
@@ -239,6 +242,33 @@ def test_stakes_on_classify_without_a_human_warns(backend: FakeBackend) -> None:
 def test_bad_stakes_on_classify_is_rejected(backend: FakeBackend) -> None:
     with pytest.raises(PolicyError, match="stakes must be one of"):
         gut.classify("t", Team, stakes="enormous", ask_human=True)  # type: ignore[arg-type]
+
+
+def test_a_posture_on_rate_warns_about_what_we_measured(backend: FakeBackend) -> None:
+    """D23 found `rate` confidence running the wrong way on a real task, so a floor built on it
+    may route away exactly the answers worth keeping. Warn, do not refuse: the mechanism is fine
+    and the caller's task may not be the one we measured."""
+    with pytest.warns(UserWarning, match="spread statistic rather than a probability"):
+        decision = gut.rate("t", ["a", "b", "c"], stakes="high", ask_human=True)
+    assert decision.min_confidence == STAKES_CONFIDENCE["high"]  # it still applies
+
+
+def test_classify_does_not_get_that_warning(backend: FakeBackend) -> None:
+    """The same measurement found `classify` confidence to be the best calibrated of the five."""
+    import warnings
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        gut.classify("t", Team, stakes="high", ask_human=True)
+
+
+def test_an_explicit_floor_on_rate_is_left_alone(backend: FakeBackend) -> None:
+    """A number the caller chose is a decision, not a default worth second-guessing."""
+    import warnings
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        gut.rate("t", ["a", "b", "c"], min_confidence=0.8)
 
 
 def test_min_confidence_for_is_usable_directly() -> None:

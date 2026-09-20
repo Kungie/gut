@@ -24,6 +24,13 @@ nothing here is simulated.
 
 ## The dataset
 
+> **All of it is synthetic.** The 101 tickets, every label, and the judgement that 26 of them are
+> ambiguous were written for this repository. Every number below therefore measures **agreement
+> with those labels**, not real-world performance, and the difficulty of the set is one author's
+> opinion rather than something the world imposed. Useful for showing what the tools surface and
+> for catching regressions; not evidence about how Jev behaves on your data. A real public dataset
+> is a [next step](../../DECISIONS.md).
+
 Written to be awkward on purpose. The 26 hard ones include:
 
 - **"How do I cancel?"** — every churn keyword, zero churn risk. It is an upgrade.

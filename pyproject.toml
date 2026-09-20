@@ -1,7 +1,7 @@
 [project]
 name = "gut"
 version = "0.0.1"
-description = "A gut feeling that knows when to ask: judgment as a programming primitive."
+description = "A gut feeling that knows when to ask. Judgment calls in Python, in one line, that can also answer UNSURE."
 readme = "README.md"
 requires-python = ">=3.10"
 license = "Apache-2.0"

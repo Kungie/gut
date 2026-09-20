@@ -11,7 +11,8 @@ dependency. Python 3.10+, Apache-2.0.
 
 - [SKILL.md](skills/gut/SKILL.md): the compact usage guide. Correct spellings, the traps, and the
   rules of thumb. Read this one if you are writing code that uses gut.
-- [README.md](README.md): the full guide, in the order the ideas build.
+- [README.md](README.md): the pitch. What problem this solves and what it looks like, in two screens.
+- [docs/README.md](docs/README.md): the full guide, one page per idea.
 
 ## Reference
 
