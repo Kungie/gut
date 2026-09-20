@@ -11,7 +11,7 @@ behavior**, write it down here, and move on.
 **Date:** 2026-09-20
 
 From *gut feeling* — the everyday phrase for exactly the kind of fast, confident-but-fallible
-judgment this library makes programmable. Four letters, available on PyPI and TestPyPI, not a Python
+judgment this library makes programmable. Three letters, available on PyPI and TestPyPI, not a Python
 keyword, no stdlib collision, and it reads well at the call site: `gut.likely(...)`, `gut.YES`.
 
 The name appears in exactly one place for packaging metadata (`pyproject.toml`) and one package
