@@ -146,7 +146,8 @@ import gut
 gut.configure(backend=gut.FakeBackend(answers={"is a bug report": 0.91}))
 ```
 
-Full documentation: [`docs/`](../../docs/README.md).
+Full documentation: [`docs/`](../../docs/README.md). Measured results:
+[`docs/benchmarks.md`](../../docs/benchmarks.md).
 
 ## Rules of thumb
 
@@ -161,3 +162,9 @@ Full documentation: [`docs/`](../../docs/README.md).
    subject can influence the answer, and `gut` does no taint tracking.
 7. **Measure before trusting a number.** `confidence` on `classify` and `rate` is a spread
    statistic, not a probability of being right, and it does not hold up on every task.
+8. **`lean` can make things worse.** It says which mistake *you* find worse, not which way the
+   model already leans. On a benchmark where the model over-predicted "bug" 10:1, `lean="yes"`
+   raised the error rate and `lean="no"` lowered it. Check with `gut eval`.
+9. **Calibrate for the decision, not the average.** A fitted correction can push every probability
+   to 0 or 1, which improves average calibration and silently disables `ask_human` — no band can
+   contain a 0. `gut calibrate` warns when a fit does this.

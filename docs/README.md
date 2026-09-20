@@ -13,6 +13,7 @@ Read in this order if you are new. Jump straight to the page you need if you are
 | [Exact costs](exact-costs.md) | The cost model underneath the posture words, its formula, and the trap in it. |
 | [Caching, logging, and backends](caching-and-logging.md) | The cache, the decision log, and the backend protocol. |
 | [Why Jev](why-jev.md) | What makes a judgment cheap enough to put inside an `if`, and the vendor's own numbers. |
+| [Benchmarks](benchmarks.md) | Three public datasets, measured: what `gut` adds to a model's probabilities, and where it loses. |
 | [Honest limitations](limitations.md) | What the model is bad at, what `gut` does not do, and what its numbers do not mean. |
 
 Also worth knowing about:
