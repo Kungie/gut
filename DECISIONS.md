@@ -327,6 +327,30 @@ Leaving the `with` block resolves nothing either. Forcing resolution on exit wou
 nobody read, which is the opposite of what an explicit API should do. The block only stops further
 registration; existing handles still resolve afterwards.
 
+## D16 — The decision log is off by default, and can never break a decision
+
+**Date:** 2026-09-20
+
+Two rules, both about a library writing to someone else's disk.
+
+**Off by default.** The default sink writes nothing, and `recording()` short-circuits record
+construction entirely so an unconfigured install pays nothing per decision. A library that starts
+writing files nobody asked for is a library people configure around.
+
+**A broken sink is swallowed.** Emission is wrapped, failures are logged at warning level, and the
+decision proceeds. Logging is observability, not correctness — a full disk must not turn a working
+classifier into an outage.
+
+The record carries the canonical question and the resolved model version, not just the id, so a log
+line stays interpretable without the code that produced it and without guessing which model answered.
+`site` records file and line for a human chasing it down, while the id is built from module and
+function (D11) — the log keeps both, and only one of them is identity.
+
+`resolve(actual=...)` exists now although nothing reads it. Calibration is explicitly out of scope
+for this release, but it is impossible to build retroactively: a decision that was never recorded
+cannot be checked against an outcome. Shipping the data path first is the difference between
+answering "is this calibrated on my data?" from existing logs and answering it six months late.
+
 ---
 
 ## Implementation order

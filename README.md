@@ -256,6 +256,38 @@ pytest                 # replays them: fast, offline, deterministic
 
 ---
 
+## The decision log
+
+Every decision can be recorded as it is made: the site id, the probability, the costs applied, the
+exact model version that answered, where it came from, and where in your code it was made.
+
+```python
+gut.configure(sink=gut.JSONLSink("decisions.jsonl"))
+```
+
+```json
+{"type":"decision","id":"079e4383c5e05c1f","kind":"noul","outcome":"yes","model":"jev-1.13.0",
+ "source":"backend","p":0.83,"costs":{"cost_false_yes":2.0,"cost_false_no":50.0,"cost_human":5.0},
+ "question":{"type":"noul","instructions":"the customer threatens to cancel"},
+ "site":{"module":"app.inbox","function":"handle","file":"app/inbox.py","line":41}}
+```
+
+When you find out what actually happened, say so:
+
+```python
+decision.resolve(actual=True, note="customer did churn")
+```
+
+Nothing consumes resolutions yet — there is no calibration in this release. The point is that the
+data path exists from the start, so the first question anyone asks of a system like this — *is it
+actually calibrated on my data?* — is answerable from logs that were already being written, instead
+of from an instrumentation project begun after the doubt arrives.
+
+Nothing is recorded unless you ask. Logging is observability, never correctness: a sink that raises
+is reported and swallowed, because a broken log must not break a decision.
+
+---
+
 ## Honest limitations
 
 - **Jev reads instructions literally** and is weak at counting, arithmetic, and date comparison. Don't

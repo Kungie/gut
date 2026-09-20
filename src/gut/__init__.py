@@ -36,6 +36,14 @@ from gut._errors import (
     UnsureDecision,
 )
 from gut._judge import Judge, Lazy, judge
+from gut._log import (
+    DecisionRecord,
+    JSONLSink,
+    MemorySink,
+    NullSink,
+    ResolutionRecord,
+    Sink,
+)
 from gut._outcomes import NO, UNSURE, YES, Outcome
 from gut._questions import ChoiceSpec, NoulSpec, ScoreSpec
 from gut._rule import DEFAULT_POLICY, Policy, policy
@@ -63,26 +71,32 @@ __all__ = [
     "ChoiceSpec",
     "ConfigurationError",
     "Decision",
+    "DecisionRecord",
     "FakeBackend",
     "GutError",
+    "JSONLSink",
     "JevBackend",
     "Judge",
     "JudgeClosedError",
     "Lazy",
     "MemoryCache",
+    "MemorySink",
     "NoulAnswer",
     "NoulSpec",
     "NullCache",
+    "NullSink",
     "Outcome",
     "Plan",
     "PlannedQuestion",
     "Policy",
     "PolicyError",
     "QuestionError",
+    "ResolutionRecord",
     "SQLiteCache",
     "ScoreAnswer",
     "ScoreDecision",
     "ScoreSpec",
+    "Sink",
     "UnsureDecision",
     "__version__",
     "classify",

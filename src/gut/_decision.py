@@ -19,8 +19,9 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Generic, Literal, TypeAlias, TypeVar
 
-from gut._config import current_on_unsure
+from gut._config import current_on_unsure, current_sink
 from gut._errors import UnsureDecision
+from gut._log import ResolutionRecord, _jsonable, _now, emit_resolution
 from gut._outcomes import Outcome
 from gut._rule import Policy
 
@@ -91,6 +92,30 @@ class BaseDecision:
     def __hash__(self) -> int:
         """Hash on the outcome alone, so that `d == gut.YES` implies `hash(d) == hash(gut.YES)`."""
         return hash(self.outcome)
+
+    def resolve(self, actual: object, *, note: str | None = None) -> ResolutionRecord:
+        """Record what actually happened, under this decision's id.
+
+        Nothing consumes resolutions yet. They exist so that the question "is this model calibrated
+        on *my* data?" is answerable later from logs already being written, rather than from an
+        instrumentation project started after the fact.
+
+        Args:
+            actual: Ground truth, however you express it -- a bool, an enum member, a level number.
+            note: Anything worth keeping alongside it.
+
+        Returns:
+            The record that was emitted, whether or not a sink kept it.
+        """
+        record = ResolutionRecord(
+            id=self.id,
+            timestamp=_now(),
+            actual=_jsonable(actual),
+            decided=self.outcome.value,
+            note=note,
+        )
+        emit_resolution(record, current_sink())
+        return record
 
     def _identity(self) -> tuple[object, ...]:
         return tuple(getattr(self, f.name) for f in dataclasses.fields(self))

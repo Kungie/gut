@@ -19,6 +19,7 @@ if TYPE_CHECKING:
     from gut._backends.base import Backend
     from gut._cache import Cache
     from gut._decision import BaseDecision
+    from gut._log import Sink
 
 UnsureLiteral: TypeAlias = Literal["raise", "true", "false"]
 """The named policies for coercing an UNSURE decision to a bool."""
@@ -33,6 +34,7 @@ _configured: UnsurePolicy = DEFAULT_ON_UNSURE
 _override: ContextVar[UnsurePolicy | None] = ContextVar("gut_on_unsure_override", default=None)
 _backend: Backend | None = None
 _cache: Cache | None = None
+_sink: Sink | None = None
 
 
 def _validate(policy: UnsurePolicy) -> UnsurePolicy:
@@ -52,6 +54,7 @@ def configure(
     on_unsure: UnsurePolicy | None = None,
     backend: Backend | None = None,
     cache: Cache | None = None,
+    sink: Sink | None = None,
 ) -> None:
     """Set process-wide defaults.
 
@@ -63,17 +66,21 @@ def configure(
             uses `configure(backend=FakeBackend(...))`.
         cache: Where answers are kept between calls. Defaults to a bounded in-memory LRU; pass
             `SQLiteCache(...)` to persist across restarts, or `NullCache()` to turn caching off.
+        sink: Where decisions are recorded. Defaults to writing nothing; pass `JSONLSink(path)` or
+            `MemorySink()` to keep them.
 
     Raises:
         ConfigurationError: `on_unsure` is not a recognised policy.
     """
-    global _configured, _backend, _cache
+    global _configured, _backend, _cache, _sink
     if on_unsure is not None:
         _configured = _validate(on_unsure)
     if backend is not None:
         _backend = backend
     if cache is not None:
         _cache = cache
+    if sink is not None:
+        _sink = sink
 
 
 def current_backend() -> Backend:
@@ -147,9 +154,27 @@ def current_cache() -> Cache:
     return _cache
 
 
+def current_sink() -> Sink:
+    """The configured sink, defaulting to one that writes nothing."""
+    global _sink
+    if _sink is None:
+        from gut._log import NullSink
+
+        _sink = NullSink()
+    return _sink
+
+
+def recording() -> bool:
+    """Whether anything is listening, so a record need not be built when nothing will read it."""
+    from gut._log import NullSink
+
+    return _sink is not None and not isinstance(_sink, NullSink)
+
+
 def reset_configuration() -> None:
     """Restore the unconfigured defaults. Intended for tests."""
-    global _configured, _backend, _cache
+    global _configured, _backend, _cache, _sink
     _configured = DEFAULT_ON_UNSURE
     _backend = None
     _cache = None
+    _sink = None

@@ -55,6 +55,12 @@ def test_choice_canonical_keeps_undescribed_options() -> None:
     assert spec.canonical()["criteria"] == {"billing": "invoices", "platform": None}
 
 
+def test_a_subject_json_cannot_hold_is_reported_clearly() -> None:
+    """Coercing it would let two different subjects share a cached answer."""
+    with pytest.raises(QuestionError, match="must be JSON-compatible"):
+        canonical_json({"when": object()})
+
+
 def test_state_fingerprint_covers_every_allowed_shape() -> None:
     assert state_fingerprint("hello") != state_fingerprint(["hello"])
     assert state_fingerprint({"a": 1, "b": 2}) == state_fingerprint({"b": 2, "a": 1})
