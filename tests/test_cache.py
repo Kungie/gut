@@ -164,6 +164,8 @@ def test_a_repeated_question_does_not_reach_the_backend() -> None:
 
     assert backend.call_count == 1
     assert first.p == second.p == 0.91
+    assert first.source == "backend"
+    assert second.source == "cache"
     assert first.cached is False
     assert second.cached is True
     assert first.latency_ms is not None
@@ -197,7 +199,7 @@ def test_caching_can_be_turned_off() -> None:
     gut.configure(backend=backend, cache=NullCache())
 
     for _ in range(3):
-        assert gut.likely("a ticket", "is a bug report").cached is False
+        assert gut.likely("a ticket", "is a bug report").source == "backend"
     assert backend.call_count == 3
 
 

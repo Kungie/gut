@@ -272,6 +272,38 @@ configuring `JevBackend` explicitly. A whitespace-only value does not count.
 point means `import gut` runs in every pytest session of every project that installs it (D8), and
 none of those should drag in a vendor SDK nobody asked for.
 
+## D14 — `@semantic` is conservative by construction, and speculative by design
+
+**Date:** 2026-09-20
+
+Two properties are worth stating plainly, because they are the ones a user will be surprised by.
+
+**It cannot change what your code does.** Anything the analysis cannot prove statically is not
+collected, and that call goes to the backend on its own exactly as it would undecorated. There is a
+second layer under that: the prefetch scope is keyed by a fingerprint of the *real* question and the
+*real* subject, computed at call time. So even a plan that guessed wrong cannot substitute an answer
+— it simply fails to match, and the normal path runs. Being wrong costs a wasted request, never a
+wrong answer.
+
+The conservative exclusions worth naming:
+
+- A parameter that is **assigned, deleted, or declared `global`/`nonlocal` anywhere** in the function
+  is excluded entirely. After `ticket = ticket.strip()`, prefetching against the original value would
+  answer about the wrong state. Tracking the rebinding through the control flow would be cleverer and
+  occasionally wrong; excluding it is dull and always right.
+- Calls inside **nested functions, lambdas and class bodies** are left alone: they may run with
+  different bindings, or not at all.
+- A call passing **`backend=`, `*args` or `**kwargs`** is left alone, since the question or the
+  backend may not be the one the prefetch would use.
+
+**It is speculative.** Questions behind branches that never execute are still asked. That is the
+whole trade: billing is on input tokens, the state is paid for once per request, so five questions in
+one call cost barely more than one, while five calls cost five states. If a question is expensive for
+reasons other than tokens, keep it out of a decorated function.
+
+Async functions are returned unchanged. The fetch is blocking, and quietly blocking an event loop is
+worse than not batching.
+
 ---
 
 ## Implementation order

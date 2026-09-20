@@ -220,10 +220,28 @@ def test_decision_records_how_it_was_produced() -> None:
         model="jev-1.13.0",
         p=0.83,
         policy=policy(cost_false_yes=2, cost_false_no=50, cost_human=5),
-        cached=True,
+        source="cache",
         latency_ms=None,
     )
     assert decision.model == "jev-1.13.0"
+    assert decision.source == "cache"
     assert decision.cached is True
     assert decision.latency_ms is None
     assert decision.policy.cost_false_no == 50
+
+
+def test_source_distinguishes_a_batch_from_a_cache_hit() -> None:
+    """A prefetched answer still cost a request, just a shared one."""
+    assert make(Outcome.YES).source == "backend"
+    assert make(Outcome.YES).cached is False
+
+    batched = Decision(
+        outcome=Outcome.YES,
+        id="site-5",
+        model="jev-1.13.0",
+        p=0.9,
+        policy=DEFAULT_POLICY,
+        source="prefetch",
+    )
+    assert batched.cached is True
+    assert batched.source == "prefetch"

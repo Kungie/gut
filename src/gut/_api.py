@@ -17,11 +17,12 @@ from typing import TypeVar
 from gut._backends.base import Answer, Backend, ChoiceAnswer, NoulAnswer, ScoreAnswer
 from gut._cache import CacheEntry, cache_key
 from gut._config import current_backend, current_cache
-from gut._decision import ChoiceDecision, Decision, ScoreDecision
+from gut._decision import ChoiceDecision, Decision, DecisionSource, ScoreDecision
 from gut._errors import BackendError, QuestionError
 from gut._outcomes import Outcome
 from gut._questions import ChoiceSpec, NoulSpec, QuestionSpec, ScoreSpec, State
 from gut._rule import policy
+from gut._scope import current_prefetch
 from gut._site import caller_site, decision_id
 
 E = TypeVar("E", bound=Enum)
@@ -39,13 +40,27 @@ class _Resolved:
 
     answer: Answer
     model: str
-    cached: bool
+    source: DecisionSource
     latency_ms: float | None
 
 
 def _ask(state: State, spec: QuestionSpec, backend: Backend | None) -> _Resolved:
     """Answer one question, from cache when possible."""
     chosen = current_backend() if backend is None else backend
+
+    # A batch fetched by @semantic or judge() is checked first: it is already paid for, and it is
+    # correct even when caching is switched off.
+    prefetch = current_prefetch()
+    if prefetch is not None:
+        prefetched = prefetch.take(state, spec)
+        if prefetched is not None:
+            return _Resolved(
+                answer=prefetched.answer,
+                model=prefetched.model,
+                source="prefetch",
+                latency_ms=None,
+            )
+
     cache = current_cache()
     key = cache_key(state, spec, chosen.model_id)
 
@@ -53,7 +68,7 @@ def _ask(state: State, spec: QuestionSpec, backend: Backend | None) -> _Resolved
     if hit is not None:
         # The stored model is the version that actually answered, which is more specific than
         # the alias in the key. Reporting the alias would make a recorded decision unfalsifiable.
-        return _Resolved(answer=hit.answer, model=hit.model, cached=True, latency_ms=None)
+        return _Resolved(answer=hit.answer, model=hit.model, source="cache", latency_ms=None)
 
     started = time.perf_counter()
     response = chosen.ask(state, {"q": spec})
@@ -62,7 +77,7 @@ def _ask(state: State, spec: QuestionSpec, backend: Backend | None) -> _Resolved
         raise BackendError(f"{type(chosen).__name__} returned no answer for the question asked.")
     answer = response.answers["q"]
     cache.set(key, CacheEntry(answer=answer, model=response.model))
-    return _Resolved(answer=answer, model=response.model, cached=False, latency_ms=latency_ms)
+    return _Resolved(answer=answer, model=response.model, source="backend", latency_ms=latency_ms)
 
 
 def _expect(answer: Answer, kind: type[A], spec: QuestionSpec) -> A:
@@ -138,7 +153,7 @@ def likely(
         outcome=rule.decide(noul.p),
         id=decision_id(spec.fingerprint, site),
         model=resolved.model,
-        cached=resolved.cached,
+        source=resolved.source,
         latency_ms=resolved.latency_ms,
         p=noul.p,
         policy=rule,
@@ -229,7 +244,7 @@ def classify(
         outcome=outcome,
         id=decision_id(spec.fingerprint, site),
         model=resolved.model,
-        cached=resolved.cached,
+        source=resolved.source,
         latency_ms=resolved.latency_ms,
         value=by_name[choice.choice] if outcome is Outcome.YES else Outcome.UNSURE,
         probabilities=probabilities,
@@ -271,7 +286,7 @@ def rate(
         outcome=_min_confidence_outcome(score.confidence, min_confidence),
         id=decision_id(spec.fingerprint, site),
         model=resolved.model,
-        cached=resolved.cached,
+        source=resolved.source,
         latency_ms=resolved.latency_ms,
         score=score.score,
         probabilities=dict(score.probabilities),
