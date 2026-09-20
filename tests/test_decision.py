@@ -219,7 +219,7 @@ def test_decision_records_how_it_was_produced() -> None:
         id="site-4",
         model="jev-1.13.0",
         p=0.83,
-        policy=policy(cost_false_yes=2, cost_false_no=50, cost_human=5),
+        policy=policy(cost_false_yes=2, cost_false_no=50, cost_human=1),
         source="cache",
         latency_ms=None,
     )

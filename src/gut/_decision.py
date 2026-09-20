@@ -128,7 +128,7 @@ class Decision(BaseDecision):
     Example:
         ```python
         d = gut.likely(email, "the customer threatens to cancel",
-                       cost_false_yes=2, cost_false_no=50, cost_human=5)
+                       cost_false_yes=2, cost_false_no=50, cost_human=1)
         match d:
             case gut.YES:    escalate()
             case gut.NO:     auto_reply()

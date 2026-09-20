@@ -12,7 +12,7 @@ typed, calibrated decision your control flow can branch on — including the bra
 import gut
 
 d = gut.likely(email, "the customer threatens to cancel",
-               cost_false_yes=2, cost_false_no=50, cost_human=5)
+               cost_false_yes=2, cost_false_no=50, cost_human=1)
 
 match d:
     case gut.YES:    escalate()
@@ -105,6 +105,17 @@ expected cost of asking a human    =         cost_human
 
 `gut` picks the cheapest of the three. Ties prefer `UNSURE`, then `NO` — the conservative order.
 
+One consequence catches people out, so `gut` warns about it. The expected cost of asking a person is
+flat, while the cheaper of yes and no *peaks* where those two lines cross. Put `cost_human` above
+that peak and there is no probability at all where a person is worth asking — the third branch you
+carefully wrote is unreachable, silently. The ceiling is
+
+```
+cost_false_yes · cost_false_no / (cost_false_yes + cost_false_no)
+```
+
+which for `2` and `50` is `1.92`. A `cost_human` of `5` would never fire; `1` does.
+
 With no human in the loop (`cost_human=None`), `UNSURE` is impossible and this reduces to the
 familiar decision threshold:
 
@@ -113,7 +124,8 @@ YES  ⟺  p > cost_false_yes / (cost_false_yes + cost_false_no)
 ```
 
 So the earlier example — `cost_false_yes=2, cost_false_no=50` — is a threshold of `2/52 ≈ 0.038`,
-with a human consulted whenever `cost_human=5` beats both. You would not have guessed `0.038`.
+with a human consulted whenever `cost_human=1` beats both — which here means any `p` between
+`0.02` and `0.5`. You would not have guessed `0.038`.
 
 Escape hatches exist (`threshold=`, `unsure_band=(lo, hi)`) but costs are the documented default.
 Given nothing at all, `gut` uses symmetric costs and no human option: `p > 0.5`.

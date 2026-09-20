@@ -88,7 +88,7 @@ def test_a_yes_no_decision_records_its_probability_and_costs(sink: MemorySink) -
         "the customer threatens to cancel",
         cost_false_yes=2,
         cost_false_no=50,
-        cost_human=5,
+        cost_human=1,
     )
 
     (record,) = sink.decisions
@@ -96,7 +96,7 @@ def test_a_yes_no_decision_records_its_probability_and_costs(sink: MemorySink) -
     assert record.kind == "noul"
     assert record.outcome == "yes"
     assert record.p == 0.83
-    assert record.costs == {"cost_false_yes": 2.0, "cost_false_no": 50.0, "cost_human": 5.0}
+    assert record.costs == {"cost_false_yes": 2.0, "cost_false_no": 50.0, "cost_human": 1.0}
     assert record.model == "fake-1.0"
     assert record.source == "backend"
     assert record.latency_ms is not None
