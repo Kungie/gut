@@ -59,3 +59,7 @@ class BackendError(GutError):
     Covers both transport failures and misconfiguration, such as a `FakeBackend` asked a question no
     fixture covers.
     """
+
+
+class JudgeClosedError(GutError):
+    """A question was registered after its `judge()` block had ended."""

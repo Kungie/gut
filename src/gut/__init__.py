@@ -30,10 +30,12 @@ from gut._errors import (
     BackendError,
     ConfigurationError,
     GutError,
+    JudgeClosedError,
     PolicyError,
     QuestionError,
     UnsureDecision,
 )
+from gut._judge import Judge, Lazy, judge
 from gut._outcomes import NO, UNSURE, YES, Outcome
 from gut._questions import ChoiceSpec, NoulSpec, ScoreSpec
 from gut._rule import DEFAULT_POLICY, Policy, policy
@@ -64,6 +66,9 @@ __all__ = [
     "FakeBackend",
     "GutError",
     "JevBackend",
+    "Judge",
+    "JudgeClosedError",
+    "Lazy",
     "MemoryCache",
     "NoulAnswer",
     "NoulSpec",
@@ -83,6 +88,7 @@ __all__ = [
     "classify",
     "configure",
     "deterministic_rule",
+    "judge",
     "likely",
     "on_unsure",
     "policy",

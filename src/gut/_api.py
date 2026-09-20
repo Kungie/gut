@@ -21,9 +21,9 @@ from gut._decision import ChoiceDecision, Decision, DecisionSource, ScoreDecisio
 from gut._errors import BackendError, QuestionError
 from gut._outcomes import Outcome
 from gut._questions import ChoiceSpec, NoulSpec, QuestionSpec, ScoreSpec, State
-from gut._rule import policy
+from gut._rule import Policy, policy
 from gut._scope import current_prefetch
-from gut._site import caller_site, decision_id
+from gut._site import CallSite, caller_site, decision_id
 
 E = TypeVar("E", bound=Enum)
 A = TypeVar("A", NoulAnswer, ChoiceAnswer, ScoreAnswer)
@@ -101,6 +101,72 @@ def _min_confidence_outcome(confidence: float, min_confidence: float | None) -> 
     return Outcome.YES
 
 
+def build_decision(
+    spec: NoulSpec, resolved: _Resolved, site: CallSite, *, rule: Policy
+) -> Decision:
+    """Assemble a yes/no decision from a raw answer."""
+    noul = _expect(resolved.answer, NoulAnswer, spec)
+    return Decision(
+        outcome=rule.decide(noul.p),
+        id=decision_id(spec.fingerprint, site),
+        model=resolved.model,
+        source=resolved.source,
+        latency_ms=resolved.latency_ms,
+        p=noul.p,
+        policy=rule,
+    )
+
+
+def build_choice_decision(
+    spec: ChoiceSpec,
+    enum_class: type[E],
+    resolved: _Resolved,
+    site: CallSite,
+    *,
+    min_confidence: float | None,
+) -> ChoiceDecision[E]:
+    """Assemble a categorical decision, mapping the chosen label back to its enum member."""
+    choice = _expect(resolved.answer, ChoiceAnswer, spec)
+    by_name = {member.name: member for member in enum_class}
+    if choice.choice not in by_name:
+        raise BackendError(
+            f"Backend chose {choice.choice!r}, which is not a member of {enum_class.__name__}."
+        )
+    outcome = _min_confidence_outcome(choice.confidence, min_confidence)
+    return ChoiceDecision(
+        outcome=outcome,
+        id=decision_id(spec.fingerprint, site),
+        model=resolved.model,
+        source=resolved.source,
+        latency_ms=resolved.latency_ms,
+        value=by_name[choice.choice] if outcome is Outcome.YES else Outcome.UNSURE,
+        probabilities={
+            by_name[name]: value for name, value in choice.probabilities.items() if name in by_name
+        },
+        confidence=choice.confidence,
+        min_confidence=min_confidence,
+    )
+
+
+def build_score_decision(
+    spec: ScoreSpec, resolved: _Resolved, site: CallSite, *, min_confidence: float | None
+) -> ScoreDecision:
+    """Assemble an ordinal decision from a raw answer."""
+    score = _expect(resolved.answer, ScoreAnswer, spec)
+    return ScoreDecision(
+        outcome=_min_confidence_outcome(score.confidence, min_confidence),
+        id=decision_id(spec.fingerprint, site),
+        model=resolved.model,
+        source=resolved.source,
+        latency_ms=resolved.latency_ms,
+        score=score.score,
+        probabilities=dict(score.probabilities),
+        confidence=score.confidence,
+        levels=tuple(spec.criteria),
+        min_confidence=min_confidence,
+    )
+
+
 def likely(
     subject: State,
     question: str,
@@ -147,17 +213,7 @@ def likely(
     )
     spec = NoulSpec(instructions=question, yes_means=yes_means, no_means=no_means)
     site = caller_site()
-    resolved = _ask(subject, spec, backend)
-    noul = _expect(resolved.answer, NoulAnswer, spec)
-    return Decision(
-        outcome=rule.decide(noul.p),
-        id=decision_id(spec.fingerprint, site),
-        model=resolved.model,
-        source=resolved.source,
-        latency_ms=resolved.latency_ms,
-        p=noul.p,
-        policy=rule,
-    )
+    return build_decision(spec, _ask(subject, spec, backend), site, rule=rule)
 
 
 def _criteria_from_enum(enum_class: type[E]) -> Mapping[str, str | None]:
@@ -228,28 +284,8 @@ def classify(
     _warn_without_catch_all(enum_class)
     spec = ChoiceSpec(instructions=question, criteria=criteria)
     site = caller_site()
-    resolved = _ask(subject, spec, backend)
-    choice = _expect(resolved.answer, ChoiceAnswer, spec)
-
-    by_name = {member.name: member for member in enum_class}
-    if choice.choice not in by_name:
-        raise BackendError(
-            f"Backend chose {choice.choice!r}, which is not a member of {enum_class.__name__}."
-        )
-    outcome = _min_confidence_outcome(choice.confidence, min_confidence)
-    probabilities = {
-        by_name[name]: value for name, value in choice.probabilities.items() if name in by_name
-    }
-    return ChoiceDecision(
-        outcome=outcome,
-        id=decision_id(spec.fingerprint, site),
-        model=resolved.model,
-        source=resolved.source,
-        latency_ms=resolved.latency_ms,
-        value=by_name[choice.choice] if outcome is Outcome.YES else Outcome.UNSURE,
-        probabilities=probabilities,
-        confidence=choice.confidence,
-        min_confidence=min_confidence,
+    return build_choice_decision(
+        spec, enum_class, _ask(subject, spec, backend), site, min_confidence=min_confidence
     )
 
 
@@ -280,19 +316,8 @@ def rate(
     """
     spec = ScoreSpec(instructions=question, criteria=levels)
     site = caller_site()
-    resolved = _ask(subject, spec, backend)
-    score = _expect(resolved.answer, ScoreAnswer, spec)
-    return ScoreDecision(
-        outcome=_min_confidence_outcome(score.confidence, min_confidence),
-        id=decision_id(spec.fingerprint, site),
-        model=resolved.model,
-        source=resolved.source,
-        latency_ms=resolved.latency_ms,
-        score=score.score,
-        probabilities=dict(score.probabilities),
-        confidence=score.confidence,
-        levels=tuple(spec.criteria),
-        min_confidence=min_confidence,
+    return build_score_decision(
+        spec, _ask(subject, spec, backend), site, min_confidence=min_confidence
     )
 
 

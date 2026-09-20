@@ -183,14 +183,29 @@ and whose question is a literal, and issues **one backend call per subject** bef
 Anything it can't prove statically falls back to a lazy single call — it never changes what your code
 does, only how many round trips it takes.
 
+It is also **speculative**: a question behind a branch that never runs is still asked. That is the
+trade, and it is usually the right one — the state is paid for once per request, so five questions in
+one call cost barely more than one, while five calls cost five states.
+
 If you'd rather not have magic, ask explicitly:
 
 ```python
 with gut.judge(ticket) as j:
-    a = j.likely("is a bug report")
-    b = j.classify(Team)
-# everything registered before the first access goes out in one call
+    bug = j.likely("is a bug report")
+    team = j.classify(Team)
+    if bug:          # <- everything registered so far goes out in one request, here
+        route(team)  # <- already answered
 ```
+
+`j.likely(...)` registers a question and hands back a handle; nothing is sent. The first time any
+handle is **used** — tested for truth, matched, compared, or read for a field — every question
+registered up to that moment goes out in one request. Questions registered afterwards form the next
+group.
+
+So where you first read decides what got batched with what. Register everything you might need
+before reading any of it. Two details that follow from the rule: `repr()` never resolves, because a
+debugger must not cost a request; and leaving the block resolves nothing, so a question nobody reads
+is never asked and never billed.
 
 ---
 
