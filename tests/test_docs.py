@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import ast
 import enum
+import json
 import os
 import re
 from pathlib import Path
@@ -56,6 +57,8 @@ def prelude() -> dict[str, Any]:
         "review": "The charger got hot enough to scorch the desk.",
         "agent_state": {"step": 4, "notes": "all checks passed"},
         "Team": Team,
+        "Intent": Team,
+        "query": "how do I transfer money to my savings account",
         "escalate": lambda *_: None,
         "auto_reply": lambda *_: None,
         "send_to_a_person": lambda *_: None,
@@ -160,7 +163,7 @@ def test_every_link_in_the_docs_resolves() -> None:
 
 
 def readme_posture() -> dict[str, object]:
-    """The arguments the README's `match` example actually passes."""
+    """The arguments the demo README's `match` example passes."""
     (source,) = [body for _, body in blocks(README, "python") if "match gut.likely(" in body]
     tree = ast.parse(source)
     call = next(
@@ -175,41 +178,93 @@ def readme_posture() -> dict[str, object]:
     }
 
 
-def test_the_headline_claim_matches_the_demo(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Run the demo with exactly the arguments the README shows, and check what it quotes.
+def results() -> dict[str, dict[str, Any]]:
+    """The benchmark results the README quotes from."""
+    raw = json.loads((ROOT / "benchmarks" / "results.json").read_text())
+    return {entry["name"]: entry for entry in raw}
 
-    The README once claimed the numbers for `stakes="low", lean="yes"` beside a code example that
-    passed neither. Prose and code drift; this is the only thing that stops it.
+
+def row(entry: dict[str, Any], posture: str, *, calibrated: bool = False) -> dict[str, Any]:
+    """One posture row out of a benchmark result."""
+    rows = entry["postures"]["calibrated" if calibrated else "raw"]
+    return next(item for item in rows if item["posture"].startswith(posture))
+
+
+def test_the_headline_numbers_come_from_the_benchmark() -> None:
+    """Every figure the README quotes is checked against benchmarks/results.json.
+
+    The README once quoted a percentage from one setting beside a code example passing another.
+    Prose drifts from measurement exactly as easily as it drifts from code.
     """
+    text = read(README)
+    found = results()
+
+    clinc = found["clinc"]
+    forced = next(item for item in clinc["baselines"] if item["posture"] == "always answer")
+    medium = row(clinc, "stakes=medium lean=none")
+    assert f"wrong {round(forced['error_rate'] * 100)}% of the time" in text
+    assert f"wrong **{medium['error_rate'] * 100:.1f}%**" in text
+    assert f"**{round(medium['coverage'] * 100)}%** of the traffic" in text
+
+    oos = clinc["out_of_scope"]["raw"]
+    caught = oos["by_other"] + oos["by_unsure"]
+    assert f"declines {caught} of the {oos['out_of_scope']} out-of-scope" in text
+
+    sms = found["sms"]
+    keyword = next(item for item in sms["baselines"] if "keyword" in item["posture"])
+    plain = row(sms, "no arguments")
+    assert f"errs {keyword['error_rate'] * 100:.1f}%" in text
+    assert f"errs {plain['error_rate'] * 100:.1f}%" in text
+
+    total = sum(entry["cost"]["usd"] for entry in found.values())
+    assert f"{total * 100:.1f} cents" in text
+
+
+def test_the_readme_shows_the_arguments_it_measured() -> None:
+    """The code block beside the claim must pass what the quoted row was measured at."""
+    (source,) = [
+        body
+        for _, body in blocks(README, "python")
+        if "gut.classify(" in body and "ask_human" in body
+    ]
+    call = next(
+        node
+        for node in ast.walk(ast.parse(source))
+        if isinstance(node, ast.Call) and ast.unparse(node.func) == "gut.classify"
+    )
+    passed = {
+        keyword.arg: ast.literal_eval(keyword.value)
+        for keyword in call.keywords
+        if keyword.arg is not None
+    }
+    assert passed == {"ask_human": True, "stakes": "medium"}
+
+
+def test_the_demo_claim_still_matches_the_demo(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The ticket demo is no longer the headline, but its own page still quotes numbers."""
     monkeypatch.syspath_prepend(str(ROOT / "examples" / "support_tickets"))
     import after
     import report
 
     backend = report.configure_backend()
     tickets = after.load_tickets()
-    threats = sum(1 for ticket in tickets if ticket["labels"]["cancel_threat"])
+    missed, _ = report.before_rule(tickets, backend)
 
-    row = report.Row(label="readme")
-    for ticket in tickets:
-        action = after.triage(after.state_of(ticket), **readme_posture())  # type: ignore[arg-type]
-        row.record(action, ticket["labels"])
-    missed_by_threshold, _ = report.before_rule(tickets, backend)
+    demo = read("examples/support_tickets/README.md")
+    assert f"threshold=0.7               100%      0%          -   {missed:>7}" in demo
 
+
+def test_the_readme_warns_about_contaminated_benchmarks() -> None:
+    """Famous public datasets may be in the training data, and the pitch has to say so."""
     text = read(README)
-    assert f"{len(tickets)} synthetic support tickets" in text
-    assert f"**8 of {threats}**" in text, "the README's baseline claim moved"
-    assert missed_by_threshold == 8, "the 0.7 baseline no longer misses 8"
-
-    quoted = re.search(r"resolving\n?\*\*(\d+)%\*\* of the queue automatically", text)
-    assert quoted is not None, "the README no longer quotes an automatic share"
-    assert round(row.automatic / row.total * 100) == int(quoted.group(1))
-    assert row.false_no == 0, "the README claims this posture misses none"
+    assert "may be in the model's training data" in text
+    assert "optimistic" in text
 
 
-def test_the_readme_says_what_the_numbers_measure() -> None:
-    """Labels written for this repository measure agreement with themselves."""
-    assert "written for this repository" in read(README)
-    assert "rather than real-world performance" in read(README)
+def test_the_demo_still_says_it_is_not_evidence() -> None:
+    demo = read("examples/support_tickets/README.md")
+    assert "not evidence" in demo
+    assert "written for this repository" in demo
 
 
 def test_the_vendor_numbers_are_marked_as_the_vendors() -> None:

@@ -58,13 +58,22 @@ No key yet? `gut.configure(backend=gut.FakeBackend(...))` runs everything above 
 
 ## Does it work?
 
-On 101 synthetic support tickets with known labels, a hard-coded `0.7` threshold missed **8 of 15**
-churn risks. The same model with nothing but `ask_human=True` missed **none** — still resolving
-**92%** of the queue automatically, and sending the other eight tickets to a person.
+On [CLINC150](docs/benchmarks.md), a public benchmark of 150 user intents plus deliberately
+out-of-scope requests: a classifier **forced to pick an intent is wrong 26% of the time.** The same
+model, allowed to answer "none of these" and to ask a person when it is unsure, is wrong **7.6%** —
+while still handling **76%** of the traffic on its own.
 
-Both the tickets and their labels were written for this repository, so that measures agreement with
-those labels rather than real-world performance. [The full demo](examples/support_tickets/) has
-every posture, the code with and without `gut`, and recordings so it all runs offline.
+```python
+gut.classify(query, Intent, ask_human=True, stakes="medium")
+```
+
+It declines 89 of the 100 out-of-scope requests. On SMS spam a good-faith keyword filter errs 7.0%
+and the same one-line judgment errs 1.4%. All of it cost 5.7 cents.
+
+These are well-known public datasets and may be in the model's training data, so read the numbers
+as optimistic — and measure your own task with [`gut eval`](docs/trusting-it.md). [The full
+results](docs/benchmarks.md), including where `gut` loses to a trained model and where calibration
+made things worse.
 
 ## Docs
 
@@ -77,6 +86,7 @@ every posture, the code with and without `gut`, and recordings so it all runs of
 | [Exact costs](docs/exact-costs.md) | The cost model underneath, for when a mistake has a price tag. |
 | [Caching, logging, and backends](docs/caching-and-logging.md) | The cache, the decision log, and the backend protocol. |
 | [Why Jev](docs/why-jev.md) | What makes a judgment cheap enough to put inside an `if`. |
+| [Benchmarks](docs/benchmarks.md) | What it does on three public datasets, and what it does not. |
 | [Honest limitations](docs/limitations.md) | What it is bad at, and what its numbers do not mean. |
 
 Writing `gut` code with a coding agent? Point it at [`skills/gut/SKILL.md`](skills/gut/SKILL.md).

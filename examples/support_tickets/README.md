@@ -1,5 +1,9 @@
 # Demo: support ticket triage
 
+> **This is a demo, not evidence.** The tickets and their labels were written for this repository,
+> so the numbers below show what the tools surface, not how well anything performs. For
+> measurements on public data with published labels, see [docs/benchmarks.md](../../docs/benchmarks.md).
+
 101 synthetic support tickets with ground-truth labels, the same triage handler written twice, and
 a sweep showing what each risk posture actually does to the queue.
 
