@@ -280,6 +280,22 @@ def test_calibrate_refuses_to_ship_a_correction_that_loses(
     assert "Nothing worth shipping" in out
 
 
+def test_a_collapsing_correction_is_called_out(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Found on the SMS benchmark: isotonic on a near-separable sample maps everything to 0 or 1.
+
+    Average calibration improves and the third branch quietly disappears, because no posture band
+    can contain a probability that is exactly 0 or exactly 1.
+    """
+    monkeypatch.delenv("TYPESAFE_API_KEY", raising=False)
+    workspace = stretched_workspace(tmp_path)
+
+    assert calibrate(workspace, "--keep-all") == 0
+    out = capsys.readouterr().out
+    assert "no posture will ever return UNSURE" in out
+
+
 def test_keep_all_ships_it_anyway(
     tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
 ) -> None:
