@@ -1,16 +1,21 @@
 """The same triage handler, written with `gut`.
 
-Compare with `before.py`. The differences worth noticing are not about line count:
+Compare with `before.py`. The differences are not about line count:
 
-1. **The thresholds are gone.** Nothing here says `0.7`. It says what a mistake costs, and the
-   runtime works out the threshold -- which for these numbers is `0.038`, not a figure anyone
-   guesses.
-2. **There is a third branch.** `UNSURE` is a real outcome with a real destination, so a decision
-   the model is not confident enough to make reaches a person instead of silently defaulting.
-3. **One request per ticket.** `@semantic` collapses all five judgments into a single call, which
-   `before.py` cannot do without restructuring the function.
-4. **Nothing is parsed.** No prompt strings, no JSON scraping, no fallbacks for output that came
-   back in the wrong shape.
+1. **No thresholds.** Nothing here says `0.7`. It says how bad each mistake is, in words, and the
+   runtime works out where the boundaries go.
+2. **There is a third branch.** `UNSURE` is a real outcome with a real destination, so a judgment
+   the model is not sure enough to make reaches a person instead of becoming a confident guess.
+3. **One request per ticket.** `@semantic` collapses all five judgments into a single call.
+4. **Nothing is parsed.** No prompt strings, no JSON scraping, no fallbacks for the wrong shape.
+
+The handler takes its posture as arguments so `report.py` can sweep every setting over the same
+tickets. Written for one setting it is just:
+
+```python
+at_risk = likely(ticket, "the customer is at risk of leaving...",
+                 stakes="high", lean="yes", ask_human=True)
+```
 """
 
 from __future__ import annotations
@@ -42,15 +47,16 @@ URGENCY = [
     "needs attention today, someone is blocked right now",
 ]
 
-# What each mistake costs us, on one scale. These are the only numbers in the file.
-COST_FALSE_ESCALATION = 2.0
-"""A CSM spends twenty minutes on a customer who was never going to leave."""
-COST_MISSED_THREAT = 20.0
-"""A churn signal goes unanswered. Ten times worse, which is why the threshold ends up at 0.09."""
-COST_HUMAN_REVIEW = 1.0
-"""An agent reads the ticket and decides. Cheap, but not free -- and it has to be cheaper than a
-needless escalation, or asking a person is never the cheapest option and UNSURE becomes
-unreachable. `gut` warns when that happens."""
+# The five judgments, worded once. predicates/ asks exactly these, so the eval suite measures the
+# questions the handler actually asks rather than a paraphrase of them.
+AT_RISK = (
+    "the customer is at risk of leaving: they threaten to cancel, say they will not renew, or "
+    "describe being close to giving up on the product"
+)
+WANTS_MONEY_BACK = "the customer is asking for money back or a credit"
+REPORTS_A_BUG = "this reports something in the product behaving incorrectly"
+OWNING_TEAM = "which team should own this ticket"
+HOW_URGENT = "how urgent is this ticket"
 
 
 @dataclass(frozen=True)
@@ -65,45 +71,32 @@ class Action:
 
 
 @semantic
-def triage(ticket: dict[str, Any]) -> Action:
+def triage(
+    ticket: dict[str, Any],
+    *,
+    stakes: gut.Stakes | None = None,
+    lean: gut.Lean | None = None,
+    ask_human: bool = False,
+) -> Action:
     """Decide what happens to one ticket.
 
     Five judgments, one request. The decorator reads this function once and asks everything up
     front; the calls below find their answers already waiting.
     """
-    at_risk = likely(
-        ticket,
-        "the customer is at risk of leaving: they threaten to cancel, say they will not renew, "
-        "or describe being close to giving up on the product",
-        cost_false_yes=COST_FALSE_ESCALATION,
-        cost_false_no=COST_MISSED_THREAT,
-        cost_human=COST_HUMAN_REVIEW,
-    )
-    team = classify(ticket, Team, min_confidence=0.55)
-    urgency = rate(ticket, URGENCY)
+    at_risk = likely(ticket, AT_RISK, stakes=stakes, lean=lean, ask_human=ask_human)
+    team = classify(ticket, Team, question=OWNING_TEAM, ask_human=ask_human, stakes=stakes)
+    urgency = rate(ticket, URGENCY, question=HOW_URGENT)
 
     match at_risk:
         case gut.YES:
-            return Action(
-                escalate=True,
-                to_human=False,
-                team=_name(team),
-                urgency=urgency.score,
-                reason="churn risk",
-            )
+            return Action(True, False, _name(team), urgency.score, "churn risk")
         case gut.UNSURE:
-            return Action(
-                escalate=False,
-                to_human=True,
-                team=_name(team),
-                urgency=urgency.score,
-                reason="unsure about churn risk",
-            )
+            return Action(False, True, _name(team), urgency.score, "unsure about churn risk")
 
     # Not a churn risk. Route it, and let the two remaining judgments shape the handling.
-    if likely(ticket, "the customer is asking for money back or a credit"):
+    if likely(ticket, WANTS_MONEY_BACK):
         return Action(False, False, "BILLING", urgency.score, "refund request")
-    if likely(ticket, "this reports something in the product behaving incorrectly"):
+    if likely(ticket, REPORTS_A_BUG):
         return Action(False, False, _name(team), urgency.score, "bug report")
     return Action(False, False, _name(team), urgency.score, "routine")
 
@@ -124,16 +117,13 @@ def state_of(ticket: dict[str, Any]) -> dict[str, str]:
 
 
 if __name__ == "__main__":
-    import sys
+    from report import configure_backend
 
-    from _simulate import configure_backend
-
-    configure_backend(load_tickets())
+    configure_backend()
     for ticket in load_tickets()[:5]:
-        action = triage(state_of(ticket))
+        action = triage(state_of(ticket), stakes="medium", lean="yes", ask_human=True)
         print(
             f"{ticket['id']}  {action.reason:<24} team={action.team:<9} "
             f"urgency={action.urgency:.1f} "
             f"{'ESCALATE' if action.escalate else 'HUMAN' if action.to_human else ''}"
         )
-    sys.exit(0)
