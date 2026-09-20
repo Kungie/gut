@@ -10,6 +10,8 @@ The public API is re-exported here. Everything else is private and may move betw
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from gut._api import classify, likely, rate
 from gut._backends import (
     Answer,
@@ -36,6 +38,9 @@ from gut._outcomes import NO, UNSURE, YES, Outcome
 from gut._questions import ChoiceSpec, NoulSpec, ScoreSpec
 from gut._rule import DEFAULT_POLICY, Policy, policy
 
+if TYPE_CHECKING:
+    from gut._backends.jev import JevBackend as JevBackend
+
 __version__ = "0.0.1"
 
 __all__ = [
@@ -57,6 +62,7 @@ __all__ = [
     "Decision",
     "FakeBackend",
     "GutError",
+    "JevBackend",
     "MemoryCache",
     "NoulAnswer",
     "NoulSpec",
@@ -79,3 +85,17 @@ __all__ = [
     "policy",
     "rate",
 ]
+
+
+def __getattr__(name: str) -> object:
+    """Resolve `JevBackend` on first use.
+
+    `typesafe-sdk` is an optional extra, and the pytest11 entry point means `import gut` runs in
+    every pytest session of every project that installs it (D8). Neither should drag in a vendor
+    SDK nobody asked for.
+    """
+    if name == "JevBackend":
+        from gut._backends.jev import JevBackend
+
+        return JevBackend
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

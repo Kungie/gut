@@ -255,7 +255,8 @@ def test_the_backend_can_be_overridden_per_call(backend: FakeBackend) -> None:
     assert backend.call_count == 0
 
 
-def test_no_backend_configured_says_what_to_do() -> None:
+def test_no_backend_configured_says_what_to_do(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("TYPESAFE_API_KEY", raising=False)
     with pytest.raises(ConfigurationError, match="No backend is configured"):
         gut.likely("a ticket", "is a bug report")
 
