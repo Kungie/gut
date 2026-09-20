@@ -12,7 +12,7 @@ from __future__ import annotations
 import hashlib
 import json
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Final, TypeAlias
 
 from gut._errors import QuestionError
@@ -55,12 +55,14 @@ class NoulSpec:
     """Optional description of what counts as yes."""
     no_means: str | None = None
     """Optional description of what counts as no."""
+    _cached_fingerprint: str = field(init=False, repr=False, compare=False, default="")
 
     def __post_init__(self) -> None:
         _require_text("question", self.instructions)
         for name, value in (("yes_means", self.yes_means), ("no_means", self.no_means)):
             if value is not None:
                 _require_text(name, value)
+        object.__setattr__(self, "_cached_fingerprint", _fingerprint(self.canonical()))
 
     def canonical(self) -> dict[str, Any]:
         """The stable, comparable form of this question."""
@@ -77,7 +79,16 @@ class NoulSpec:
     @property
     def fingerprint(self) -> str:
         """A short, stable hash of this question, used in cache keys and decision-site ids."""
-        return _fingerprint(self.canonical())
+        return self._cached_fingerprint
+
+    def __hash__(self) -> int:
+        """Hash on the fingerprint.
+
+        `frozen=True` would otherwise generate a hash over the fields, which raises for a spec
+        holding a `dict`. Equal specs have equal canonical forms and so equal fingerprints, which
+        is exactly the contract a hash needs.
+        """
+        return hash(self._cached_fingerprint)
 
 
 @dataclass(frozen=True, slots=True)
@@ -90,6 +101,7 @@ class ChoiceSpec:
     criteria: Mapping[str, str | None]
     """Option names mapped to descriptions of when each applies; `None` means the name speaks
     for itself."""
+    _cached_fingerprint: str = field(init=False, repr=False, compare=False, default="")
 
     def __post_init__(self) -> None:
         if self.instructions is not None:
@@ -106,6 +118,7 @@ class ChoiceSpec:
             _require_text("An option name", name)
             if description is not None:
                 _require_text(f"The description for option {name!r}", description)
+        object.__setattr__(self, "_cached_fingerprint", _fingerprint(self.canonical()))
 
     def canonical(self) -> dict[str, Any]:
         """The stable, comparable form of this question."""
@@ -117,7 +130,16 @@ class ChoiceSpec:
     @property
     def fingerprint(self) -> str:
         """A short, stable hash of this question, used in cache keys and decision-site ids."""
-        return _fingerprint(self.canonical())
+        return self._cached_fingerprint
+
+    def __hash__(self) -> int:
+        """Hash on the fingerprint.
+
+        `frozen=True` would otherwise generate a hash over the fields, which raises for a spec
+        holding a `dict`. Equal specs have equal canonical forms and so equal fingerprints, which
+        is exactly the contract a hash needs.
+        """
+        return hash(self._cached_fingerprint)
 
 
 @dataclass(frozen=True, slots=True)
@@ -132,6 +154,7 @@ class ScoreSpec:
     Normalised to a `tuple` on construction, so two specs built from a list and a tuple of the same
     strings compare equal and fingerprint alike.
     """
+    _cached_fingerprint: str = field(init=False, repr=False, compare=False, default="")
 
     def __post_init__(self) -> None:
         if self.instructions is not None:
@@ -149,6 +172,7 @@ class ScoreSpec:
             )
         for index, level in enumerate(self.criteria):
             _require_text(f"Level {index}", level)
+        object.__setattr__(self, "_cached_fingerprint", _fingerprint(self.canonical()))
 
     def canonical(self) -> dict[str, Any]:
         """The stable, comparable form of this question."""
@@ -160,7 +184,16 @@ class ScoreSpec:
     @property
     def fingerprint(self) -> str:
         """A short, stable hash of this question, used in cache keys and decision-site ids."""
-        return _fingerprint(self.canonical())
+        return self._cached_fingerprint
+
+    def __hash__(self) -> int:
+        """Hash on the fingerprint.
+
+        `frozen=True` would otherwise generate a hash over the fields, which raises for a spec
+        holding a `dict`. Equal specs have equal canonical forms and so equal fingerprints, which
+        is exactly the contract a hash needs.
+        """
+        return hash(self._cached_fingerprint)
 
 
 QuestionSpec: TypeAlias = NoulSpec | ChoiceSpec | ScoreSpec

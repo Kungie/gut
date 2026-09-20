@@ -17,12 +17,15 @@ import dataclasses
 from collections.abc import Mapping
 from dataclasses import dataclass
 from enum import Enum
-from typing import Generic, Literal, TypeVar
+from typing import Generic, Literal, TypeAlias, TypeVar
 
 from gut._config import current_on_unsure
 from gut._errors import UnsureDecision
 from gut._outcomes import Outcome
 from gut._rule import Policy
+
+DecisionSource: TypeAlias = Literal["backend", "cache", "prefetch"]
+"""Where an answer came from: its own request, the cache, or a batch fetched ahead of it."""
 
 E = TypeVar("E", bound=Enum)
 
@@ -39,10 +42,19 @@ class BaseDecision:
     model: str
     """The exact versioned model that answered, never an alias. Aliases move; recorded answers
     should not silently change meaning underneath a stored id."""
-    cached: bool = False
-    """Whether the answer came from `gut`'s cache rather than the backend."""
+    source: DecisionSource = "backend"
+    """How the answer was obtained.
+
+    `"prefetch"` means it rode along in a batch fetched by `@semantic` or `judge()` -- distinct from
+    `"cache"`, because it still cost a request, just a shared one.
+    """
     latency_ms: float | None = None
-    """How long the backend call took, or `None` for a cache hit."""
+    """How long this decision's own backend call took, or `None` when it did not make one."""
+
+    @property
+    def cached(self) -> bool:
+        """Whether this decision avoided a request of its own."""
+        return self.source != "backend"
 
     def __bool__(self) -> bool:
         """Collapse to a bool, consulting the UNSURE policy when there is no honest answer.

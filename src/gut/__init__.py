@@ -37,6 +37,7 @@ from gut._errors import (
 from gut._outcomes import NO, UNSURE, YES, Outcome
 from gut._questions import ChoiceSpec, NoulSpec, ScoreSpec
 from gut._rule import DEFAULT_POLICY, Policy, policy
+from gut._semantic import Plan, PlannedQuestion, semantic
 
 if TYPE_CHECKING:
     from gut._backends.jev import JevBackend as JevBackend
@@ -68,6 +69,8 @@ __all__ = [
     "NoulSpec",
     "NullCache",
     "Outcome",
+    "Plan",
+    "PlannedQuestion",
     "Policy",
     "PolicyError",
     "QuestionError",
@@ -84,6 +87,7 @@ __all__ = [
     "on_unsure",
     "policy",
     "rate",
+    "semantic",
 ]
 
 
