@@ -42,3 +42,20 @@ class UnsureDecision(GutError):  # noqa: N818 - named by the public API, not the
             f"answer for that. Handle it explicitly (match on gut.UNSURE), or choose a coercion "
             f"with gut.configure(on_unsure=...) or the gut.on_unsure(...) context manager."
         )
+
+
+class QuestionError(GutError, ValueError):
+    """A question cannot be asked as written.
+
+    Raised before any request leaves the process, so limits that the API enforces server-side --
+    two to ten score levels, two to 255 choice options -- surface as a readable local error rather
+    than a round trip and a 422.
+    """
+
+
+class BackendError(GutError):
+    """A backend could not answer.
+
+    Covers both transport failures and misconfiguration, such as a `FakeBackend` asked a question no
+    fixture covers.
+    """
