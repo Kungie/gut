@@ -411,16 +411,36 @@ a README.
 
 ## Implementation order
 
-Per the handoff, kept in this order so the suite stays green at every step:
+Built in this order, keeping the suite green at every step. All of it is done.
 
-1. decision rule (pure, property-tested)
-2. `Decision` types, truthiness, `match` semantics
-3. `FakeBackend`
-4. `likely` / `classify` / `rate`
-5. cache
-6. `JevBackend`
-7. `@semantic` + `judge()`
-8. decision log
-9. testing tools (example files, pytest plugin, record/replay)
-10. demo (`examples/support_tickets/`)
-11. README pass
+| | | |
+|---|---|---|
+| 1 | decision rule, property-tested | `_rule.py` |
+| 2 | `Decision` types, truthiness, `match` semantics | `_decision.py`, `_outcomes.py`, `_config.py` |
+| 3 | question specs and `FakeBackend` | `_questions.py`, `_backends/` |
+| 4 | `likely` / `classify` / `rate` | `_api.py`, `_site.py` |
+| 5 | cache | `_cache.py`, `_serde.py` |
+| 6 | `JevBackend` | `_backends/jev.py` |
+| 7 | `@semantic` and `judge()` | `_semantic.py`, `_judge.py`, `_scope.py`, `_batching.py` |
+| 8 | decision log | `_log.py` |
+| 9 | example files, pytest plugin, cassettes | `_evals.py`, `pytest_plugin.py`, `_cassette.py` |
+| 10 | demo | `examples/support_tickets/` |
+| 11 | README | `README.md`, `tests/test_readme.py` |
+
+## Acceptance criteria
+
+Each one, and where it is checked.
+
+| criterion | evidence |
+|---|---|
+| `pip install -e .` works; the quickstart runs with `FakeBackend` and with a real key | verified in a clean 3.12 venv, core-only and with `[jev]`; `tests/test_readme.py` executes the quickstart block from the README itself |
+| `match` on YES / NO / UNSURE works; `if likely(...)` follows the configured unsure policy | `tests/test_decision.py`, plus a test that compiles the bare-name spelling and asserts the `SyntaxError` |
+| the cost rule matches the formulas, covered by property-based tests | `tests/test_rule.py`: expected-cost optimality, the threshold reduction, and monotonicity in `p`, all under hypothesis |
+| a decorated handler with 5 questions on one ticket makes exactly 1 backend call | `tests/test_semantic.py`, and the demo against the live model: 101 requests carrying 505 judgments |
+| `pytest --gut-evals` runs the YAML files and fails below `min_accuracy` | `tests/test_pytest_plugin.py`, run through pytest's own `pytester` |
+| replay mode runs the whole suite offline and deterministically | `tests/test_cassette.py`; measured on the demo predicates at 4.05s recording, 0.07s replaying |
+| `report.py` prints the demo metrics | `examples/support_tickets/report.py`, output in that directory's README |
+
+Deliberately out of scope, and not designed around: calibration from resolved outcomes, durable
+execution, taint tracking, a linter for unhandled UNSURE, anything hosted, and a TypeScript port.
+The decision log exists so the first of those can be built on real data rather than retrofitted.
