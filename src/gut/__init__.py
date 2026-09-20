@@ -1,11 +1,27 @@
-"""gut -- judgment as a programming primitive.
+"""gut -- a gut feeling that knows when to ask.
 
-Some decisions in code are not logic but judgment: *is this a cancellation threat?*, *which team
-owns this ticket?*, *how angry is this customer?* `gut` makes those first-class, as decisions that
-can come back YES, NO, or UNSURE, and that you configure by what each kind of mistake costs you
-rather than by a threshold you guessed.
+Some decisions in code are judgment, not logic: *is this customer about to leave?*, *which team
+owns this?*, *is this a bug report?* `gut` lets you write one of those as a line that reads like
+English, runs cheaply enough to use everywhere, and -- unlike a real gut feeling -- can tell you
+when it does not know.
 
-The public API is re-exported here. Everything else is private and may move between releases.
+```python
+if gut.likely(email, "the customer threatens to cancel"):
+    escalate()
+```
+
+Say how careful to be in words, and a third answer becomes possible:
+
+```python
+match gut.likely(email, "the customer threatens to cancel",
+                 stakes="high", lean="yes", ask_human=True):
+    case gut.YES:    escalate()
+    case gut.NO:     auto_reply()
+    case gut.UNSURE: review_queue.add(email)
+```
+
+Exact costs are underneath, for when a mistake has a price tag. The public API is re-exported
+here; everything else is private and may move between releases.
 """
 
 from __future__ import annotations
