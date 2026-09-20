@@ -810,6 +810,32 @@ out-of-scope set was collected separately from its in-scope one and they touch. 
 out-of-scope recall is a floor, not a ceiling, and the two-or-so percent it costs should be read as
 label noise rather than as a failure to abstain.
 
+## D35 — A correction that collapses the range disables `ask_human`, and now says so
+
+**Date:** 2026-09-20
+
+Found on the SMS benchmark, and it is the most useful thing the benchmarks turned up about `gut`
+itself.
+
+SMS spam is nearly separable, so the isotonic fit on 200 dev examples learned a step. Applied to
+the 500 test messages it mapped **every one of them to exactly 0.0 or 1.0** — 433 and 67. Average
+calibration improved (ECE 0.038 → 0.016), and the third branch vanished: no posture band can
+contain a probability that is exactly 0 or exactly 1, so `ask_human=True` became a no-op at every
+`stakes` and the automatic error rate got slightly *worse* (1.4% → 1.6%).
+
+That is the objectives diverging. A calibrator minimises average error over the whole distribution,
+which rewards confidence wherever the model is usually right. `gut`'s value is concentrated in the
+cases where it is not, and those are exactly the ones a collapsing fit throws away.
+
+`gut calibrate` now checks how many examples land inside the `stakes="medium"` band after
+correction and warns when the answer is none. A warning rather than a refusal: the correction is
+genuinely better calibrated, and a caller who is not using `ask_human` loses nothing by it. What is
+not defensible is disabling someone's third branch silently.
+
+The general lesson, and it belongs in the docs rather than only here: **calibrate for the decision
+you are making, not for the average.** If abstention matters, check that the corrected
+probabilities still reach the middle.
+
 ## Next steps, noted and not started
 
 - A native `async` backend, so batched judgments need no worker thread, and an `async` `judge()`.

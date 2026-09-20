@@ -40,6 +40,9 @@ COMMANDS: Final[tuple[str, ...]] = ("eval", "calibrate")
 OVERFIT_GAP = 0.02
 """How much better in-sample has to look than out-of-fold before the gap is called out."""
 
+COLLAPSE_BAND = (0.25, 0.75)
+"""The `stakes="medium"` band. A correction that leaves nothing inside it disables abstention."""
+
 
 def discover(paths: Sequence[str]) -> list[Path]:
     """Every predicate file under the given paths, in a stable order.
@@ -312,6 +315,7 @@ def run_calibrate(arguments: argparse.Namespace) -> int:
         entry, before, in_sample, honest = _fit_one(
             result, arguments.method, arguments.folds, arguments.model
         )
+        pairs = [(item.probability, item.event) for item in result.results]
         measured = honest or in_sample
         label = "out-of-fold" if honest else "in-sample only"
         print(
@@ -319,6 +323,17 @@ def run_calibrate(arguments: argparse.Namespace) -> int:
             f"ece {before.ece:.3f} -> {measured.ece:.3f}   ({label})"
         )
         print(f"  {'':<18} {entry.calibrator}")
+        inside = sum(
+            1
+            for probability, _ in pairs
+            if COLLAPSE_BAND[0] <= entry.calibrator.apply(probability) <= COLLAPSE_BAND[1]
+        )
+        if inside == 0:
+            print(
+                f"  {'':<18} WARNING: this maps every example outside "
+                f"{COLLAPSE_BAND[0]}-{COLLAPSE_BAND[1]}, so no posture will ever return UNSURE. "
+                f"Calibration improves the average and removes the third branch; see D35."
+            )
         if honest is not None and in_sample.ece < honest.ece - OVERFIT_GAP:
             print(
                 f"  {'':<18} in-sample ece would have read {in_sample.ece:.3f}; "
