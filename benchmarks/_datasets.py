@@ -1,4 +1,4 @@
-"""The three datasets: where they come from, and what we ask about them.
+"""The datasets: where they come from, and what we ask about them.
 
 Every source is pinned to a commit where the host has commits, and verified by SHA-256 either way.
 Licences differ and so does what may be committed -- see D31 in DECISIONS.md.
@@ -203,6 +203,80 @@ def looks_like_spam(text: str) -> bool:
     return len(SPAM_WORDS.findall(text)) >= 2
 
 
+# --------------------------------------------------------------------------- irony
+
+IRONY_REVISION: Final = "4fbd22cd78421f05b1ecdb4fc5725bc7a7bd8f66"
+
+
+def _irony_source(name: str, sha256: str) -> Source:
+    return Source(
+        url=f"https://raw.githubusercontent.com/cardiffnlp/tweeteval/{IRONY_REVISION}"
+        f"/datasets/irony/{name}.txt",
+        sha256=sha256,
+        revision=IRONY_REVISION,
+    )
+
+
+IRONY_SOURCES: Final = {
+    "train_text": _irony_source(
+        "train_text", "a888125a44f7dfaa25b026318748d0e62cc9a300d20f66eafd62011a19eaea23"
+    ),
+    "train_labels": _irony_source(
+        "train_labels", "fc69e6106c0f1f433a91536e08f83c71a391d7b219f7684d42f243a8089af77d"
+    ),
+    "val_text": _irony_source(
+        "val_text", "8806cf3793e300a485cfae34892fc3a0a2f9a183deb06c750c6531515c83051e"
+    ),
+    "val_labels": _irony_source(
+        "val_labels", "ccf429f63b4e8d0e7f425ca09445f7c31f7cea8a1b7c283b015b117c4002fd07"
+    ),
+    "test_text": _irony_source(
+        "test_text", "53103da934a7308eee82f05f2a9781a8ea3e88604fdc1e02d3101108505c64be"
+    ),
+    "test_labels": _irony_source(
+        "test_labels", "08e2095e1725e74907a380614c220204e356bb46e3e8c93deb74e83e5b15ab38"
+    ),
+}
+
+IRONY: Final = "irony"
+
+
+def load_irony() -> list[Example]:
+    """Tweets labelled ironic or not, from SemEval-2018 Task 3 via TweetEval."""
+    examples: list[Example] = []
+    for split in ("train", "val", "test"):
+        text = fetch(IRONY_SOURCES[f"{split}_text"]).decode("utf-8").splitlines()
+        labels = fetch(IRONY_SOURCES[f"{split}_labels"]).decode("utf-8").split()
+        examples.extend(
+            Example(text=line.strip(), label=IRONY if flag == "1" else "plain")
+            for line, flag in zip(text, labels, strict=True)
+            if line.strip()
+        )
+    return examples
+
+
+IRONY_QUESTION: Final = (
+    "the author does not mean this literally: they are being ironic or sarcastic, saying the "
+    "opposite of what they actually think. This includes dry understatement, fake enthusiasm "
+    "and mock praise, which read as sincere if taken at face value"
+)
+"""Chosen on dev from three candidates, which landed within a point of each other (66.0-67.0%
+accuracy). Spelling out the failure mode bought almost nothing, which is the point: the ceiling
+here belongs to the model, not to the prompt. See D36."""
+
+IRONY_TAGS: Final = re.compile(r"#(irony|ironic|sarcasm|sarcastic|not)\b", re.IGNORECASE)
+
+
+def tagged_as_ironic(text: str) -> bool:
+    """The rule a developer would reach for first, and the one this dataset rewards.
+
+    SemEval-2018's positives were collected by searching for these hashtags, and many still carry
+    them. Measuring it is the only way to tell how much of any score is reading the label off the
+    text.
+    """
+    return IRONY_TAGS.search(text) is not None
+
+
 # --------------------------------------------------------------------------- the registry
 
 
@@ -254,6 +328,21 @@ def benchmarks() -> dict[str, Benchmark]:
             redistributable=False,
             text_limit=1500,
             published="NLBSE'24 baselines report ~0.87 F1 for a fine-tuned RoBERTa across repos",
+        ),
+        "irony": Benchmark(
+            name="irony",
+            kind="binary",
+            load=load_irony,
+            spec=NoulSpec(IRONY_QUESTION),
+            what="reading tone rather than content -- the thing a literal reader is worst at",
+            licence="none declared; not redistributable",
+            citation="Van Hee, Lefever & Hoste 2018, SemEval-2018 Task 3 (irony detection), "
+            "via Barbieri et al. 2020, TweetEval (Findings of EMNLP)",
+            redistributable=False,
+            positive=IRONY,
+            keyword=tagged_as_ironic,
+            keyword_name="the #irony / #sarcasm hashtag itself",
+            published="TweetEval reports 82.1 (irony-class F1) for a fine-tuned BERTweet",
         ),
         "sms": Benchmark(
             name="sms",

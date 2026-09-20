@@ -68,7 +68,9 @@ gut.classify(query, Intent, ask_human=True, stakes="medium")
 ```
 
 It declines 89 of the 100 out-of-scope requests. On SMS spam a good-faith keyword filter errs 7.0%
-and the same one-line judgment errs 1.4%. All of it cost 5.7 cents.
+and the same one-line judgment errs 1.4%. On detecting sarcasm — a near coin-flip task where
+the model is wrong 28% of the time — declining the cases it cannot read brings that to 6.8%. All of it cost
+6.0 cents.
 
 These are well-known public datasets and may be in the model's training data, so read the numbers
 as optimistic — and measure your own task with [`gut eval`](docs/trusting-it.md). [The full
@@ -86,7 +88,7 @@ made things worse.
 | [Exact costs](docs/exact-costs.md) | The cost model underneath, for when a mistake has a price tag. |
 | [Caching, logging, and backends](docs/caching-and-logging.md) | The cache, the decision log, and the backend protocol. |
 | [Why Jev](docs/why-jev.md) | What makes a judgment cheap enough to put inside an `if`. |
-| [Benchmarks](docs/benchmarks.md) | What it does on three public datasets, and what it does not. |
+| [Benchmarks](docs/benchmarks.md) | What it does on four public datasets, and what it does not. |
 | [Honest limitations](docs/limitations.md) | What it is bad at, and what its numbers do not mean. |
 
 Writing `gut` code with a coding agent? Point it at [`skills/gut/SKILL.md`](skills/gut/SKILL.md).

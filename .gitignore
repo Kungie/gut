@@ -38,3 +38,4 @@ benchmarks/.data/
 # are not redistributable. Regenerate with:
 #   TYPESAFE_API_KEY=... python -m benchmarks nlbse-bug nlbse-kind --record
 benchmarks/cassettes/nlbse-*.json
+benchmarks/cassettes/irony*.json

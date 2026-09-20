@@ -216,6 +216,20 @@ def test_the_headline_numbers_come_from_the_benchmark() -> None:
     assert f"errs {keyword['error_rate'] * 100:.1f}%" in text
     assert f"errs {plain['error_rate'] * 100:.1f}%" in text
 
+    irony = found["irony"]
+    plain_irony = row(irony, "no arguments")
+    careful = row(irony, "stakes=high   lean=none")
+    # From the counts, not the stored rate: 4dp in the file is enough to move the last digit.
+    exact = 100 * careful["wrong"] / careful["automatic"]
+    assert f"wrong {round(plain_irony['error_rate'] * 100)}% of the time" in text
+    assert f"brings that to {exact:.1f}%" in text
+    # "near coin-flip" is a claim about the task, not only the score: the set has to stay balanced
+    # enough that 28% is genuinely close to guessing. It is not the highest raw error on the page
+    # -- nlbse-kind is worse in absolute terms on a three-way choice -- and the prose says so.
+    ironic = irony["split"]["test"]["irony"]
+    assert 0.45 < ironic / irony["test_size"] < 0.55
+    assert plain_irony["error_rate"] > 0.5 * ironic / irony["test_size"]
+
     total = sum(entry["cost"]["usd"] for entry in found.values())
     assert f"{total * 100:.1f} cents" in text
 
