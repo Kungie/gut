@@ -146,6 +146,8 @@ import gut
 gut.configure(backend=gut.FakeBackend(answers={"is a bug report": 0.91}))
 ```
 
+Full documentation: [`docs/`](../../docs/README.md).
+
 ## Rules of thumb
 
 1. **Start with no arguments.** Add `ask_human=True` when a wrong answer is expensive, then `lean`,

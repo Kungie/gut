@@ -179,7 +179,18 @@ def _resolve_min_confidence(
             f"shorthand for a confidence floor; gut.presets() shows the mapping."
         )
     if stakes is not None or ask_human:
-        return min_confidence_for(stakes, ask_human)
+        floor = min_confidence_for(stakes, ask_human)
+        if floor is not None and kind == "rate":
+            warnings.warn(
+                f"stakes/ask_human on rate() gates the answer on its confidence, which is a "
+                f"spread statistic rather than a probability of being right. Measured on one real "
+                f"task it ran the wrong way -- the least confident answers were the most accurate "
+                f"-- so a floor of {floor} may route away exactly the ratings you want to keep. "
+                f"Check yours with `gut eval` before relying on it. See D23 and D29.",
+                UserWarning,
+                stacklevel=3,
+            )
+        return floor
     return min_confidence
 
 

@@ -658,10 +658,59 @@ notice a mistake and argue about it:
 can drift silently is worse than none, and this is the documentation most likely to be acted on
 without a second look.
 
+## D29 — `stakes` on `rate` warns, pointing at what we measured
+
+**Date:** 2026-09-20
+
+D23 measured `rate`'s confidence running close to backwards on a real task: the bucket where the
+model was least sure was its most accurate. `stakes` and `ask_human` map onto a `min_confidence`
+floor for `rate` (D21), so on a task shaped like that one, the floor would route away exactly the
+ratings worth keeping.
+
+A warning rather than an error, and rather than removing the feature. The mechanism is sound —
+`classify` confidence, measured the same way, was the best calibrated of the five predicates — and
+the caller's task may not be the one we measured. What is not defensible is saying nothing while
+handing someone a gate built on a number we have watched behave badly. The warning names the
+finding and points at `gut eval`.
+
+An explicit `min_confidence=` on `rate` is left alone: a number the caller chose is a decision, not
+a default worth second-guessing.
+
+## D30 — The README is a pitch; the manual lives in `docs/`
+
+**Date:** 2026-09-20
+
+The README had grown to 574 accurate lines, and after the first screen it was `match` syntax, cache
+keys and cassette warnings. All of that earns its place somewhere — just not in the file that has
+thirty seconds to explain what problem this solves.
+
+So the README is now the pitch: the problem, why the existing three answers hurt, one line of code,
+what it is good for, the third branch, one measured result, and links. Seven pages under `docs/`
+carry everything else, unchanged in substance.
+
+The guarantee that documentation runs got **stronger** rather than weaker in the move. Every Python
+block in the README and in every `docs/` page is now *executed*, not merely compiled, against a
+`FakeBackend` in a temporary directory, with a prelude supplying the names an illustrative snippet
+expects its reader to have (`email`, `ticket`, `Team`). A page runs top to bottom in one namespace,
+the way it is read, and the backend is re-seeded between blocks so a snippet that reconfigures `gut`
+cannot break the next one. The sandbox sets a dummy API key so `JevBackend(...)` constructs, and an
+unroutable base URL so that if a snippet ever tried to *call* it, the test would fail instead of
+reaching the real API.
+
+Two checks exist to stop the README growing back: it must stay under 120 lines, and naming
+`cost_false_yes`, `on_unsure`, `GUT_RECORD` or `SQLiteCache` in it is a failure that names the page
+each belongs to.
+
 ## Next steps, noted and not started
 
 - A native `async` backend, so batched judgments need no worker thread, and an `async` `judge()`.
-- A written specification separate from the README.
+- **A real public dataset.** Every number in this repository is measured against 101 tickets and
+  labels written for it, so they show agreement with one author's judgement rather than real-world
+  performance. Running the same evals against a public labelled corpus would be the first honest
+  external measurement.
+- Fitting calibrators from resolved production decisions (`resolve()`) rather than only from eval
+  files, which is where the data actually accumulates.
+- A written specification separate from the docs.
 - Agent skills, so a coding agent can use `gut` without reading the whole README.
 - `async` support in `@semantic`, which today declines rather than blocking an event loop.
 

@@ -1,27 +1,26 @@
 """gut -- a gut feeling that knows when to ask.
 
-Some decisions in code are judgment, not logic: *is this customer about to leave?*, *which team
-owns this?*, *is this a bug report?* `gut` lets you write one of those as a line that reads like
-English, runs cheaply enough to use everywhere, and -- unlike a real gut feeling -- can tell you
-when it does not know.
+Your code keeps running into questions that are not logic: *is this customer about to leave?*,
+*which team should handle this?*, *is this comment spam?* `gut` answers one of those in a line,
+fast and cheap enough to put inside an `if`, and -- unlike a keyword rule or an LLM -- it can say
+that it does not know.
 
 ```python
 if gut.likely(email, "the customer threatens to cancel"):
-    escalate()
+    escalate(email)
 ```
 
 Say how careful to be in words, and a third answer becomes possible:
 
 ```python
-match gut.likely(email, "the customer threatens to cancel",
-                 stakes="high", lean="yes", ask_human=True):
-    case gut.YES:    escalate()
-    case gut.NO:     auto_reply()
-    case gut.UNSURE: review_queue.add(email)
+match gut.likely(email, "the customer threatens to cancel", lean="yes", ask_human=True):
+    case gut.YES:    escalate(email)
+    case gut.NO:     auto_reply(email)
+    case gut.UNSURE: send_to_a_person(email)
 ```
 
-Exact costs are underneath, for when a mistake has a price tag. The public API is re-exported
-here; everything else is private and may move between releases.
+The public API is re-exported here; everything else is private and may move between releases.
+Documentation lives in `docs/`, and `skills/gut/SKILL.md` is the short version for coding agents.
 """
 
 from __future__ import annotations
