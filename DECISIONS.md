@@ -838,13 +838,15 @@ probabilities still reach the middle.
 
 ## Next steps, noted and not started
 
+- **A second backend.** Every benchmark number comes from one model. The strongest evidence that
+  `gut`'s value is in `gut` rather than in Jev would be repeating the risk-coverage and
+  cross-dataset measurements against an LLM exposing token log-probabilities, or a small local
+  model reading option probabilities. This is the most valuable thing left undone.
 - A native `async` backend, so batched judgments need no worker thread, and an `async` `judge()`.
-- **A real public dataset.** Every number in this repository is measured against 101 tickets and
-  labels written for it, so they show agreement with one author's judgement rather than real-world
-  performance. Running the same evals against a public labelled corpus would be the first honest
-  external measurement.
 - Fitting calibrators from resolved production decisions (`resolve()`) rather than only from eval
   files, which is where the data actually accumulates.
+- More datasets: GoEmotions would re-test D23's finding about `rate` confidence on real data,
+  which is the one primitive the current three do not exercise.
 - A written specification separate from the docs.
 - Agent skills, so a coding agent can use `gut` without reading the whole README.
 - `async` support in `@semantic`, which today declines rather than blocking an event loop.
