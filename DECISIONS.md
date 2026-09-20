@@ -604,8 +604,37 @@ the right outcome: the number is now honestly uninformative rather than confiden
 **Calibration optimises calibration, not accuracy.** `refund_request` improves on ECE and loses a
 point of accuracy. They are different objectives and a fit will trade one for the other.
 
+## D27 — `@semantic` batches coroutines by moving the prefetch off the loop
+
+**Date:** 2026-09-20
+
+`@semantic` used to return coroutine functions unchanged, on the reasoning that a blocking fetch
+inside an event loop is worse than no batching. That was the wrong comparison. An `async` handler
+calling `likely()` was *already* blocking — once per judgment — so declining to decorate it made
+things strictly worse, not safer.
+
+The prefetch is the only call that touches the network. Everything after it is answered from the
+scope, in memory. So a decorated coroutine now runs that single call through `asyncio.to_thread`
+and awaits it, and the body never blocks at all. Measured on a backend with a 200 ms delay: three
+judgments in one request, the loop taking nineteen turns while it ran, and three concurrent tickets
+finishing in 209 ms where sequential would be 600.
+
+The scope is entered in the coroutine's own context after the await, so it follows that task and no
+other. A sibling task awaiting concurrently sees none of it, which a test pins by interleaving two
+handlers with different subjects across an `await`.
+
+The event-loop claim is tested without timing. The backend parks inside `ask` until a coroutine on
+the loop releases it; if the loop were blocked, that coroutine could never run and the wait times
+out. A stopwatch would have been flaky in CI and would have proved less.
+
+A backend that speaks `async` natively would avoid the thread entirely and is the better end state.
+It is a much larger change -- an `AsyncBackend` protocol, an async path through cache, batching and
+logging -- and is noted below rather than started. `judge()` is still synchronous for the same
+reason.
+
 ## Next steps, noted and not started
 
+- A native `async` backend, so batched judgments need no worker thread, and an `async` `judge()`.
 - A written specification separate from the README.
 - Agent skills, so a coding agent can use `gut` without reading the whole README.
 - `async` support in `@semantic`, which today declines rather than blocking an event loop.

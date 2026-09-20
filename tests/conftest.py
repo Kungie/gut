@@ -15,6 +15,12 @@ from gut._config import reset_configuration
 pytest_plugins = ["pytester"]
 
 
+@pytest.fixture
+def anyio_backend() -> str:
+    """Run the async tests on asyncio. anyio's plugin requires this to exist."""
+    return "asyncio"
+
+
 @pytest.fixture(autouse=True)
 def _reset_gut_configuration() -> Iterator[None]:
     reset_configuration()

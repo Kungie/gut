@@ -601,6 +601,7 @@ plot = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "anyio" },
     { name = "coverage", extra = ["toml"] },
     { name = "hypothesis" },
     { name = "matplotlib", version = "3.10.9", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
@@ -622,6 +623,7 @@ provides-extras = ["jev", "plot"]
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "anyio", specifier = ">=4.0" },
     { name = "coverage", extras = ["toml"], specifier = ">=7.6" },
     { name = "hypothesis", specifier = ">=6.100" },
     { name = "matplotlib", specifier = ">=3.8" },

@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+import asyncio
 import enum
+import inspect
 import logging
+import threading
 from collections.abc import Callable
 from typing import Any
 
@@ -444,15 +447,124 @@ def test_a_function_without_retrievable_source_runs_unchanged(
     assert backend.call_count == 1
 
 
-def test_an_async_function_is_returned_unchanged(caplog: pytest.LogCaptureFixture) -> None:
-    async def handler(ticket: str) -> None:  # pragma: no cover - never awaited
+# --------------------------------------------------------------------------- coroutines
+
+
+@pytest.mark.anyio
+async def test_a_coroutine_batches_too(backend: FakeBackend) -> None:
+    @semantic
+    async def handler(ticket: str) -> tuple[float, float, float]:
+        return (
+            likely(ticket, "is a bug report").p,
+            likely(ticket, "asks for a refund").p,
+            likely(ticket, "has reproduction steps").p,
+        )
+
+    assert len(handler.gut_plan.questions) == 3  # type: ignore[attr-defined]
+    assert await handler("a ticket") == (0.9, 0.9, 0.9)
+    assert backend.call_count == 1
+
+
+@pytest.mark.anyio
+async def test_the_event_loop_keeps_running_during_the_prefetch() -> None:
+    """Deterministic, not timed: if the loop were blocked this deadlocks and the wait fails.
+
+    The backend parks inside `ask` until a coroutine on the loop releases it. That coroutine can
+    only run if the prefetch is off the event loop, which is the whole claim.
+    """
+    entered = threading.Event()
+    release = threading.Event()
+
+    class Parking(FakeBackend):
+        def ask(self, state: State, questions: Any) -> Any:
+            entered.set()
+            assert release.wait(timeout=5), "the event loop never got a turn"
+            return super().ask(state, questions)
+
+    gut.configure(backend=Parking(default=0.5), cache=gut.NullCache())
+
+    @semantic
+    async def handler(ticket: str) -> float:
+        return likely(ticket, "is a bug report").p
+
+    async def releaser() -> None:
+        while not entered.is_set():
+            await asyncio.sleep(0.005)
+        release.set()
+
+    result, _ = await asyncio.gather(handler("a ticket"), releaser())
+    assert result == 0.5
+
+
+@pytest.mark.anyio
+async def test_concurrent_handlers_do_not_see_each_others_answers(
+    backend: FakeBackend,
+) -> None:
+    """Each task enters the scope in its own context, so nothing leaks sideways."""
+    gut.configure(
+        backend=FakeBackend(rule=lambda state, name, spec: 0.1 if state == "first" else 0.9),
+        cache=gut.NullCache(),
+    )
+
+    @semantic
+    async def handler(ticket: str) -> float:
+        await asyncio.sleep(0)  # hand the loop to the other task, mid-body
+        return likely(ticket, "is a bug report").p
+
+    first, second = await asyncio.gather(handler("first"), handler("second"))
+    assert (first, second) == (0.1, 0.9)
+
+
+@pytest.mark.anyio
+async def test_a_coroutine_without_questions_is_untouched(backend: FakeBackend) -> None:
+    @semantic
+    async def handler(ticket: str) -> str:
+        return ticket.upper()
+
+    assert await handler("hi") == "HI"
+    assert backend.call_count == 0
+
+
+@pytest.mark.anyio
+async def test_wrong_arguments_still_raise_from_the_coroutine(backend: FakeBackend) -> None:
+    @semantic
+    async def needs_two(ticket: str, other: str) -> None:
         likely(ticket, "is a bug report")
 
-    with caplog.at_level(logging.DEBUG, logger="gut"):
-        decorated = semantic(handler)
+    with pytest.raises(TypeError):
+        await needs_two("only one")  # type: ignore[call-arg]
+    assert backend.call_count == 0
 
-    assert decorated is handler
-    assert any("async" in record.message for record in caplog.records)
+
+@pytest.mark.anyio
+async def test_a_failing_prefetch_still_falls_back(caplog: pytest.LogCaptureFixture) -> None:
+    class Broken(FakeBackend):
+        def ask(self, state: State, questions: Any) -> Any:
+            if len(questions) > 1:
+                raise BackendError("batches not supported here")
+            return super().ask(state, questions)
+
+    gut.configure(backend=Broken(default=0.5), cache=gut.NullCache())
+
+    @semantic
+    async def handler(ticket: str) -> tuple[float, float]:
+        return (
+            likely(ticket, "is a bug report").p,
+            likely(ticket, "asks for a refund").p,
+        )
+
+    with caplog.at_level(logging.DEBUG, logger="gut"):
+        assert await handler("a ticket") == (0.5, 0.5)
+    assert any("falling back" in record.message for record in caplog.records)
+
+
+def test_a_decorated_coroutine_is_still_a_coroutine_function() -> None:
+    @semantic
+    async def handler(ticket: str) -> None:
+        likely(ticket, "is a bug report")
+
+    assert inspect.iscoroutinefunction(handler)
+    assert handler.__name__ == "handler"
 
 
 def test_a_failing_prefetch_falls_back_to_single_calls(

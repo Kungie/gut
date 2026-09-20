@@ -17,16 +17,21 @@ subject: a plan that guessed wrong just fails to match and the normal path takes
 the decorator exists to make: billing is on input tokens, the state is paid for once per request,
 and so five questions in one call cost barely more than one. If a question is expensive for reasons
 other than tokens, keep it out of a decorated function.
+
+Coroutine functions work the same way. The prefetch is the only call that touches the network, so
+it is run in a worker thread and awaited; everything after it is answered from memory and never
+blocks the loop.
 """
 
 from __future__ import annotations
 
 import ast
+import asyncio
 import functools
 import inspect
 import logging
 import textwrap
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Coroutine, Mapping, Sequence
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, ParamSpec, TypeVar, cast
@@ -338,6 +343,44 @@ def _prefetch_for(plan: Plan, arguments: Mapping[str, Any], backend: Backend) ->
     return prefetch
 
 
+def _async_wrapper(
+    func: Callable[P, Coroutine[Any, Any, R]], plan: Plan, signature: inspect.Signature
+) -> Callable[P, Coroutine[Any, Any, R]]:
+    """The same batching for a coroutine function, with the one blocking call moved off the loop.
+
+    The only I/O `@semantic` does is the prefetch itself; once it has run, every `likely` in the
+    body is answered from the scope without touching the network. So running that single call in a
+    worker thread is enough to make a decorated coroutine batch properly without blocking the event
+    loop -- and it is a strict improvement on today's behaviour, where the body issues one blocking
+    request per judgment.
+
+    A backend that speaks `async` natively would avoid the thread entirely. That is a larger change
+    and is noted as a next step rather than done here. See D27.
+    """
+
+    @functools.wraps(func)
+    async def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
+        if not plan.questions:
+            return await func(*args, **kwargs)
+        try:
+            bound = signature.bind(*args, **kwargs)
+        except TypeError:
+            # Let the function raise the argument error, with its own traceback.
+            return await func(*args, **kwargs)
+        bound.apply_defaults()
+
+        backend = current_backend()
+        arguments = dict(bound.arguments)
+        prefetch = await asyncio.to_thread(_prefetch_for, plan, arguments, backend)
+        # The scope is entered in the coroutine's own context, so it follows this task and no
+        # other: a sibling task awaiting concurrently has its own, and sees none of this.
+        with prefetch_scope(prefetch):
+            return await func(*args, **kwargs)
+
+    wrapper.gut_plan = plan  # type: ignore[attr-defined]
+    return wrapper
+
+
 def semantic(func: Callable[P, R]) -> Callable[P, R]:
     """Batch every question a function asks about its own parameters into one request each.
 
@@ -356,17 +399,19 @@ def semantic(func: Callable[P, R]) -> Callable[P, R]:
     subject is one of its parameters and whose question is knowable at decoration time. Everything
     else runs exactly as it would undecorated.
 
+    Coroutine functions are supported: the prefetch runs in a worker thread so the event loop keeps
+    turning, and the body's judgments are then answered from memory.
+
     The plan is available as `handle.gut_plan` for inspection.
     """
-    if inspect.iscoroutinefunction(func):
-        logger.debug("gut: @semantic does not batch async functions; %r left unchanged", func)
-        return cast("Callable[P, R]", func)
-
     plan = build_plan(func)
     if plan.skipped is not None:
         logger.debug("gut: @semantic collected nothing from %r: %s", func, plan.skipped)
 
     signature = inspect.signature(func)
+
+    if inspect.iscoroutinefunction(func):
+        return cast("Callable[P, R]", _async_wrapper(func, plan, signature))
 
     @functools.wraps(func)
     def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
