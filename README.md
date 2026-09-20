@@ -210,6 +210,11 @@ costs a wasted request, never a wrong answer.
 **It is speculative.** Questions behind branches that never run are still asked. Usually the right
 trade; if a question is expensive for reasons other than tokens, keep it out.
 
+**Coroutines work too.** The prefetch is the only call that touches the network, so it runs in a
+worker thread and is awaited; the body is then answered from memory and never blocks the loop.
+Three judgments about one ticket become one request, and concurrent handlers overlap instead of
+queueing.
+
 If you'd rather place the batch by hand:
 
 ```python
@@ -537,8 +542,9 @@ synthesises `P(no)` from a separately asked negated question, and neither should
 asked in, so inserting lines above a call doesn't reset its history — moving it to another function
 does.
 
-**`@semantic` is speculative and synchronous.** It asks questions behind branches that never run,
-and declines to decorate `async` functions rather than quietly blocking an event loop.
+**`@semantic` is speculative.** It asks questions behind branches that never run. It handles
+`async` functions by running the prefetch in a worker thread -- correct and non-blocking, but a
+backend that spoke `async` natively would not need the thread. `judge()` is still synchronous.
 
 **Context limits.** 64k tokens for subject plus every question, 32k for subject plus the longest
 one. Large batches split automatically, using a character-count estimate rather than a real

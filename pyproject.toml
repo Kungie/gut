@@ -48,6 +48,7 @@ dev = [
     "ruff>=0.6",
     "types-pyyaml>=6.0",
     "matplotlib>=3.8",
+    "anyio>=4.0",
 ]
 
 [build-system]
