@@ -632,6 +632,32 @@ It is a much larger change -- an `AsyncBackend` protocol, an async path through 
 logging -- and is noted below rather than started. `judge()` is still synchronous for the same
 reason.
 
+## D28 — An agent skill, tested like code
+
+**Date:** 2026-09-20
+
+Much of the code that will use `gut` is going to be written by coding agents and reviewed by people.
+An agent reading a 500-line README to write three lines is the wrong shape, so `skills/gut/SKILL.md`
+is the short version: the correct spellings, the traps, and seven rules of thumb. `llms.txt` at the
+root is the index, following the convention this project's own research depended on when reading
+the vendor's docs.
+
+Both are **tested against the code**, harder than prose usually is, because their reader will not
+notice a mistake and argue about it:
+
+- every Python example compiles, and the offline setup snippet is executed;
+- every API name the skill mentions must still be in `gut.__all__`;
+- the values it says are accepted — `stakes="low"|"medium"|"high"` — are checked against
+  `STAKES_CERTAINTY` and `LEAN_THRESHOLD`, so adding a level without documenting it fails;
+- its YAML predicate example is loaded through the real parser;
+- the `SyntaxError` it quotes is produced by compiling the bad spelling;
+- the ceiling formula it states is compared against `max_useful_cost_human`;
+- every file `llms.txt` links to must exist, and every CLI subcommand must be mentioned.
+
+`_cli.COMMANDS` exists so that last check does not reach into argparse internals. Documentation that
+can drift silently is worse than none, and this is the documentation most likely to be acted on
+without a second look.
+
 ## Next steps, noted and not started
 
 - A native `async` backend, so batched judgments need no worker thread, and an `async` `judge()`.
