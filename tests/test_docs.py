@@ -12,8 +12,8 @@ bottom in one namespace, the way it is read.
 
 from __future__ import annotations
 
+import ast
 import enum
-import json
 import os
 import re
 from pathlib import Path
@@ -159,17 +159,51 @@ def test_every_link_in_the_docs_resolves() -> None:
 # --------------------------------------------------------------------------- the claims
 
 
-def test_the_headline_result_matches_the_demo() -> None:
-    """The README's one number has to be the one the demo actually produces."""
-    tickets = json.loads((ROOT / "examples/support_tickets/tickets.json").read_text())
+def readme_posture() -> dict[str, object]:
+    """The arguments the README's `match` example actually passes."""
+    (source,) = [body for _, body in blocks(README, "python") if "match gut.likely(" in body]
+    tree = ast.parse(source)
+    call = next(
+        node
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Call) and ast.unparse(node.func) == "gut.likely"
+    )
+    return {
+        keyword.arg: ast.literal_eval(keyword.value)
+        for keyword in call.keywords
+        if keyword.arg is not None
+    }
+
+
+def test_the_headline_claim_matches_the_demo(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Run the demo with exactly the arguments the README shows, and check what it quotes.
+
+    The README once claimed the numbers for `stakes="low", lean="yes"` beside a code example that
+    passed neither. Prose and code drift; this is the only thing that stops it.
+    """
+    monkeypatch.syspath_prepend(str(ROOT / "examples" / "support_tickets"))
+    import after
+    import report
+
+    backend = report.configure_backend()
+    tickets = after.load_tickets()
     threats = sum(1 for ticket in tickets if ticket["labels"]["cancel_threat"])
 
+    row = report.Row(label="readme")
+    for ticket in tickets:
+        action = after.triage(after.state_of(ticket), **readme_posture())  # type: ignore[arg-type]
+        row.record(action, ticket["labels"])
+    missed_by_threshold, _ = report.before_rule(tickets, backend)
+
     text = read(README)
-    assert f"**8 of {threats}**" in text
-    assert "101 synthetic support tickets" in text
-    # And the demo's own table is where that 8 comes from.
-    demo = read("examples/support_tickets/README.md")
-    assert "threshold=0.7               100%      0%          -         8" in demo
+    assert f"{len(tickets)} synthetic support tickets" in text
+    assert f"**8 of {threats}**" in text, "the README's baseline claim moved"
+    assert missed_by_threshold == 8, "the 0.7 baseline no longer misses 8"
+
+    quoted = re.search(r"resolving\n?\*\*(\d+)%\*\* of the queue automatically", text)
+    assert quoted is not None, "the README no longer quotes an automatic share"
+    assert round(row.automatic / row.total * 100) == int(quoted.group(1))
+    assert row.false_no == 0, "the README claims this posture misses none"
 
 
 def test_the_readme_says_what_the_numbers_measure() -> None:
@@ -179,7 +213,7 @@ def test_the_readme_says_what_the_numbers_measure() -> None:
 
 
 def test_the_vendor_numbers_are_marked_as_the_vendors() -> None:
-    page = read("docs/caching-and-logging.md")
+    page = read("docs/why-jev.md")
     assert "self-reported vendor benchmarks" in page
     assert "40x-200x faster" in page
     assert "$0.042 / MTok" in page
