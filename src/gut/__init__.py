@@ -49,6 +49,7 @@ from gut._log import (
     Sink,
 )
 from gut._outcomes import NO, UNSURE, YES, Outcome
+from gut._posture import Lean, Preset, Stakes, presets
 from gut._questions import ChoiceSpec, NoulSpec, ScoreSpec
 from gut._rule import DEFAULT_POLICY, Policy, policy
 from gut._semantic import Plan, PlannedQuestion, semantic
@@ -89,6 +90,7 @@ __all__ = [
     "Judge",
     "JudgeClosedError",
     "Lazy",
+    "Lean",
     "MemoryCache",
     "MemorySink",
     "NoulAnswer",
@@ -100,6 +102,7 @@ __all__ = [
     "PlannedQuestion",
     "Policy",
     "PolicyError",
+    "Preset",
     "QuestionError",
     "ResolutionRecord",
     "SQLiteCache",
@@ -107,6 +110,7 @@ __all__ = [
     "ScoreDecision",
     "ScoreSpec",
     "Sink",
+    "Stakes",
     "UnsureDecision",
     "__version__",
     "classify",
@@ -117,6 +121,7 @@ __all__ = [
     "load_suite",
     "on_unsure",
     "policy",
+    "presets",
     "rate",
     "record_requested",
     "run_suite",

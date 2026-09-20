@@ -407,6 +407,62 @@ The demo's own costs were wrong in exactly this way on the first run: 101 ticket
 human. That is the report doing its job, and the reason the demo is in the repository rather than in
 a README.
 
+## D20 — Posture presets are defined as bands, with the costs derived
+
+**Date:** 2026-09-20
+
+The middle layer — `stakes`, `lean`, `ask_human` — maps onto the cost rule rather than sitting
+beside it, so there is still exactly one thing that decides anything. The question was which end to
+define.
+
+Defining **bands** and deriving the costs, rather than tabulating costs and hoping the bands come
+out sensible, buys two properties that matter:
+
+**The trap in D19 becomes impossible here.** A cost policy asks a person exactly for `p` in
+`[cost_human/cost_false_no, 1 - cost_human/cost_false_yes]`, which is a real interval precisely when
+`lo < hi`. A preset *is* a band with `lo < hi`, so every preset is reachable by construction. It is
+not guarded against; it cannot occur.
+
+**The two knobs stay independent.** `lean` fixes the point where yes overtakes no (`0.25` / `0.5` /
+`0.75`) and `stakes` only widens the band around it. Being more careful must never quietly change
+which way you err, so with `a = lo` and `b = 1 - hi`, the threshold is `a/(a+b)` — fixed by `lean` —
+and `a + b` is the width knob, fixed by `stakes`.
+
+| stakes | `lean=None` | `lean="yes"` | `lean="no"` |
+|---|---|---|---|
+| low | 0.400 – 0.600 | 0.200 – 0.400 | 0.600 – 0.800 |
+| medium | 0.250 – 0.750 | 0.125 – 0.625 | 0.375 – 0.875 |
+| high | 0.100 – 0.900 | 0.050 – 0.850 | 0.150 – 0.950 |
+
+`lean=None` lands exactly on the targets the brief named. The derived costs are `cost_human = 1`,
+`cost_false_yes = 1/(1 - hi)`, `cost_false_no = 1/lo`.
+
+Without `ask_human`, the costs come from the threshold alone (`cost_false_yes = t`,
+`cost_false_no = 1 - t`), so `stakes` is genuinely inert rather than merely inconsequential — the
+resulting `Policy` compares equal whatever `stakes` said. A test asserts that, because "has no
+effect" in a warning should be literally true.
+
+`gut.presets()` and `Policy.describe()` print the bands. Costs are what you configure; boundaries
+are what you can check against a model's behaviour, and the gap between the two is where a
+misunderstanding lives.
+
+## D21 — `lean` does not apply to `classify` and `rate`
+
+**Date:** 2026-09-20
+
+`classify` and `rate` answer *which* and *how much*; neither has a probability of yes for the cost
+rule to work on, and neither has a direction to err in — there is no "safer side" of a four-way
+choice. So the posture maps onto `min_confidence` instead: `stakes` becomes a confidence floor
+(`low` 0.50, `medium` 0.65, `high` 0.80) and `ask_human` decides whether there is a floor at all.
+`lean` is not accepted, rather than accepted and ignored.
+
+That floor is a **spread filter, not a probability of being right** — the same caveat that applies
+to `min_confidence` everywhere else. `stakes="high"` on a `classify` means "only act on a peaked
+answer", not "only act when 80% likely to be correct".
+
+Mixing a posture with `min_confidence` is an error, on the same reasoning as mixing it with costs:
+one of them would have to win silently.
+
 ---
 
 ## Implementation order
