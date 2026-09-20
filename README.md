@@ -235,4 +235,4 @@ pytest                 # replays them: fast, offline, deterministic
 
 ## License
 
-MIT
+Apache-2.0

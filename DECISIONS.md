@@ -6,34 +6,28 @@ behavior**, write it down here, and move on.
 
 ---
 
-## D1 — Name: `gut` (was `maybe`)
+## D1 — Name: `gut`
 
 **Date:** 2026-09-20
 
-`maybe` was the working name in the handoff, but it is taken on PyPI by an abandoned 2016 CLI tool
-(`p-e-w/maybe`, last release 2016-03-27, "See what a program does before deciding whether you really
-want it to happen"). Taking it over is not an option and shipping under a colliding import name would
-break anyone who has the old package installed.
+From *gut feeling* — the everyday phrase for exactly the kind of fast, confident-but-fallible
+judgment this library makes programmable. Four letters, available on PyPI and TestPyPI, not a Python
+keyword, no stdlib collision, and it reads well at the call site: `gut.likely(...)`, `gut.YES`.
 
-Also checked and taken: `reckon`, `deem`, `hunch`, `verdict`, `judgment`, `judgement`, `discern`,
-`probably`, `unsure`, `hedge`, `squint`, `inkling`, `appraise`, `mull`, `tilt`, `kinda`, `prob`,
-`guts`, `pymaybe`.
-
-**Chosen:** `gut`, from *gut feeling* — the everyday word for exactly the kind of fast, confident-but-
-fallible judgment this library makes programmable. Free on PyPI and TestPyPI, not a Python keyword,
-no stdlib collision, four letters, and it reads well at the call site (`gut.likely(...)`).
-
-The name is referenced in exactly one place for packaging metadata (`pyproject.toml`) and one package
+The name appears in exactly one place for packaging metadata (`pyproject.toml`) and one package
 directory (`src/gut/`), so a later rename stays cheap.
 
-## D2 — License: MIT
+## D2 — License: Apache-2.0
 
 **Date:** 2026-09-20
 
-The handoff says "open-source Python package" without naming a license. MIT is the conventional,
-lowest-friction default for a small Python library and imposes nothing on adopters. Apache-2.0 would
-add an explicit patent grant; if that becomes desirable before 1.0 it is a one-file change while the
-contributor set is still one person.
+The handoff says "open-source Python package" without naming a license. Apache-2.0 is permissive, so
+it imposes nothing on adopters, and it adds two things worth having for a library meant to sit in
+other people's production decision paths: an explicit patent grant, and an explicit contribution
+clause that sets the terms for inbound patches without a separate CLA.
+
+The repository carries the full licence text in `LICENSE` and an attribution `NOTICE`, as section
+4(d) provides for.
 
 ## D3 — Packaging: `uv_build`, `src/` layout, Python 3.10+
 

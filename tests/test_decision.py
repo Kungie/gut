@@ -118,7 +118,7 @@ def test_scoped_override_does_not_leak_across_threads() -> None:
 
 def test_configure_rejects_unknown_policies() -> None:
     with pytest.raises(gut.ConfigurationError, match="on_unsure must be one of"):
-        gut.configure(on_unsure="maybe")  # type: ignore[arg-type]
+        gut.configure(on_unsure="sometimes")  # type: ignore[arg-type]
     with (
         pytest.raises(gut.ConfigurationError, match="on_unsure must be one of"),
         gut.on_unsure("perhaps"),  # type: ignore[arg-type]
