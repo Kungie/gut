@@ -1,41 +1,41 @@
 # gut
 
-**A gut feeling that knows when to ask.**
+**Judgment calls as one line of Python, on models small enough to put inside an `if`.**
 
-Your code keeps running into questions that aren't logic: *Is this customer about to leave? Which
-team should handle this ticket? Is this comment spam?* Until now there were three ways to answer
-them, and all of them hurt:
+Your code keeps running into questions that aren't logic: *Is this comment spam? Which team owns
+this ticket? How urgent is it? Is the agent's task done?* Until now there were three answers:
 
-- **Keyword rules and regexes** — fast and free, but brittle. They miss anything phrased differently.
-- **Call an LLM** — smart, but seconds per call and a real bill at volume. And you still parse text.
-- **Train your own classifier** — accurate and cheap to run, but you need labelled data and time.
+- **Regex and keyword rules** — free and instant, and wrong the moment someone phrases it differently.
+- **A frontier LLM** — understands anything, at seconds and cents a call, with prose to parse.
+- **Train a classifier** — cheap to run, once you have the labelled data, the pipeline and the week.
 
-`gut` gives your code a gut feeling instead. It runs on [Jev](https://docs.typesafe.ai), a new kind
-of model that answers with probabilities instead of text — [up to hundreds of times faster and
-cheaper](docs/why-jev.md) than an LLM, with no training.
+There is a fourth: **small models**. A 70M-parameter NLI model answers "is this spam?" in about a
+tenth of a second on a laptop CPU; a 0.6B language model, in under a second on a laptop GPU.
+Hosted models built for exactly this, like Jev, need no hardware at all. They are good enough for
+these questions — but each speaks its own API, and none of them hands you a decision.
+
+`gut` is the primitive that does:
 
 ```python
 import gut
 
-if gut.likely(email, "the customer threatens to cancel"):
-    escalate(email)
+if gut.likely(comment, "is spam"):
+    hide(comment)
 ```
 
-One line. No prompt, no parsing, no threshold.
+No prompt, no parsing, no threshold — and no model named in your code.
 
-## What it's good for
+## Three questions
 
 ```python
-gut.likely(comment, "is spam or self-promotion")                  # moderation
-gut.classify(ticket, Team)                                        # routing
-gut.rate(message, ["can wait", "this week", "right now"])         # urgency
-gut.likely(review, "mentions a safety problem with the product")  # monitoring
-gut.likely(agent_state, "the task is finished")                   # agent loops
+gut.likely(ticket, "is a bug report")                      # yes / no
+gut.classify(ticket, Team)                                 # which one — an Enum
+gut.rate(ticket, ["can wait", "this week", "right now"])   # how much
 ```
 
-## And it knows when it doesn't know
+## It knows when it doesn't know
 
-A keyword rule never hesitates, and neither does an LLM. `gut` can:
+A regex never hesitates, and neither does an LLM. `gut` can:
 
 ```python
 match gut.likely(email, "the customer threatens to cancel", ask_human=True):
@@ -44,61 +44,75 @@ match gut.likely(email, "the customer threatens to cancel", ask_human=True):
     case gut.UNSURE: send_to_a_person(email)
 ```
 
-Clear cases get handled automatically. Only the unclear ones reach a person.
+Say how careful to be in words — `lean="yes"`, `stakes="high"` — and `gut` works out the thresholds.
+
+## Any model
+
+The model is configuration, not code. Change it and nothing else changes:
+
+```python
+gut.configure(backend=gut.ZeroShotBackend())                       # NLI model, on your CPU
+gut.configure(backend=gut.TransformersBackend("Qwen/Qwen3-0.6B"))  # small LLM, on your machine
+gut.configure(backend=gut.OpenAICompatibleBackend(                 # Ollama, vLLM, llama.cpp
+    "qwen2.5:1.5b", base_url="http://localhost:11434/v1"))
+gut.configure(backend=gut.OpenAICompatibleBackend("gpt-4.1-nano")) # OpenAI
+gut.configure(backend=gut.JevBackend())                            # TypeSafe AI's Jev
+```
+
+Or several at once. `Cascade` asks the cheapest model first and passes on only what it is unsure of:
+
+```python
+gut.configure(backend=gut.Cascade(
+    gut.ZeroShotBackend(),                        # free and local: settles the obvious
+    gut.OpenAICompatibleBackend("gpt-4.1-nano"),  # sees only what the first could not
+))
+```
+
+Answers are read from each model's own probabilities, never parsed from text, and `decision.model`
+names the model that gave one. Your own model can be a backend too: [here is how](docs/backends.md).
+
+## Several questions, one pass
+
+```python
+@gut.semantic
+def handle(ticket):
+    if gut.likely(ticket, "is a bug report"):
+        ...
+    elif gut.likely(ticket, "asks for a refund"):   # already answered
+        ...
+```
+
+Every judgment about `ticket` goes to the model together: one request to a hosted model, one pass
+over the ticket for a local one.
 
 ## Install
 
 ```bash
-pip install "gut[jev]"
-export TYPESAFE_API_KEY=...
+pip install gut                  # any OpenAI-compatible server; FakeBackend for tests
+pip install "gut[local]"         # + ZeroShotBackend and TransformersBackend (PyTorch)
+pip install "gut[jev]"           # + JevBackend
 ```
 
-No key yet? `gut.configure(backend=gut.FakeBackend(...))` runs everything above offline — see
-[getting started](docs/getting-started.md).
-
-## Does it work?
-
-On [CLINC150](docs/benchmarks.md), a public benchmark of 150 user intents plus deliberately
-out-of-scope requests: a classifier **forced to pick an intent is wrong 26% of the time.** The same
-model, allowed to answer "none of these" and to ask a person when it is unsure, is wrong **7.6%** —
-while still handling **76%** of the traffic on its own.
-
-```python
-gut.classify(query, Intent, ask_human=True, stakes="medium")
-```
-
-It declines 89 of the 100 out-of-scope requests. On SMS spam a good-faith keyword filter errs 7.0%
-and the same one-line judgment errs 1.4%. On detecting sarcasm — a near coin-flip task where
-the model is wrong 28% of the time — declining the cases it cannot read brings that to 6.8%. All of it cost
-6.0 cents.
-
-These are well-known public datasets and may be in the model's training data, so read the numbers
-as optimistic — and measure your own task with [`gut eval`](docs/trusting-it.md). [The full
-results](docs/benchmarks.md), including where `gut` loses to a trained model and where calibration
-made things worse.
+Not on PyPI yet: until the first release, `pip install "gut[local] @ git+https://github.com/Kungie/gut"`.
+No model at hand? `gut.FakeBackend(answers={"is spam": 0.97})` answers from fixtures, for tests.
 
 ## Docs
 
 | | |
 |---|---|
-| [Getting started](docs/getting-started.md) | Install, run it offline, and the three questions you can ask. |
-| [Knowing when it doesn't know](docs/knowing-when-it-doesnt-know.md) | How careful to be, in words rather than thresholds. |
-| [Asking everything at once](docs/batching.md) | Ten judgments about one subject, in one request. |
-| [Knowing whether to trust it](docs/trusting-it.md) | Test your judgments, measure calibration, and fix it. |
-| [Exact costs](docs/exact-costs.md) | The cost model underneath, for when a mistake has a price tag. |
-| [Caching, logging, and backends](docs/caching-and-logging.md) | The cache, the decision log, and the backend protocol. |
-| [Why Jev](docs/why-jev.md) | What makes a judgment cheap enough to put inside an `if`. |
-| [Benchmarks](docs/benchmarks.md) | What it does on four public datasets, and what it does not. |
-| [Honest limitations](docs/limitations.md) | What it is bad at, and what its numbers do not mean. |
+| [Getting started](docs/getting-started.md) | Install, pick a backend, and the three questions. |
+| [Backends](docs/backends.md) | Every model `gut` can run on, `Cascade`, and writing your own. |
+| [Knowing when it doesn't know](docs/knowing-when-it-doesnt-know.md) | `lean`, `ask_human`, `stakes`, and what `if` and `match` do with `UNSURE`. |
+| [Asking everything at once](docs/batching.md) | `@semantic` and `judge()`: every judgment about one subject, together. |
+| [Exact costs](docs/exact-costs.md) | The cost model under the posture words. |
+| [Caching and observability](docs/caching-and-observability.md) | The cache, and seeing every decision as it is made. |
+| [Honest limitations](docs/limitations.md) | What small models get wrong, and what `gut` does not do. |
 
-Writing `gut` code with a coding agent? Point it at [`skills/gut/SKILL.md`](skills/gut/SKILL.md).
+[`examples/`](examples/) runs the same code on every backend. Coding agents: read [`SKILL.md`](skills/gut/SKILL.md).
 
 ## Status
 
-Pre-1.0. Everything documented works and is covered by tests. Not done yet, deliberately: a native
-`async` backend, a real public dataset to measure against, and fitting calibrators from resolved
-production outcomes rather than eval files. Every design decision and its reasoning is in
-[DECISIONS.md](DECISIONS.md).
+Pre-1.0. Every code block in these docs runs in the test suite; every decision is in [DECISIONS.md](DECISIONS.md).
 
 ## License
 

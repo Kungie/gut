@@ -1,23 +1,26 @@
 ---
 name: gut
-description: Write judgment calls in Python with gut — "is this a churn threat?", "which team owns this?", "how urgent is this?" — as one readable line that can also answer UNSURE. Use when code needs a decision that is judgment rather than logic, or when replacing a hand-rolled LLM call plus a hard-coded threshold.
+description: Write judgment calls in Python with gut — "is this spam?", "which team owns this?", "how urgent is this?" — as one readable line that runs on a small, cheap model (local NLI, a local 0.6B LLM, Ollama, OpenAI, Jev) and can also answer UNSURE. Use when code needs a decision that is judgment rather than logic, or when replacing a regex, or an LLM call plus a hard-coded threshold, for a classification-sized task.
 ---
 
 # gut
 
-Judgment as one line of Python. `pip install "gut[jev]"`, `export TYPESAFE_API_KEY=...`.
+Judgment as one line of Python, on any small model. The model is configured once; the call sites
+never name it.
 
 ## Start here
 
 ```python
 import gut
 
+gut.configure(backend=gut.ZeroShotBackend())    # once, at startup
+
 if gut.likely(email, "the customer threatens to cancel"):
     escalate()
 ```
 
-**Write this form first.** No arguments, no threshold, no prompt. Reach for anything below only when
-the decision genuinely warrants it.
+**Write the call with no arguments first.** No threshold, no prompt. Reach for anything below only
+when the decision genuinely warrants it.
 
 Three question shapes:
 
@@ -35,6 +38,24 @@ class Team(Enum):
     PLATFORM = "outages, latency, API errors"
     OTHER    = "anything else"        # always include a catch-all; gut warns without one
 ```
+
+## Choosing the backend
+
+| need | backend | install |
+|---|---|---|
+| free, local, fast yes/no and routing | `gut.ZeroShotBackend()` | `gut[local]` |
+| a small LLM on this machine | `gut.TransformersBackend("Qwen/Qwen3-0.6B")` | `gut[local]` |
+| a model already served (Ollama, vLLM, llama.cpp) | `gut.OpenAICompatibleBackend(name, base_url=...)` | core |
+| OpenAI | `gut.OpenAICompatibleBackend("gpt-4.1-nano")` | core |
+| TypeSafe's Jev | `gut.JevBackend()` | `gut[jev]` |
+| cheap first, bigger only when unsure | `gut.Cascade(small, bigger)` | core |
+| tests | `gut.FakeBackend(answers={...})` | core |
+
+- `OpenAICompatibleBackend` needs a model that returns **logprobs**: not OpenAI's reasoning models
+  (o-series, gpt-5). Ollama needs 0.12.11+.
+- Text-model backends take at most **26 options** in a `classify`.
+- `OPENAI_API_KEY` is sent only to OpenAI or `OPENAI_BASE_URL`; pass `api_key=` for anywhere else.
+- A custom backend is `model_id` plus `ask(state, questions) -> gut.BackendResponse`.
 
 ## Saying how careful to be
 
@@ -86,7 +107,7 @@ def handle(ticket):
         ...
 ```
 
-One request instead of three. For `@semantic` to collect a judgment:
+One batch instead of three. For `@semantic` to collect a judgment:
 
 - the subject must be a **parameter** of the decorated function, never reassigned inside it;
 - the question must be a **literal or a module-level name**, not an f-string;
@@ -101,9 +122,9 @@ No parameter to batch against? Ask explicitly:
 import gut
 
 with gut.judge(ticket) as j:
-    bug = j.likely("is a bug report")
+    bug = j.likely("is a bug report", ask_human=True)
     team = j.classify(Team)
-    if bug:          # everything registered so far goes out here, in one request
+    if bug:          # everything registered so far goes out here, together
         route(team)
 ```
 
@@ -120,25 +141,9 @@ gut.likely(email, "the customer threatens to cancel",
 `UNSURE` can never fire. `gut` warns; `Policy.max_useful_cost_human` gives the ceiling. The posture
 words cannot hit this, which is one reason to prefer them.
 
-## Testing
+## Testing and logging
 
-```yaml
-# predicates/cancel_threat.yaml
-question: "the customer threatens to cancel"
-min_accuracy: 0.9
-examples:
-  - text: "If this happens again I'm cancelling my subscription."
-    expected: yes
-  - text: "How do I cancel my subscription? I want to downgrade."
-    expected: no
-```
-
-```bash
-gut eval predicates/                  # accuracy, Brier score, calibration error
-pytest --gut-evals predicates/        # the same, as tests
-```
-
-Offline development needs no key:
+Offline development and unit tests need no model:
 
 ```python
 import gut
@@ -146,8 +151,14 @@ import gut
 gut.configure(backend=gut.FakeBackend(answers={"is a bug report": 0.91}))
 ```
 
-Full documentation: [`docs/`](../../docs/README.md). Measured results:
-[`docs/benchmarks.md`](../../docs/benchmarks.md).
+Every decision can be observed as it is made; `d.to_dict()` is a ready-made log record:
+
+```python
+gut.configure(on_decision=lambda d: logger.info("gut", extra=d.to_dict()))
+```
+
+Full documentation: [`docs/`](../../docs/README.md). Backends in depth:
+[`docs/backends.md`](../../docs/backends.md).
 
 ## Rules of thumb
 
@@ -155,16 +166,15 @@ Full documentation: [`docs/`](../../docs/README.md). Measured results:
    then `stakes`. Reach for explicit costs only when you actually know them.
 2. **Never invent a threshold.** If you find yourself writing `if decision.p > 0.7`, use `lean` or
    costs instead — that is the whole point of the library.
-3. **Ask the question plainly**, as a statement about the subject. The model reads it literally.
+3. **One claim per question, stated plainly.** `"is spam"`, `"asks for a refund"`. Not "is spam or
+   abusive" — ask two questions and batch them. Small models read literally.
 4. **Don't ask it to count, do arithmetic, or compare dates.** Compute those in Python.
-5. **Pass the narrowest subject** that contains the answer; irrelevant context hurts accuracy.
+5. **Pass the narrowest subject** that contains the answer; irrelevant text hurts small models most.
 6. **Don't treat a judgment over user-controlled text as an authorisation decision.** Text in the
    subject can influence the answer, and `gut` does no taint tracking.
-7. **Measure before trusting a number.** `confidence` on `classify` and `rate` is a spread
-   statistic, not a probability of being right, and it does not hold up on every task.
-8. **`lean` can make things worse.** It says which mistake *you* find worse, not which way the
-   model already leans. On a benchmark where the model over-predicted "bug" 10:1, `lean="yes"`
-   raised the error rate and `lean="no"` lowered it. Check with `gut eval`.
-9. **Calibrate for the decision, not the average.** A fitted correction can push every probability
-   to 0 or 1, which improves average calibration and silently disables `ask_human` — no band can
-   contain a 0. `gut calibrate` warns when a fit does this.
+7. **`confidence` is not a probability of being right.** On `classify` and `rate` it is how peaked
+   the answer's distribution is. A model can be confidently wrong.
+8. **The same costs mean different things on different models.** After switching backends, look at
+   `d.p` for a few subjects you know the answer to.
+9. **Let a cascade do the expensive part.** `gut.Cascade(gut.ZeroShotBackend(), bigger)` settles the
+   obvious cases for free and sends only the unsure ones on. `cascade.answered_by` shows the split.

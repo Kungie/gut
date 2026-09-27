@@ -4,6 +4,11 @@ A running log of choices made while building `gut`, especially the ambiguous one
 when a design question is genuinely ambiguous, pick the option that **never silently changes user code
 behavior**, write it down here, and move on.
 
+`gut` changed direction on 2026-09-27 (D38): it is a coding primitive for small models, not a study
+of one model. Decisions that belonged to the old direction -- benchmarks, calibration, evaluation
+files, record/replay -- are listed under [Retired](#retired) with one line each; their full text is in
+the git history. Numbers are never reused, so a `D`-reference in the code always means one thing.
+
 ---
 
 ## D1 — Name: `gut`
@@ -39,7 +44,9 @@ The repository carries the full licence text in `LICENSE` and an attribution `NO
 - `typesafe-sdk` is an **optional extra** (`gut[jev]`), not a hard dependency. The core decision rule,
   `Decision` types, cache, `@semantic` batching and the entire test suite must work with no API key
   and no vendor SDK installed.
-- Core runtime dependencies stay at `httpx` and `pyyaml`.
+- Core runtime dependencies stay at `httpx`, used by the OpenAI-compatible backend and imported
+  only when that backend is. `pyyaml` left with the evaluation files (D38). PyTorch and
+  `transformers` are the optional `local` extra (D43).
 
 ---
 
@@ -147,26 +154,12 @@ that the dotted form works rather than silently testing the capture-pattern spel
 
 ## D8 — Coverage runs as `coverage run -m pytest`, not through pytest-cov
 
-**Date:** 2026-09-20
+**Date:** 2026-09-20 · **Reason superseded 2026-09-27**
 
-`gut` registers its own pytest plugin through the `pytest11` entry point, so installing the package
-makes `--gut-evals` available everywhere. A consequence: pytest imports `gut.pytest_plugin` — and
-therefore `gut/__init__.py` and everything it re-exports — while loading plugins, which happens
-*before* pytest-cov starts measuring. The whole package then reads as unexecuted. Measured directly:
-
-| | reported coverage |
-|---|---|
-| `pytest --cov` | 71% (`_errors.py` 0%, `__init__.py` 0%) |
-| `coverage run -m pytest` | 100% |
-
-Nothing about the tests differed; only when measurement began. Starting coverage as the process
-entry point puts it ahead of plugin loading, so `coverage run -m pytest` is the project's coverage
-command, `pytest-cov` is not a dependency, and CI runs the two steps separately. `fail_under = 95`
-guards the number.
-
-This is worth knowing beyond coverage: **the entry point means `import gut` happens in every pytest
-run of every project that installs it.** Keeping `gut/__init__.py` cheap to import is a real
-constraint, not a nicety.
+`gut` used to register a pytest plugin through the `pytest11` entry point, which imported the package
+before pytest-cov began measuring and made coverage read 71% instead of 100%. The plugin went with the
+evaluation files (D38), so the original reason is gone. `coverage run -m pytest` stays the documented
+command because it is correct either way and CI already uses it. `fail_under = 95` guards the number.
 
 ## D9 — `on_unsure` defaults to `"raise"`
 
@@ -209,9 +202,9 @@ direction specifically.
 
 The handoff specifies the site id as a hash of the question spec plus the `file:line` of the call
 site. Following that literally has a failure mode worth avoiding: **adding a line anywhere above the
-call changes its id.** Since the id is what ties today's decisions to next month's resolved outcomes,
-an unrelated edit would silently orphan a decision's entire calibration history, with nothing in the
-data to indicate why the series stopped.
+call changes its id.** Since the id is what groups a decision's log lines across runs and deploys,
+an unrelated edit would silently split its history in two, with nothing in the data to indicate why
+the series stopped.
 
 So the id is built from the question fingerprint plus `module:function`, which survives ordinary
 editing. The file and line are still captured on every `CallSite` and recorded alongside the
@@ -267,10 +260,12 @@ signal the vendor SDK already uses. With it set, `current_backend()` builds a `J
 keeps it. Without it, `gut` raises and names both ways forward — `FakeBackend` for offline work, or
 configuring `JevBackend` explicitly. A whitespace-only value does not count.
 
-`JevBackend` itself is resolved through a module `__getattr__` on both `gut` and `gut._backends`, so
-`import gut` never pulls in `typesafe-sdk`. That matters more than it looks: the `pytest11` entry
-point means `import gut` runs in every pytest session of every project that installs it (D8), and
-none of those should drag in a vendor SDK nobody asked for.
+`OPENAI_API_KEY` is deliberately **not** treated the same way (D39). Plenty of machines have it set
+for other reasons, so finding it is not a statement that `gut` should spend it.
+
+Every real backend is resolved through a module `__getattr__` on both `gut` and `gut._backends`, so
+`import gut` pulls in no HTTP client, no vendor SDK and no PyTorch. A test runs the import in a fresh
+interpreter and checks.
 
 ## D14 — `@semantic` is conservative by construction, and speculative by design
 
@@ -297,12 +292,13 @@ The conservative exclusions worth naming:
   backend may not be the one the prefetch would use.
 
 **It is speculative.** Questions behind branches that never execute are still asked. That is the
-whole trade: billing is on input tokens, the state is paid for once per request, so five questions in
-one call cost barely more than one, while five calls cost five states. If a question is expensive for
-reasons other than tokens, keep it out of a decorated function.
+whole trade: reading the subject is the expensive part, and every backend reads it once per batch --
+Jev bills on input and reads the state once per request, `TransformersBackend` computes the subject's
+key-value cache once (D43), a server with prefix caching does the same on its side. Five questions in
+one call cost barely more than one, while five calls cost five subjects. If a question is expensive for
+reasons other than the subject, keep it out of a decorated function.
 
-Async functions are returned unchanged. The fetch is blocking, and quietly blocking an event loop is
-worse than not batching.
+Coroutine functions are batched too; see D27.
 
 ## D15 — `judge()` hands back a handle typed as the decision it will become
 
@@ -329,58 +325,10 @@ registration; existing handles still resolve afterwards.
 
 ## D16 — The decision log is off by default, and can never break a decision
 
-**Date:** 2026-09-20
+**Date:** 2026-09-20 · **Superseded by D42**
 
-Two rules, both about a library writing to someone else's disk.
-
-**Off by default.** The default sink writes nothing, and `recording()` short-circuits record
-construction entirely so an unconfigured install pays nothing per decision. A library that starts
-writing files nobody asked for is a library people configure around.
-
-**A broken sink is swallowed.** Emission is wrapped, failures are logged at warning level, and the
-decision proceeds. Logging is observability, not correctness — a full disk must not turn a working
-classifier into an outage.
-
-The record carries the canonical question and the resolved model version, not just the id, so a log
-line stays interpretable without the code that produced it and without guessing which model answered.
-`site` records file and line for a human chasing it down, while the id is built from module and
-function (D11) — the log keeps both, and only one of them is identity.
-
-`resolve(actual=...)` exists now although nothing reads it. Calibration is explicitly out of scope
-for this release, but it is impossible to build retroactively: a decision that was never recorded
-cannot be checked against an outcome. Shipping the data path first is the difference between
-answering "is this calibrated on my data?" from existing logs and answering it six months late.
-
-## D17 — Cassettes key per question, and a miss is an error
-
-**Date:** 2026-09-20
-
-Two choices about record/replay, both about what a fixture is for.
-
-**Entries are keyed by state and question, not by the request they travelled in.** The obvious
-implementation keys a whole batch, which means adding `@semantic` — or changing which questions get
-grouped — silently invalidates every recording. Keying per question makes a cassette survive changes
-to how the calls are batched, which is exactly the refactor most likely to happen after the
-recording exists.
-
-**Replay never falls back to the network.** An unrecorded question raises and names itself. Quietly
-making the call instead would mean a suite that passes on the author's laptop, fails in CI where
-there is no key, and bills the account in between — a failure mode that is hard to notice and easy
-to blame on something else.
-
-Cassettes store the state, the question and the answer in full rather than hashes. They are test
-fixtures meant to be committed and reviewed: a diff should show *what the model's behaviour changed
-to*, which a file of hashes cannot.
-
-## D18 — `min_accuracy` defaults to 1.0
-
-**Date:** 2026-09-20
-
-Judgment tasks rarely justify demanding every example, and the handoff's own illustration uses `0.9`.
-The default is `1.0` anyway, because the two failure modes are not symmetric: a bar that is too high
-fails loudly on the first run and gets lowered deliberately, while a bar that is too low silently
-accepts a predicate that was already wrong about a case you wrote down. Lowering it should be
-something you decided.
+The two rules survive -- nothing is observed unless asked, and observing a decision can never break
+it -- but the sink protocol, the JSONL file and `resolve()` do not. They existed to feed calibration.
 
 ## D19 — `gut` warns when the human branch is unreachable
 
@@ -403,9 +351,8 @@ The boundary is reachable, not unreachable: exactly at the peak all three option
 rule prefers `UNSURE`. A test pins that, because the off-by-one here is the difference between a
 warning that is right and one that cries wolf on a working configuration.
 
-The demo's own costs were wrong in exactly this way on the first run: 101 tickets, zero sent to a
-human. That is the report doing its job, and the reason the demo is in the repository rather than in
-a README.
+The first demo's own costs were wrong in exactly this way: 101 tickets, zero sent to a human, and no
+error anywhere.
 
 ## D20 — Posture presets are defined as bands, with the costs derived
 
@@ -463,147 +410,6 @@ answer", not "only act when 80% likely to be correct".
 Mixing a posture with `min_confidence` is an error, on the same reasoning as mixing it with costs:
 one of them would have to win silently.
 
-## D22 — Thirty examples before a calibration number means anything
-
-**Date:** 2026-09-20
-
-`gut eval` reports Brier score and expected calibration error on whatever you give it, and both are
-meaningless on ten examples: one flipped label moves ECE by a tenth. Below `MIN_EXAMPLES = 30` the
-report says so in the output and `Calibration.reliable` is `False`, but the numbers are still
-printed — hiding them would just move the guessing somewhere else.
-
-Thirty is a convention, not a derivation. With the default five buckets it is roughly the point
-where a bucket can hold enough examples for its observed frequency to be more than one or two
-tickets. Larger would be defensible; the important part is that the threshold is stated and visible
-in the output rather than left to the reader.
-
-Pass and fail still hang on `min_accuracy` alone. A file written before anyone measured calibration
-must not start failing because the measurement now exists, so `max_ece` is an opt-in field.
-
-## D23 — What the first real calibration run found
-
-**Date:** 2026-09-20
-
-Five predicates built from the 101-ticket dataset, recorded against `jev-1.13.0`, replayed offline
-in 0.63s. This is the measurement the whole cost rule rests on, so it is recorded here rather than
-summarised away.
-
-| predicate | kind | accuracy | Brier | ECE | |
-|---|---|---|---|---|---|
-| refund_request | noul | 97% | 0.028 | 0.049 | pass |
-| cancel_threat | noul | 96% | 0.029 | 0.100 | pass |
-| owning_team | choice | 84% | 0.110 | 0.037 | fail (accuracy) |
-| bug_report | noul | 83% | 0.126 | 0.156 | fail |
-| urgency | score | 74% | 0.255 | 0.248 | fail |
-
-Three findings, in order of how much they matter.
-
-**`rate` confidence is not usable as a gate on this task.** A Brier score of `0.255` is worse than
-answering `0.5` to everything, and the reliability table is close to inverted:
-
-```
-p 0.2-0.4   n=18   said 0.31   happened 0.89
-p 0.4-0.6   n=24   said 0.51   happened 0.79
-p 0.6-0.8   n=28   said 0.70   happened 0.46
-p 0.8-1.0   n=31   said 0.90   happened 0.87
-```
-
-The bucket where the model was *least* sure was its most accurate, and the `0.6-0.8` bucket was its
-worst. A `min_confidence` floor — which is what `stakes` maps to for `rate` (D21) — would therefore
-route away the answers most likely to be right. **On this task, `stakes` on `rate` is worse than
-useless.** The mechanism is not broken; the assumption that a score's confidence tracks correctness
-does not hold here. It is documented as something to measure, not something to trust, and this is
-the measurement.
-
-**`classify` confidence holds up.** `owning_team` has the lowest ECE of the five (`0.037`) despite
-only 84% accuracy: the model knows when it is guessing. So the same `stakes` → `min_confidence`
-mapping is sound for `classify` on this data and unsound for `rate`, which is exactly why the
-answer has to be measured per task rather than assumed per primitive.
-
-**Noul probabilities are good but not centred.** `cancel_threat` is under-confident in the middle
-(said `0.28`, happened `0.67`; said `0.52`, happened `1.00`) while `bug_report` is over-confident at
-the top (said `0.92`, happened `0.75`). Both rank well; the numbers are stretched. For the cost
-rule this means a preset band drawn at `0.25–0.75` does not sit where you would expect on either
-distribution, and the honest fix is to measure and adjust rather than to trust the defaults.
-
-Fitting calibrators to correct any of this is deliberately out of scope. Measuring it is the
-prerequisite, and it now exists.
-
-## D24 — Isotonic by default, because of how it fails
-
-**Date:** 2026-09-20
-
-Two calibrators ship. **Platt** is a two-parameter logistic fit in log-odds space: it can stretch or
-shift a curve but never bend it, and it works on very little data. **Isotonic** is the best
-non-decreasing fit by pool-adjacent-violators, assuming nothing about the shape.
-
-Isotonic is the default because of its failure mode rather than its fit. Given a relationship that
-is actually *inverted* — which is exactly what D23 found in `urgency` — the best non-decreasing fit
-is a **constant**. A signal that does not rank therefore calibrates to "I have no information"
-instead of to a confident lie. Fitted on the real `urgency` data it collapses three of its four
-buckets onto a single value.
-
-That property is worth more than a better curve, because the failure it guards against is the one
-that does real damage: a number that looks like a probability, behaves like noise, and gets fed into
-a cost rule.
-
-Neither invents information. A calibrator fixes a number that ranks well and is wrongly scaled; it
-cannot fix a number that does not rank, and a test pins that accuracy is untouched by construction.
-
-## D25 — Corrections are keyed per question, and per model
-
-**Date:** 2026-09-20
-
-A correction fitted on "is this a churn threat" says nothing about "is this a bug report". The two
-questions have different base rates, different difficulty, and different failure shapes; applying
-one to the other would be worse than applying nothing. So a `CalibrationSet` maps question
-fingerprint → calibrator, and a question with no entry gets the identity.
-
-The model is recorded on each entry and checked at use. A mismatch warns once per question rather
-than refusing: refusing would break a deployment over a version bump, and a correction fitted on a
-near neighbour is usually better than none — but it is a claim about one model's distribution, so
-silence would be wrong too.
-
-Corrections are applied **on the way out of the cache**, never on the way in. What is stored is what
-the model said, so refitting a calibrator does not invalidate a single cached answer. The same
-applies to cassettes, and to `Decision.raw_p`, which keeps the uncorrected number alongside the one
-the rule used.
-
-## D26 — What fitting produced, and what got thrown away
-
-**Date:** 2026-09-20
-
-Fitted on the same five predicates as D23, reported out-of-fold over five folds so the improvement
-is not self-graded.
-
-| predicate | Brier | ECE | |
-|---|---|---|---|
-| cancel_threat | 0.029 → 0.006 | 0.100 → **0.004** | shipped |
-| urgency | 0.255 → 0.197 | 0.248 → **0.061** | shipped |
-| bug_report | 0.126 → 0.095 | 0.156 → **0.082** | shipped |
-| refund_request | 0.028 → 0.037 | 0.049 → **0.036** | shipped |
-| owning_team | 0.110 → 0.124 | 0.037 → 0.058 | **dropped** |
-
-**`owning_team` got worse, so it is not shipped.** It was already the best-calibrated of the five;
-fitting on 101 examples added noise and nothing else. `gut calibrate` drops any correction that
-loses out of fold and says so, with `--keep-all` to override. Shipping a correction that makes
-calibration worse is strictly worse than shipping nothing, and the in-sample number would have
-hidden it.
-
-**The in-sample numbers are not to be believed, and the tool prints the gap.** For `bug_report`,
-in-sample ECE reads `0.007` against `0.082` out of fold — a tenfold difference, which is isotonic
-fitting noise on 101 points. Evaluating with the corrections applied on the same data shows
-`cancel_threat` at 100% accuracy and an ECE of exactly `0.000`, which is the signature of measuring
-a fit on its own training set, not a result.
-
-**Calibration cannot fix `urgency`'s real problem.** Its ECE falls from `0.248` to `0.061` and its
-accuracy does not move at all, because the correction flattens a signal that does not rank. That is
-the right outcome: the number is now honestly uninformative rather than confidently wrong, and a
-`min_confidence` gate built on it will abstain rather than choosing badly.
-
-**Calibration optimises calibration, not accuracy.** `refund_request` improves on ECE and loses a
-point of accuracy. They are different objectives and a fit will trade one for the other.
-
 ## D27 — `@semantic` batches coroutines by moving the prefetch off the loop
 
 **Date:** 2026-09-20
@@ -628,9 +434,8 @@ the loop releases it; if the loop were blocked, that coroutine could never run a
 out. A stopwatch would have been flaky in CI and would have proved less.
 
 A backend that speaks `async` natively would avoid the thread entirely and is the better end state.
-It is a much larger change -- an `AsyncBackend` protocol, an async path through cache, batching and
-logging -- and is noted below rather than started. `judge()` is still synchronous for the same
-reason.
+It is a much larger change -- an `AsyncBackend` protocol, an async path through cache and batching --
+and is noted below rather than started. `judge()` is still synchronous for the same reason.
 
 ## D28 — An agent skill, tested like code
 
@@ -638,7 +443,7 @@ reason.
 
 Much of the code that will use `gut` is going to be written by coding agents and reviewed by people.
 An agent reading a 500-line README to write three lines is the wrong shape, so `skills/gut/SKILL.md`
-is the short version: the correct spellings, the traps, and seven rules of thumb. `llms.txt` at the
+is the short version: the correct spellings, the traps, and the rules of thumb. `llms.txt` at the
 root is the index, following the convention this project's own research depended on when reading
 the vendor's docs.
 
@@ -649,32 +454,13 @@ notice a mistake and argue about it:
 - every API name the skill mentions must still be in `gut.__all__`;
 - the values it says are accepted — `stakes="low"|"medium"|"high"` — are checked against
   `STAKES_CERTAINTY` and `LEAN_THRESHOLD`, so adding a level without documenting it fails;
-- its YAML predicate example is loaded through the real parser;
+- the backends it recommends are the ones `gut` exports;
 - the `SyntaxError` it quotes is produced by compiling the bad spelling;
 - the ceiling formula it states is compared against `max_useful_cost_human`;
-- every file `llms.txt` links to must exist, and every CLI subcommand must be mentioned.
+- every file `llms.txt` links to must exist.
 
-`_cli.COMMANDS` exists so that last check does not reach into argparse internals. Documentation that
-can drift silently is worse than none, and this is the documentation most likely to be acted on
-without a second look.
-
-## D29 — `stakes` on `rate` warns, pointing at what we measured
-
-**Date:** 2026-09-20
-
-D23 measured `rate`'s confidence running close to backwards on a real task: the bucket where the
-model was least sure was its most accurate. `stakes` and `ask_human` map onto a `min_confidence`
-floor for `rate` (D21), so on a task shaped like that one, the floor would route away exactly the
-ratings worth keeping.
-
-A warning rather than an error, and rather than removing the feature. The mechanism is sound —
-`classify` confidence, measured the same way, was the best calibrated of the five predicates — and
-the caller's task may not be the one we measured. What is not defensible is saying nothing while
-handing someone a gate built on a number we have watched behave badly. The warning names the
-finding and points at `gut eval`.
-
-An explicit `min_confidence=` on `rate` is left alone: a number the caller chose is a decision, not
-a default worth second-guessing.
+Documentation that can drift silently is worse than none, and this is the documentation most likely
+to be acted on without a second look.
 
 ## D30 — The README is a pitch; the manual lives in `docs/`
 
@@ -684,9 +470,8 @@ The README had grown to 574 accurate lines, and after the first screen it was `m
 keys and cassette warnings. All of that earns its place somewhere — just not in the file that has
 thirty seconds to explain what problem this solves.
 
-So the README is now the pitch: the problem, why the existing three answers hurt, one line of code,
-what it is good for, the third branch, one measured result, and links. Seven pages under `docs/`
-carry everything else, unchanged in substance.
+So the README is the pitch: the problem, why the existing answers hurt, one line of code, what it is
+good for, the third branch, the backends, and links. The pages under `docs/` carry everything else.
 
 The guarantee that documentation runs got **stronger** rather than weaker in the move. Every Python
 block in the README and in every `docs/` page is now *executed*, not merely compiled, against a
@@ -698,252 +483,230 @@ unroutable base URL so that if a snippet ever tried to *call* it, the test would
 reaching the real API.
 
 Two checks exist to stop the README growing back: it must stay under 120 lines, and naming
-`cost_false_yes`, `on_unsure`, `GUT_RECORD` or `SQLiteCache` in it is a failure that names the page
-each belongs to.
+`cost_false_yes`, `on_unsure` or `SQLiteCache` in it is a failure that names the page each belongs
+to.
 
-## D31 — The three benchmark datasets, and what may be committed
+## D38 — `gut` is a coding primitive for small models, not a study of one
 
-**Date:** 2026-09-20
+**Date:** 2026-09-27
 
-Every number in this repository was measured against 101 tickets written for it. These three are
-not. Each was verified — link, licence, size, label set — before use, and pinned.
+Until now every number in this repository measured one model. Five public benchmarks, a calibration
+toolkit, evaluation files and a record/replay layer all answered the question *how good is Jev at
+this?* That is a real question, and it is the model vendor's to answer. It is not what a library is
+for.
 
-| dataset | source | licence | may we redistribute? |
-|---|---|---|---|
-| **CLINC150** | `clinc/oos-eval` at `828f8093`, `data/data_full.json`, SHA-256 `36923c37…` | CC BY 3.0 per the HuggingFace dataset card; **the upstream repository declares none** | yes, with attribution |
-| **NLBSE'24 issues** | `nlbse2024/issue-report-classification` at `2927bc67`, `data/issues_{train,test}.csv`, SHA-256 `18dc42a3…` / `4f7d8619…` | **none declared**, and the text is third-party GitHub content | **no** |
-| **SMS Spam Collection** | UCI dataset 228, SHA-256 `1587ea43…` | CC BY 4.0 (UCI is authoritative; the HuggingFace mirror says "unknown") | yes, with attribution |
+What `gut` is for is the gap between two ways of writing code. Classic code cannot answer "is this a
+bug report?"; a frontier LLM can, but it is seconds and cents per call, returns prose to be parsed,
+and is absurd overkill for a yes/no question. Between those sits a whole class of small, fast, cheap
+models -- NLI encoders, sub-billion-parameter language models, Jev -- that are good enough for
+exactly these questions. What is missing is the primitive that makes any of them one line of code.
+That is `gut`.
 
-Nothing is downloaded without a SHA-256 check. A benchmark whose inputs can change underneath it is
-not a benchmark, and "the upstream file moved" should be a loud failure rather than a quiet shift in
-the results.
+So, removed: `benchmarks/`, `gut eval`, `gut calibrate`, the calibrators, the pytest plugin,
+evaluation files, cassettes, the decision log's resolutions, and the demo whose purpose was to be
+measured. Added: backends for the models this is actually about (D39, D43), a cascade between them
+(D41), and a hook for seeing what was decided (D42). What stays is everything that makes the call
+site good: the three question shapes, `YES / NO / UNSURE`, the posture words and the cost rule
+under them, batching, caching.
 
-**Cassettes follow the licence.** CLINC and SMS recordings are committed, so those numbers reproduce
-offline from a clean clone. The NLBSE cassette contains issue text under no licence and is therefore
-**not** committed; `docs/benchmarks.md` says how to regenerate it, and that is the honest cost of
-using it.
+**The test suite stays.** It tests `gut`, not a model: that a cost of 2 against 50 puts the
+threshold at 0.038, that five judgments become one request, that the batched answer from a shared
+key-value cache equals the unbatched one. That is the library's job.
 
-The NLBSE'24 competition data was used rather than NLBSE'23: 2023 ships 1.4 M issues as external
-tarballs, while 2024 has 3,000 balanced issues in-repo. Three thousand real issues is plenty for a
-500-example test sample, and the smaller download is the difference between a benchmark someone runs
-and one they read about.
+## D39 — Text models answer by label probability, and API keys stay where they belong
 
-CLINC's 150 intent descriptions are the label names with underscores removed — mechanical, not
-hand-written. Writing 150 descriptions by hand would be tuning the prompt against the labels, which
-is the exact thing the dev/test split exists to prevent.
+**Date:** 2026-09-27
 
-Banking77, TweetEval and GoEmotions were skipped. The first three cover a binary judgment, a
-multiway classification and out-of-scope detection, which is what the claims need; GoEmotions would
-have re-tested D23's finding about `rate` confidence and is the most interesting of the three to
-add next.
+Most small models are text models. They do not answer typed questions; they predict a next token.
+`gut` turns each question into a prompt whose first answer token is a label -- `Yes`/`No`, a letter
+per option, a digit per level -- and reads the probability of each label straight from the model's
+next-token distribution. Nothing is generated and nothing is parsed. The same function turns those
+probabilities into the same `NoulAnswer` / `ChoiceAnswer` / `ScoreAnswer` Jev returns, so nothing
+above the backend knows the difference.
 
-## D32 — The method, and why each part of it is there
+Decisions inside that, each chosen to fail loudly rather than quietly:
 
-**Date:** 2026-09-20
+- **Only the labels count.** Probability on other tokens is dropped and the rest renormalised. If no
+  label appears among the likeliest tokens at all, that is a `BackendError` naming the tokens that
+  did -- usually a thinking model spending its first token on `<think>` -- never a silent `0.5`.
+- **A label a server did not list gets the most it could have had.** An OpenAI-compatible server
+  reports its top 20 tokens. A missing label gets `min(least listed probability, even share of the
+  unlisted mass)` -- an upper bound, so the answer looks *less* certain, the safe direction.
+- **Only single-token spellings count.** In Qwen's vocabulary `" 0"` is a bare space followed by
+  `0`; counting the space for the label `0` would count every digit's leading space too. Found by
+  running a real tokenizer, not by reading about one.
+- **Letters cap choices at 26** on these backends, with a `QuestionError` pointing at the backends
+  that have no cap.
+- **The subject comes first and the question last**, so every question about one subject shares a
+  prefix.
 
-Numbers from a model you are also tuning against are worthless. The protocol is ordinary and the
-discipline is the point.
+`OpenAICompatibleBackend` speaks the chat completions protocol over `httpx` with `max_tokens=1` and
+`logprobs`, which covers OpenAI's non-reasoning models and anything served by Ollama (0.12.11+),
+vLLM or llama.cpp. **`OPENAI_API_KEY` is only sent to the server it belongs to** -- the
+OpenAI default, or `OPENAI_BASE_URL` if set. Point the backend at any other `base_url` and the
+environment's key stays home unless you pass `api_key=` yourself. Sending a secret to whatever URL a
+config line names is how keys leak.
 
-- **One split, fixed seed `20260920`,** stratified by label. Dev ≈ 200, test ≈ 500. Dev is drawn
-  first and removed, so they cannot overlap. The sampling code is `stratified_split`, and a test
-  asserts the split is deterministic, that the two halves are disjoint, and that proportions hold.
-- **CLINC's out-of-scope share is set deliberately** to 100 of 550 test examples (18.2%), matching
-  the canonical CLINC test split, rather than the 5% its natural share in the corpus would give.
-  The departure is a `quota` argument, and it is reported rather than hidden.
-- **Question wording is written against dev and then frozen.** `python -m benchmarks --dev-only`
-  exists so that judging the wording cannot accidentally show a test result. The wording lives in
-  `benchmarks/_datasets.py` as constants for the same reason.
-- **Calibrators are fitted on dev, applied to test.** Never fitted on what they are scored on.
-- **The model is pinned** to `jev-1.13.0` and recorded in every result.
-- **The budget is checked before spending.** The estimate is printed and a run that would exceed
-  five dollars refuses to start. The real figure is around six cents.
+## D40 — Read every yes/no question both ways round
 
-Each example is asked **exactly once**. A posture changes how an answer is acted on, never what was
-asked — a property of the design that the test suite already asserts — so the whole posture sweep is
-computed afterwards from those probabilities. Ten postures therefore cost what one costs, and more
-importantly every posture is scored on *identical* model answers, which is the only thing that makes
-comparing them meaningful.
+**Date:** 2026-09-27
 
-## D33 — The question wording, and the one time it was revised
+The first run against a real 0.5B model was sobering. Asked *"Judge this about the subject: is spam.
+Answer Yes or No"*, Qwen2.5-0.5B called a meeting request spam at 0.69. Offered the same question as
+*"No or Yes"*, it said 0.04. A small model leans hard towards whichever label it is offered first --
+the probabilities were mostly measuring the prompt.
 
-**Date:** 2026-09-20
+Two changes, both chosen on twenty obvious sentence/claim pairs written to separate prompt artefacts
+from model quality (not a benchmark: the question was which *prompt* lets a model's own judgment
+through):
 
-Wording was written against the dev samples and frozen before any test set was scored. It was
-revised **once**, on dev evidence, and this is the record of it.
+- **Balanced readings.** A yes/no question is asked with its labels in both orders and the two
+  readings averaged; a choice is asked with its options in both orders and averaged *by option*, so
+  B-in-one-order and the same option under another letter count together. A rating's scale has a
+  real order and is asked once. On `TransformersBackend` the second reading costs a few dozen tokens
+  against the shared prefix; on `OpenAICompatibleBackend` it is a second request, and `balanced=False`
+  turns it off for a model known not to need it.
+- **A claim about "the text".** The question is framed as *"Claim: the text is spam. Is the claim
+  true?"*, with a bare predicate given a subject. *"The subject is spam"* scored worse: a small model
+  reads it as a claim about an email's subject line.
 
-The first attempt at the two NLBSE questions asked what the issue *was about*: "this issue reports
-that something is broken or behaving incorrectly". On dev that agreed with the label 63.2% of the
-time, and the failures said why. GitHub issue templates put the category in the body — a feature
-request whose form reads `Type: <b>Bug</b>`, a question that pastes a stack trace. What an issue
-*contains* and what it is *for* are different things, and the question was asking about the wrong
-one.
+| Qwen3-0.6B, 20 pairs | mean p when true | mean p when false | right side of 0.5 | ranking (AUC) |
+|---|---|---|---|---|
+| "Judge this about the subject", one order | 0.95 | 0.78 | 0.55 | 0.95 |
+| "Judge this about the subject", both orders | 0.75 | 0.53 | 0.80 | 0.81 |
+| "Claim: the text …", one order | 0.95 | 0.42 | 0.80 | 0.97 |
+| "Claim: the text …", both orders | 0.81 | 0.30 | 0.95 | 0.93 |
 
-Rewritten around the author's purpose — "the author opened this issue to report a defect: they are
-saying the software does something wrong and should be fixed, rather than asking for a new feature
-or for help" — and the input truncated from 4,000 to 1,500 characters, since Jev's documented
-weakness is that irrelevant state acts as a distractor and a GitHub issue is mostly boilerplate.
+Read it for what each change does. Both framings *rank* the pairs well in one order. What differs is
+where the probabilities sit: asked to "judge", the model gave false claims 0.78 on average, so
+almost everything came out yes. The claim framing halves that lean; the balanced reading removes
+most of the rest, at a small cost in ranking. Where the probabilities sit is what `gut` decides on --
+a threshold, a band, a cost -- so that is the column that matters here.
 
-| dev | before | after |
+That table is about the prompt, measured on one model with twenty sentences. It says nothing about
+how good Qwen3 is, and is not meant to.
+
+## D41 — `Cascade`: the cheap model first, and only the unsure answers go further
+
+**Date:** 2026-09-27
+
+Most judgments a program makes are easy, and a 70M-parameter NLI model gets the easy ones right in
+milliseconds for free. `Cascade(a, b, ...)` asks each backend in order and keeps an answer as soon as
+it is decisive -- a probability outside `unsure_band`, or a confidence at or above `min_confidence`
+-- escalating only the rest. It is the same idea as `ask_human`, one level down: UNSURE means *ask
+someone better*, and that someone can be a bigger model before it is a person.
+
+It is an ordinary `Backend`, so it composes with everything: `@semantic` hands it a whole batch and
+only the unsettled questions travel on; the cache stores what it returns; and because a response can
+now carry **per-answer models** (`BackendResponse.models`), `Decision.model` names the model that
+actually answered each question rather than the cascade.
+
+Choices worth naming:
+
+- **The band is the cascade's own**, separate from the caller's posture. The final answer still
+  goes through `stakes` / `ask_human`, so what the last model is unsure of can still reach a person.
+- **Every stage and both thresholds are in `model_id`**, which is part of the cache key: changing the
+  band changes which answer comes back, so it must not be served from an entry made under the old one.
+- **A stage that fails is treated like one that was unsure** -- its questions move on. So a cascade
+  doubles as a fallback chain: a local model that cannot take a 40-option choice hands it to one that
+  can. The last stage's errors are raised; there is nobody left to ask.
+- **`answered_by`** counts answers per model. It is the one number that shows what the cascade saves.
+
+## D42 — One `on_decision` hook instead of sinks
+
+**Date:** 2026-09-27
+
+The decision log (D16) had a `Sink` protocol, three implementations, a record type, a resolution
+type and `resolve()`, because it was the data path for calibration. Without calibration, what is left
+is observability, and the primitive for that is a callback:
+
+```python
+gut.configure(on_decision=lambda d: logger.info("gut", extra=d.to_dict()))
+```
+
+`Decision.to_dict()` is the ready-made record: kind, id, outcome, question, model, source, latency,
+and the kind-specific fields -- `p` and the policy in words for `likely`, the member and distribution
+for `classify`, the score and nearest level for `rate`. Writing it to a JSONL file, a metrics counter
+or a trace span is one line in the caller's code, where the choice belongs. The two rules of D16
+still hold: nothing happens unless asked, and a hook that raises is logged and swallowed.
+
+## D43 — Local models: one pass over the subject, float32 on a CPU, thinking off
+
+**Date:** 2026-09-27
+
+`TransformersBackend` and `ZeroShotBackend` run in-process through the optional `local` extra.
+
+**One pass over the subject.** A batch's prompts are tokenized in full and their longest common
+prefix found on token ids -- not on strings, so tokenizer boundaries cannot cause a mismatch. The
+prefix runs once; its key-value cache is repeated per question and every remainder runs against it in
+**one** right-padded forward pass. No attention mask is needed: under causal attention a real token
+never sees the padding after it, and every row's positions continue from the same prefix. A test
+against a real model checks the batched answers equal the unbatched ones to 1e-4. Measured on an
+8 GB M-series laptop, five questions about one ticket went from 13.4 s to 2.6 s on the CPU and from
+1.4 s to 0.9 s on the GPU.
+
+**float32 on a CPU.** `transformers` loads Qwen3 in bfloat16 by default, which on a laptop CPU took
+3.4 s per question; float32 took 1.8 s. The backend picks float32 for a CPU unless told otherwise.
+
+**Thinking off.** The answer is read from the first token, so a model that opens with `<think>` has
+nothing to read. `enable_thinking=False` is passed to every chat template; templates that do not
+know the switch ignore it.
+
+**The default model is Qwen3-0.6B**, over Qwen2.5-0.5B, because the latter could not be prompted
+into seeing obvious spam in any wording tried (D40). Neither is gated, and both are Apache-2.0.
+
+`ZeroShotBackend` needs no prompt at all: an NLI model scores whether the subject *entails* a
+hypothesis. A yes/no question is one hypothesis (a bare predicate becomes "This text is ..."); a
+choice or a rating is one hypothesis per option, with entailment log-odds competing through one
+softmax. It reads "A or B" claims poorly -- ask two questions -- and that is documented rather than
+worked around.
+
+The `torch`-touching lines are excluded from the coverage floor, since CI cannot download models.
+Everything they feed is pure and tested; `tests/test_local_models.py` runs them end to end wherever
+the extra is installed.
+
+## D44 — A catch-all can be called `DIGER`
+
+**Date:** 2026-09-27
+
+`classify` warns when an enum has no "none of these" member, because a forced choice among options
+that do not fit is the most common way a classifier quietly goes wrong. The check knew six English
+names, so `class Kategori(Enum): ... DIGER = "başka"` got the warning while doing the right thing.
+Names are now compared after upper-casing and stripping accents -- `Diğer`, `DİĞER` and `DIGER` are
+one name -- against a list covering English, Turkish, German, Dutch, French, Spanish, Portuguese and
+Italian.
+
+## D45 — `judge()` takes the posture words
+
+**Date:** 2026-09-27
+
+`gut.likely(...)` took `stakes` / `lean` / `ask_human`; `j.likely(...)` inside a `judge()` block took
+only raw costs, so batching a question meant giving up the words for how careful to be. The
+methods now go through the same resolution as the module functions, including the error for mixing
+words with numbers.
+
+## Retired
+
+Retired on 2026-09-27 with the change of direction (D38). Kept here so the numbers stay meaningful;
+the full entries are in the git history.
+
+| | what it decided | why it went |
 |---|---|---|
-| nlbse-bug agreement | 63.2% | **81.6%** |
-| nlbse-bug Brier | 0.294 | **0.142** |
-| nlbse-kind agreement | 70.6% | **72.6%** |
-| nlbse-kind Brier | 0.217 | **0.187** |
-
-CLINC (72.6% overall, 92% in-scope) and SMS (99.5%) were left alone. No wording was touched after a
-test set was scored.
-
-## D34 — CLINC's out-of-scope set overlaps its in-scope intents
-
-**Date:** 2026-09-20
-
-Worth recording because it caps what any system can score, and reporting an out-of-scope number
-without it would be misleading.
-
-Of the four out-of-scope dev queries answered confidently, two are near-duplicates of in-scope
-intents. `"give me the weather forecast for today"` is labelled out-of-scope, while `"give me the
-7 day forecast"` and `"what is the weather going to be like today"` are labelled `weather`.
-Likewise `"how many calories does jumping up and down burn"` against the `calories` intent.
-
-Nothing is wrong with the model's answer there, and nothing is wrong with `gut`. The dataset's
-out-of-scope set was collected separately from its in-scope one and they touch. So the measured
-out-of-scope recall is a floor, not a ceiling, and the two-or-so percent it costs should be read as
-label noise rather than as a failure to abstain.
-
-## D35 — A correction that collapses the range disables `ask_human`, and now says so
-
-**Date:** 2026-09-20
-
-Found on the SMS benchmark, and it is the most useful thing the benchmarks turned up about `gut`
-itself.
-
-SMS spam is nearly separable, so the isotonic fit on 200 dev examples learned a step. Applied to
-the 500 test messages it mapped **every one of them to exactly 0.0 or 1.0** — 433 and 67. Average
-calibration improved (ECE 0.038 → 0.016), and the third branch vanished: no posture band can
-contain a probability that is exactly 0 or exactly 1, so `ask_human=True` became a no-op at every
-`stakes` and the automatic error rate got slightly *worse* (1.4% → 1.6%).
-
-That is the objectives diverging. A calibrator minimises average error over the whole distribution,
-which rewards confidence wherever the model is usually right. `gut`'s value is concentrated in the
-cases where it is not, and those are exactly the ones a collapsing fit throws away.
-
-`gut calibrate` now checks how many examples land inside the `stakes="medium"` band after
-correction and warns when the answer is none. A warning rather than a refusal: the correction is
-genuinely better calibrated, and a caller who is not using `ask_human` loses nothing by it. What is
-not defensible is disabling someone's third branch silently.
-
-The general lesson, and it belongs in the docs rather than only here: **calibrate for the decision
-you are making, not for the average.** If abstention matters, check that the corrected
-probabilities still reach the middle.
-
-## D36 — No `tone()`, and the benchmark that settles it
-
-**Date:** 2026-09-20
-
-Asked for directly: *should there be a `tone(msg, "sarcastic")`?*
-
-The API answer is no, and it is the same answer as for `sentiment()`, `spam()` and `intent()`:
-`tone(msg, "sarcastic")` is `likely(msg, "…the author is being sarcastic…")` with a smaller
-vocabulary. Tone is a subject, not a shape of question. `gut` has three shapes — is it true, which
-one, how much — and a fourth entry point that collapses to the first buys nothing and costs the
-library a boundary it currently keeps.
-
-But the question underneath it was real, and not answerable from the armchair: **can the model
-read tone at all?** Jev's documented weakness is literal reading, and sarcasm is exactly what a
-literal reader misses. So TweetEval's irony set was added as a fifth benchmark
-([docs/benchmarks.md](docs/benchmarks.md)), and it turned out to be the clearest demonstration of
-the mechanism on the page:
-
-- 28.4% error with no arguments, against a 48% base rate. The model is genuinely bad at this.
-- ECE **0.036** — the second-best calibration of the five, better than the CLINC router that is
-  three times more accurate.
-- `stakes="high"` reaches **6.8% error at 15% coverage**: a 4× reduction, on the task where the
-  model comes closest to guessing. (Not the highest raw error on the page — `nlbse-kind` is 30.7%
-  — but that is a three-way choice where chance errs 67%; here chance errs 50%.)
-
-Being frequently wrong and being overconfident are independent properties, and `gut` only requires
-the second to be false. `nlbse-kind` is the control: similar accuracy, ECE 0.174, and the same
-posture only reaches 18.8%.
-
-Three wordings were tried on dev before freezing, and they landed within one point of each other
-(66.0–67.0%). Naming the failure mode in the prompt — "dry understatement, fake enthusiasm" —
-bought 0.5 points. The ceiling belongs to the model, not to the prompt, which is worth recording
-because the opposite is usually assumed.
-
-The cassette is not committed: the tweets are third-party content under no declared licence, the
-same call as NLBSE in [D31](#d31).
-
-What the docs get instead of a function: the irony section, and the point that this question is
-only usable at `stakes="high"`. A `tone()` returning a bare label would have hidden precisely that.
-
-## D37 — Running one benchmark deleted the other four
-
-**Date:** 2026-09-20
-
-`save()` wrote the results of the current run and nothing else, so `python -m benchmarks irony`
-replaced a five-entry `results.json` with a one-entry one. It already had a guard for the related
-problem — an offline replay measures ~0 ms, so recorded latencies were protected from being
-overwritten with zeros — and that guard was defeated by this one: the entries were not overwritten,
-they were dropped, and the next full run found nothing to restore from. Four live latency
-measurements were lost and had to be re-measured.
-
-`save()` now merges into the file and keeps entries it did not rerun, and `--latency` says so out
-loud when a benchmark has no scored run to merge into rather than skipping it silently. Three
-tests in `tests/test_benchmarks.py` cover it, named after the failures rather than the functions.
-
-Worth the entry because of the shape: a guard that protects a value against being *changed* does
-nothing about it being *deleted*, and the deletion was invisible — the file was still valid JSON
-and the run still printed a table.
+| D17 | Cassettes key per question, and a replay miss is an error | record/replay existed for the benchmarks; `FakeBackend` covers offline development |
+| D18 | `min_accuracy` defaults to 1.0 in evaluation files | evaluation files removed |
+| D22 | Thirty examples before a calibration number means anything | calibration removed |
+| D23 | What the first real calibration run found | a measurement of one model, not a property of `gut` |
+| D24 | Isotonic calibration by default | calibration removed |
+| D25 | Corrections keyed per question and per model | calibration removed |
+| D26 | What fitting produced | calibration removed |
+| D29 | `stakes` on `rate` warns, citing D23 | the warning cited a measurement of one model and a command that no longer exists |
+| D31–D37 | The benchmark datasets, method, wording, and results | benchmarks removed: they measured Jev, which is Jev's job |
 
 ## Next steps, noted and not started
 
-- **A second backend.** Every benchmark number comes from one model. The strongest evidence that
-  `gut`'s value is in `gut` rather than in Jev would be repeating the risk-coverage and
-  cross-dataset measurements against an LLM exposing token log-probabilities, or a small local
-  model reading option probabilities. This is the most valuable thing left undone.
-- A native `async` backend, so batched judgments need no worker thread, and an `async` `judge()`.
-- Fitting calibrators from resolved production decisions (`resolve()`) rather than only from eval
-  files, which is where the data actually accumulates.
-- More datasets: GoEmotions would re-test D23's finding about `rate` confidence on real data,
-  which is the one primitive the current five do not exercise.
+- A native `async` backend protocol, so batched judgments need no worker thread, and an `async`
+  `judge()`. The OpenAI-compatible backend is the obvious first implementation.
+- Letting a local backend batch *across* subjects -- many tickets at once -- not only across the
+  questions about one.
+- A GGUF backend through `llama-cpp-python`, for machines without PyTorch.
 - A written specification separate from the docs.
-- Agent skills, so a coding agent can use `gut` without reading the whole README.
-- `async` support in `@semantic`, which today declines rather than blocking an event loop.
-
----
-
-## Implementation order
-
-Built in this order, keeping the suite green at every step. All of it is done.
-
-| | | |
-|---|---|---|
-| 1 | decision rule, property-tested | `_rule.py` |
-| 2 | `Decision` types, truthiness, `match` semantics | `_decision.py`, `_outcomes.py`, `_config.py` |
-| 3 | question specs and `FakeBackend` | `_questions.py`, `_backends/` |
-| 4 | `likely` / `classify` / `rate` | `_api.py`, `_site.py` |
-| 5 | cache | `_cache.py`, `_serde.py` |
-| 6 | `JevBackend` | `_backends/jev.py` |
-| 7 | `@semantic` and `judge()` | `_semantic.py`, `_judge.py`, `_scope.py`, `_batching.py` |
-| 8 | decision log | `_log.py` |
-| 9 | example files, pytest plugin, cassettes | `_evals.py`, `pytest_plugin.py`, `_cassette.py` |
-| 10 | demo | `examples/support_tickets/` |
-| 11 | README | `README.md`, `tests/test_readme.py` |
-
-## Acceptance criteria
-
-Each one, and where it is checked.
-
-| criterion | evidence |
-|---|---|
-| `pip install -e .` works; the quickstart runs with `FakeBackend` and with a real key | verified in a clean 3.12 venv, core-only and with `[jev]`; `tests/test_readme.py` executes the quickstart block from the README itself |
-| `match` on YES / NO / UNSURE works; `if likely(...)` follows the configured unsure policy | `tests/test_decision.py`, plus a test that compiles the bare-name spelling and asserts the `SyntaxError` |
-| the cost rule matches the formulas, covered by property-based tests | `tests/test_rule.py`: expected-cost optimality, the threshold reduction, and monotonicity in `p`, all under hypothesis |
-| a decorated handler with 5 questions on one ticket makes exactly 1 backend call | `tests/test_semantic.py`, and the demo against the live model: 101 requests carrying 505 judgments |
-| `pytest --gut-evals` runs the YAML files and fails below `min_accuracy` | `tests/test_pytest_plugin.py`, run through pytest's own `pytester` |
-| replay mode runs the whole suite offline and deterministically | `tests/test_cassette.py`; measured on the demo predicates at 4.05s recording, 0.07s replaying |
-| `report.py` prints the demo metrics | `examples/support_tickets/report.py`, output in that directory's README |
-
-Deliberately out of scope, and not designed around: calibration from resolved outcomes, durable
-execution, taint tracking, a linter for unhandled UNSURE, anything hosted, and a TypeScript port.
-The decision log exists so the first of those can be built on real data rather than retrofitted.

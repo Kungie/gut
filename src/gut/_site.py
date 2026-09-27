@@ -1,7 +1,7 @@
 """Decision-site identity.
 
-Every decision carries an id that answers "which decision in the code is this?", so that outcomes
-recorded today can be matched against outcomes recorded next month and calibrated against reality.
+Every decision carries an id that answers "which decision in the code is this?", so that a log of
+decisions can be grouped by the line of code that made them, across runs and across deploys.
 
 The id is derived from the question itself plus *where it is asked from* -- not from the state,
 which changes on every call. See D11 in DECISIONS.md for why the location is the module and function

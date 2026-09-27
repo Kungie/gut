@@ -2,40 +2,50 @@
 
 [← docs index](README.md)
 
+**Small models are small.** That is the point, and it has a price. On one laptop run of the
+[examples](../examples/), the 70M-parameter NLI model routed support tickets to the right team and
+missed a customer saying they would move to another vendor; Qwen3-0.6B caught that and was unsure
+about much else. Neither is wrong to exist -- they are cheap enough to ask about everything -- but
+check your own questions on your own data before trusting a model with anything that matters, and
+let `ask_human=True` and [`Cascade`](backends.md#cascade) catch what the cheap model cannot settle.
 
-**About the model.** Jev reads instructions literally and is weak at counting, arithmetic and date
-comparison — compute those in Python and let `gut` judge the rest. Irrelevant state hurts accuracy,
-so pass the narrowest subject that contains the answer. Multi-hop reasoning degrades.
+**Each backend has its own blind spots.**
+
+- NLI models read one claim at a time. "Is spam or abusive" is two questions.
+- Language models under a billion parameters lean towards whichever label they are offered first.
+  `gut` reads every yes/no question and choice in both orders and averages them, which removes most
+  of the lean and doubles the requests on a hosted server. See [D40](../DECISIONS.md).
+- Text-model backends label a choice's options A to Z, so they take at most 26 options. The NLI
+  backend and Jev have no such limit.
+- OpenAI-compatible servers report their top 20 tokens. An option that does not appear there is given
+  the most probability it could have had, which makes the answer look less certain, never more.
+
+**The same number means different things on different backends.** A probability of 0.8 from an NLI
+model and 0.8 from a language model are not the same claim. `stakes` and `lean` sit on top of
+whatever the backend reports, so switching backends can move where your boundaries effectively
+fall. Look at `d.p` for a handful of subjects you know the answer to after switching.
+
+**`confidence` is not an accuracy estimate.** For `classify` and `rate` it is how peaked the answer's
+own distribution is -- on the local and OpenAI-compatible backends, the probability of the top
+option. A model can be confidently wrong.
+
+**Probabilities across questions are not comparable.** `gut` never synthesises `P(no)` from a
+separately asked negated question, and neither should you.
 
 **Text in the subject can influence the answer**, and `gut` does not do taint tracking. Treat a
 decision over user-controlled text as advisory in security contexts.
 
-**"Calibrated" is a claim, not a guarantee, and the measurements above show where it fails.** The
-cost rule and the postures are only as good as the probabilities feeding them. Measure yours with
-`gut eval` before trusting a preset band to sit where this page says it does, and fix what you can
-with `gut calibrate`. A correction is fitted on your data, for your model — nothing ships
-pre-calibrated, because nothing could be.
+**Do the arithmetic in Python.** Small models are weak at counting, arithmetic and date comparison.
+Compute those, and let `gut` judge the rest.
 
-**`confidence` is not an accuracy estimate.** For `classify` and `rate` it is a statistic over how
-peaked the answer's own distribution is. It held up for `classify` on our data and inverted for
-`rate`. Measure it.
-
-**Costs do not transfer across backends.** A cost model is a claim about *these* probabilities. A
-different model, or an unpinned version that moves, can be sharper or flatter in the middle and put
-the implied boundaries somewhere else on its distribution.
-
-**Probabilities across questions are not comparable.** The vendor's docs warn that negated questions
-need not sum to 1 and that different primitives yield non-comparable numbers. `gut` never
-synthesises `P(no)` from a separately asked negated question, and neither should you.
+**Local models need memory and time.** Qwen3-0.6B takes about 1.2 GB of memory in half precision and
+twice that in float32, which is what it uses on a CPU. Measured on one 8 GB M-series laptop, it
+answered one question in about 2 s on the CPU and 0.4 s on the GPU, and five questions about the
+same ticket in 2.6 s and 0.9 s; the NLI model took about 0.1 s per question on the CPU.
 
 **Decision ids survive edits, not moves.** An id is the question plus the module and function it is
-asked in, so inserting lines above a call doesn't reset its history — moving it to another function
-does.
+asked in, so inserting lines above a call doesn't change it -- moving it to another function does.
 
-**`@semantic` is speculative.** It asks questions behind branches that never run. It handles
-`async` functions by running the prefetch in a worker thread -- correct and non-blocking, but a
-backend that spoke `async` natively would not need the thread. `judge()` is still synchronous.
-
-**Context limits.** 64k tokens for subject plus every question, 32k for subject plus the longest
-one. Large batches split automatically, using a character-count estimate rather than a real
-tokeniser — a wrong estimate costs an extra request, never a wrong answer.
+**`@semantic` is speculative.** It asks questions behind branches that never run. It handles `async`
+functions by running the batch in a worker thread -- correct and non-blocking, but a backend that
+spoke `async` natively would not need the thread. `judge()` is still synchronous.

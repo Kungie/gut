@@ -1,9 +1,10 @@
 """The backend protocol and the raw answer shapes every backend returns.
 
-These types are `gut`'s own, deliberately not the vendor's. A backend's job is narrow: take one
+These types are `gut`'s own, deliberately not any vendor's. A backend's job is narrow: take one
 state and a batch of named questions, return one typed answer per name plus the exact model version
-that produced them. Everything above this line -- cost rules, caching, batching, logging -- is
-backend-agnostic, which is what keeps a future local-model or logprob backend a drop-in.
+that produced them. Everything above this line -- the cost rule, caching, batching, the decision
+types -- is backend-agnostic, which is what lets a hosted model, a 0.5B model on a laptop and an
+NLI encoder answer the same `gut.likely(...)` line.
 """
 
 from __future__ import annotations
@@ -63,6 +64,15 @@ class BackendResponse:
     """The exact versioned model that answered, never an alias."""
     input_tokens: int | None = None
     """Billable input tokens, when the backend reports them."""
+    models: Mapping[str, str] | None = None
+    """Per-answer models, for a response assembled from more than one model -- a `Cascade` that
+    escalated some questions and not others. `None` means `model` answered everything."""
+
+    def model_for(self, name: str) -> str:
+        """The model that produced the answer called `name`."""
+        if self.models is not None and name in self.models:
+            return self.models[name]
+        return self.model
 
 
 @runtime_checkable

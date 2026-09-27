@@ -56,26 +56,11 @@ class QuestionError(GutError, ValueError):
 class BackendError(GutError):
     """A backend could not answer.
 
-    Covers both transport failures and misconfiguration, such as a `FakeBackend` asked a question no
-    fixture covers.
+    Covers transport failures, a model that did not answer in the expected shape, and
+    misconfiguration, such as a `FakeBackend` asked a question no fixture covers or a local model
+    whose optional dependencies are not installed.
     """
 
 
 class JudgeClosedError(GutError):
     """A question was registered after its `judge()` block had ended."""
-
-
-class CassetteMissError(GutError):
-    """A replayed question was never recorded, or a recording run has nothing to record from.
-
-    Replay mode refuses to fall back to the network: one forgotten re-record would otherwise become
-    a suite that passes on a laptop, fails in CI, and bills you either way.
-    """
-
-
-class EvalError(GutError, ValueError):
-    """A predicate example file cannot be read as one."""
-
-
-class CalibrationError(GutError, ValueError):
-    """A probability correction cannot be fitted, loaded, or applied as asked."""

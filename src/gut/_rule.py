@@ -5,7 +5,7 @@ error types, it performs no I/O, and it holds no state. Everything in `gut` that
 do* with a probability goes through `Policy.decide`.
 
 The idea it exists to serve: a threshold is an arbitrary number, but the cost of each kind of
-mistake is something a developer actually knows. Given a calibrated ``p = P(yes)``:
+mistake is something a developer actually knows. Given ``p = P(yes)``:
 
     expected cost of saying YES     = (1 - p) * cost_false_yes
     expected cost of saying NO      =      p  * cost_false_no

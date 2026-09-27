@@ -1,8 +1,8 @@
 """Converting answers to and from JSON.
 
-Used by the on-disk cache and, later, by record/replay cassettes. Kept in one place so that a
-change to the wire form invalidates both at once rather than leaving one of them silently reading
-a shape the other no longer writes.
+Used by the on-disk cache. Kept in one place, and versioned, so that a change to the wire form
+invalidates stored answers rather than leaving the cache silently reading a shape nothing writes
+any more.
 
 One asymmetry to know about: JSON object keys are always strings, but score answers key their
 `probabilities` and `legend` by integer level. Round-tripping therefore has to coerce those keys

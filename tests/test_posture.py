@@ -244,22 +244,14 @@ def test_bad_stakes_on_classify_is_rejected(backend: FakeBackend) -> None:
         gut.classify("t", Team, stakes="enormous", ask_human=True)  # type: ignore[arg-type]
 
 
-def test_a_posture_on_rate_warns_about_what_we_measured(backend: FakeBackend) -> None:
-    """D23 found `rate` confidence running the wrong way on a real task, so a floor built on it
-    may route away exactly the answers worth keeping. Warn, do not refuse: the mechanism is fine
-    and the caller's task may not be the one we measured."""
-    with pytest.warns(UserWarning, match="spread statistic rather than a probability"):
-        decision = gut.rate("t", ["a", "b", "c"], stakes="high", ask_human=True)
-    assert decision.min_confidence == STAKES_CONFIDENCE["high"]  # it still applies
-
-
-def test_classify_does_not_get_that_warning(backend: FakeBackend) -> None:
-    """The same measurement found `classify` confidence to be the best calibrated of the five."""
+def test_a_posture_on_rate_sets_a_confidence_floor_quietly(backend: FakeBackend) -> None:
     import warnings
 
     with warnings.catch_warnings():
         warnings.simplefilter("error")
+        decision = gut.rate("t", ["a", "b", "c"], stakes="high", ask_human=True)
         gut.classify("t", Team, stakes="high", ask_human=True)
+    assert decision.min_confidence == STAKES_CONFIDENCE["high"]
 
 
 def test_an_explicit_floor_on_rate_is_left_alone(backend: FakeBackend) -> None:

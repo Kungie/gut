@@ -50,6 +50,11 @@ def test_the_skill_names_only_real_api() -> None:
         "UnsureDecision",
         "PolicyError",
         "Outcome",
+        "Cascade",
+        "ZeroShotBackend",
+        "TransformersBackend",
+        "OpenAICompatibleBackend",
+        "JevBackend",
     ):
         assert name in text, f"the skill stopped mentioning {name}"
         assert name in gut.__all__, f"the skill names {name}, which gut no longer exports"
@@ -87,21 +92,6 @@ def test_the_skill_states_the_ceiling_formula_correctly() -> None:
     assert rule.max_useful_cost_human == pytest.approx(2 * 50 / (2 + 50))
 
 
-def test_the_skills_predicate_file_is_a_valid_one(tmp_path: pytest.TempPathFactory) -> None:
-    from gut._evals import load_suite
-
-    (yaml_block,) = [source for _, source in blocks(SKILL, "yaml")]
-    path = ROOT / "skills" / "gut" / "_example.yaml"
-    try:
-        path.write_text(yaml_block, encoding="utf-8")
-        suite = load_suite(path)
-        assert suite.kind == "noul"
-        assert len(suite.examples) == 2
-        assert suite.min_accuracy == 0.9
-    finally:
-        path.unlink(missing_ok=True)
-
-
 def test_the_skills_offline_setup_works() -> None:
     """The one snippet a reader will paste before anything else."""
     setup = [source for _, source in blocks(SKILL, "python") if "FakeBackend" in source]
@@ -132,20 +122,25 @@ def test_every_document_the_index_points_at_exists() -> None:
         assert (ROOT / target).exists(), f"llms.txt points at {target}, which is not there"
 
 
-def test_the_index_names_the_commands_that_exist() -> None:
-    from gut._cli import COMMANDS, build_parser
-
-    text = read(INDEX)
-    parser = build_parser()
-    for command in COMMANDS:
-        # Each name is a real subcommand, and the index mentions it.
-        assert parser.parse_args([command]).handler is not None
-        assert f"gut {command}" in text, f"llms.txt does not mention `gut {command}`"
-
-
 def test_the_index_traps_match_the_code() -> None:
     text = read(INDEX)
     assert "must be dotted" in text
     assert "ask_human=True" in text
     assert "cannot be mixed" in text
     assert "cfy * cfn / (cfy + cfn)" in text
+
+
+def test_the_skill_recommends_backends_that_exist() -> None:
+    """The backend table is the part an agent copies verbatim."""
+    import re
+
+    for name in set(re.findall(r"`gut\.(\w+)\(", read(SKILL))):
+        assert name in gut.__all__, f"the skill recommends gut.{name}, which gut does not export"
+
+
+def test_the_skill_and_index_state_the_backend_limits() -> None:
+    from gut._backends._labels import MAX_LETTERED_OPTIONS
+
+    for document in (read(SKILL), read(INDEX)):
+        assert f"{MAX_LETTERED_OPTIONS} options" in document
+        assert "logprobs" in document

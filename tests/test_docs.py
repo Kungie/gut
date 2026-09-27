@@ -7,14 +7,14 @@ threshold from a different cost model, and a check that quietly stopped assertin
 
 Illustrative blocks refer to names a reader is expected to supply -- `email`, `ticket`, `Team` --
 so a prelude provides them and a `FakeBackend` answers whatever gets asked. A page runs top to
-bottom in one namespace, the way it is read.
+bottom in one namespace, the way it is read. Every backend behind an optional extra is stood in
+for, so the docs need no model and no extra, and every hosted one is pointed at an address that
+cannot answer.
 """
 
 from __future__ import annotations
 
-import ast
 import enum
-import json
 import os
 import re
 from pathlib import Path
@@ -23,6 +23,7 @@ from typing import Any
 import pytest
 
 import gut
+from gut._backends import jev, local
 from tests._markdown import ROOT, blocks, read
 
 README = "README.md"
@@ -64,34 +65,34 @@ def prelude() -> dict[str, Any]:
         "send_to_a_person": lambda *_: None,
         "review_queue": type("Queue", (), {"add": staticmethod(lambda *_: None)})(),
         "route": lambda *_: None,
+        "hide": lambda *_: None,
         "decision": gut.likely("a ticket", "is a bug report"),
     }
+
+
+class StandIn(gut.FakeBackend):
+    """What an optional backend is replaced with here: any constructor arguments, no model."""
+
+    def __init__(self, model: str = "stand-in", **options: object) -> None:
+        super().__init__(rule=gut.deterministic_rule, model=model)
 
 
 @pytest.fixture
 def sandbox(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     """Somewhere a snippet can write a cache or a log without touching the repository.
 
-    A dummy key lets `JevBackend(...)` construct, which some snippets do; an unroutable base URL
-    means that if one ever tried to *call* it, the test fails immediately instead of reaching the
-    real API.
+    The optional backends are stood in for. The hosted ones' base URLs point at an address that
+    cannot answer, so a snippet that ever tried to *call* a real API fails immediately instead of
+    reaching it.
     """
     monkeypatch.chdir(tmp_path)
     monkeypatch.setenv("TYPESAFE_API_KEY", "documentation-test-not-a-real-key")
     monkeypatch.setenv("TYPESAFE_BASE_URL", "http://127.0.0.1:1")
-    monkeypatch.delenv("GUT_RECORD", raising=False)
-
-    # Files a reader following the docs would already have by the time they reach the snippet
-    # that loads them.
-    calibration = gut.CalibrationSet()
-    calibration.add(
-        gut.Entry(
-            fingerprint=gut.NoulSpec("is a bug report").fingerprint,
-            calibrator=gut.Isotonic(points=((0.0, 0.0), (1.0, 1.0))),
-            model="fake-1.0",
-        )
-    )
-    calibration.save(tmp_path / "calibration.json")
+    monkeypatch.setenv("OPENAI_BASE_URL", "http://127.0.0.1:1/v1")
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.setattr(local, "ZeroShotBackend", StandIn)
+    monkeypatch.setattr(local, "TransformersBackend", StandIn)
+    monkeypatch.setattr(jev, "JevBackend", StandIn)
     return tmp_path
 
 
@@ -119,11 +120,11 @@ def test_the_pages_that_should_have_examples_do() -> None:
     for page in (
         README,
         "docs/getting-started.md",
+        "docs/backends.md",
         "docs/knowing-when-it-doesnt-know.md",
         "docs/batching.md",
-        "docs/trusting-it.md",
         "docs/exact-costs.md",
-        "docs/caching-and-logging.md",
+        "docs/caching-and-observability.md",
     ):
         assert blocks(page, "python"), f"{page} lost all of its examples"
 
@@ -146,8 +147,7 @@ def test_the_readme_stays_a_pitch() -> None:
     for banned, where in (
         ("cost_false_yes", "docs/exact-costs.md"),
         ("on_unsure", "docs/knowing-when-it-doesnt-know.md"),
-        ("GUT_RECORD", "docs/trusting-it.md"),
-        ("SQLiteCache", "docs/caching-and-logging.md"),
+        ("SQLiteCache", "docs/caching-and-observability.md"),
     ):
         assert banned not in text, f"{banned} belongs in {where}, not the README"
 
@@ -162,134 +162,30 @@ def test_every_link_in_the_docs_resolves() -> None:
 # --------------------------------------------------------------------------- the claims
 
 
-def readme_posture() -> dict[str, object]:
-    """The arguments the demo README's `match` example passes."""
-    (source,) = [body for _, body in blocks(README, "python") if "match gut.likely(" in body]
-    tree = ast.parse(source)
-    call = next(
-        node
-        for node in ast.walk(tree)
-        if isinstance(node, ast.Call) and ast.unparse(node.func) == "gut.likely"
-    )
-    return {
-        keyword.arg: ast.literal_eval(keyword.value)
-        for keyword in call.keywords
-        if keyword.arg is not None
-    }
+BACKENDS = ("ZeroShotBackend", "TransformersBackend", "OpenAICompatibleBackend", "JevBackend")
 
 
-def results() -> dict[str, dict[str, Any]]:
-    """The benchmark results the README quotes from."""
-    raw = json.loads((ROOT / "benchmarks" / "results.json").read_text())
-    return {entry["name"]: entry for entry in raw}
-
-
-def row(entry: dict[str, Any], posture: str, *, calibrated: bool = False) -> dict[str, Any]:
-    """One posture row out of a benchmark result."""
-    rows = entry["postures"]["calibrated" if calibrated else "raw"]
-    return next(item for item in rows if item["posture"].startswith(posture))
-
-
-def test_the_headline_numbers_come_from_the_benchmark() -> None:
-    """Every figure the README quotes is checked against benchmarks/results.json.
-
-    The README once quoted a percentage from one setting beside a code example passing another.
-    Prose drifts from measurement exactly as easily as it drifts from code.
-    """
+def test_the_readme_shows_every_backend_and_the_cascade() -> None:
+    """Model-agnostic is the claim, so the pitch has to show the models."""
     text = read(README)
-    found = results()
-
-    clinc = found["clinc"]
-    forced = next(item for item in clinc["baselines"] if item["posture"] == "always answer")
-    medium = row(clinc, "stakes=medium lean=none")
-    assert f"wrong {round(forced['error_rate'] * 100)}% of the time" in text
-    assert f"wrong **{medium['error_rate'] * 100:.1f}%**" in text
-    assert f"**{round(medium['coverage'] * 100)}%** of the traffic" in text
-
-    oos = clinc["out_of_scope"]["raw"]
-    caught = oos["by_other"] + oos["by_unsure"]
-    assert f"declines {caught} of the {oos['out_of_scope']} out-of-scope" in text
-
-    sms = found["sms"]
-    keyword = next(item for item in sms["baselines"] if "keyword" in item["posture"])
-    plain = row(sms, "no arguments")
-    assert f"errs {keyword['error_rate'] * 100:.1f}%" in text
-    assert f"errs {plain['error_rate'] * 100:.1f}%" in text
-
-    irony = found["irony"]
-    plain_irony = row(irony, "no arguments")
-    careful = row(irony, "stakes=high   lean=none")
-    # From the counts, not the stored rate: 4dp in the file is enough to move the last digit.
-    exact = 100 * careful["wrong"] / careful["automatic"]
-    assert f"wrong {round(plain_irony['error_rate'] * 100)}% of the time" in text
-    assert f"brings that to {exact:.1f}%" in text
-    # "near coin-flip" is a claim about the task, not only the score: the set has to stay balanced
-    # enough that 28% is genuinely close to guessing. It is not the highest raw error on the page
-    # -- nlbse-kind is worse in absolute terms on a three-way choice -- and the prose says so.
-    ironic = irony["split"]["test"]["irony"]
-    assert 0.45 < ironic / irony["test_size"] < 0.55
-    assert plain_irony["error_rate"] > 0.5 * ironic / irony["test_size"]
-
-    total = sum(entry["cost"]["usd"] for entry in found.values())
-    assert f"{total * 100:.1f} cents" in text
+    for name in (*BACKENDS, "Cascade", "FakeBackend"):
+        assert f"gut.{name}(" in text, f"the README never shows {name}"
+        assert name in gut.__all__
 
 
-def test_the_readme_shows_the_arguments_it_measured() -> None:
-    """The code block beside the claim must pass what the quoted row was measured at."""
-    (source,) = [
-        body
-        for _, body in blocks(README, "python")
-        if "gut.classify(" in body and "ask_human" in body
-    ]
-    call = next(
-        node
-        for node in ast.walk(ast.parse(source))
-        if isinstance(node, ast.Call) and ast.unparse(node.func) == "gut.classify"
-    )
-    passed = {
-        keyword.arg: ast.literal_eval(keyword.value)
-        for keyword in call.keywords
-        if keyword.arg is not None
-    }
-    assert passed == {"ask_human": True, "stakes": "medium"}
+def test_the_backends_page_covers_every_backend_gut_exports() -> None:
+    page = read("docs/backends.md")
+    exported = [name for name in gut.__all__ if name.endswith("Backend") and name != "Backend"]
+    for name in [*exported, "Cascade"]:
+        assert f"## `{name}`" in page, f"docs/backends.md has no section for {name}"
 
 
-def test_the_demo_claim_still_matches_the_demo(monkeypatch: pytest.MonkeyPatch) -> None:
-    """The ticket demo is no longer the headline, but its own page still quotes numbers."""
-    monkeypatch.syspath_prepend(str(ROOT / "examples" / "support_tickets"))
-    import after
-    import report
-
-    backend = report.configure_backend()
-    tickets = after.load_tickets()
-    missed, _ = report.before_rule(tickets, backend)
-
-    demo = read("examples/support_tickets/README.md")
-    assert f"threshold=0.7               100%      0%          -   {missed:>7}" in demo
-
-
-def test_the_readme_warns_about_contaminated_benchmarks() -> None:
-    """Famous public datasets may be in the training data, and the pitch has to say so."""
-    text = read(README)
-    assert "may be in the model's training data" in text
-    assert "optimistic" in text
-
-
-def test_the_demo_still_says_it_is_not_evidence() -> None:
-    demo = read("examples/support_tickets/README.md")
-    assert "not evidence" in demo
-    assert "written for this repository" in demo
-
-
-def test_the_vendor_numbers_are_marked_as_the_vendors() -> None:
-    page = read("docs/why-jev.md")
-    assert "self-reported vendor benchmarks" in page
-    assert "40x-200x faster" in page
-    assert "$0.042 / MTok" in page
-    assert "on the higher end of real world gains" in page
-    # The README links to that page rather than repeating the figures.
-    assert "hundreds of times faster and\ncheaper" in read(README)
-    assert "444" not in read(README)
+def test_no_page_quotes_a_benchmark() -> None:
+    """Measuring models is their makers' job (D38). The docs describe `gut`, not a leaderboard."""
+    for page in ALL_PAGES:
+        text = read(page).lower()
+        for word in ("benchmark", "clinc", "sms spam", "brier", "calibrat"):
+            assert word not in text, f"{page} mentions {word!r}"
 
 
 def test_the_preset_table_matches_the_code() -> None:

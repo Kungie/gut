@@ -7,8 +7,9 @@ to a bool, and the point of the type is to make the third value impossible to ig
 - `if d:` works, and what it does with UNSURE is a configured decision, not a silent default.
 
 Every decision also carries what it took to produce it -- the probability, the exact model version
-that answered, the policy applied, whether it came from cache -- because a judgment you cannot audit
-later is a judgment you cannot calibrate.
+that answered, the policy applied, whether it came from cache -- and `to_dict()` turns all of it
+into one JSON-ready record, because a judgment nobody can look at afterwards is one nobody can
+debug.
 """
 
 from __future__ import annotations
@@ -17,11 +18,10 @@ import dataclasses
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Generic, Literal, TypeAlias, TypeVar
+from typing import Any, Generic, Literal, TypeAlias, TypeVar
 
-from gut._config import current_on_unsure, current_sink
+from gut._config import current_on_unsure
 from gut._errors import UnsureDecision
-from gut._log import ResolutionRecord, _jsonable, _now, emit_resolution
 from gut._outcomes import Outcome
 from gut._rule import DEFAULT_POLICY, Policy
 
@@ -39,7 +39,7 @@ class BaseDecision:
     """What the decision resolved to."""
     id: str
     """Stable decision-site identifier: the same question asked from the same place keeps this id
-    across runs and across releases, so decisions can be tracked and later calibrated."""
+    across runs and across releases, so a log can be grouped by the decision that produced it."""
     model: str
     """The exact versioned model that answered, never an alias. Aliases move; recorded answers
     should not silently change meaning underneath a stored id."""
@@ -51,6 +51,8 @@ class BaseDecision:
     """
     latency_ms: float | None = None
     """How long this decision's own backend call took, or `None` when it did not make one."""
+    question: str | None = None
+    """The question as written, or `None` for a `classify` or `rate` that let its options speak."""
 
     @property
     def cached(self) -> bool:
@@ -93,29 +95,29 @@ class BaseDecision:
         """Hash on the outcome alone, so that `d == gut.YES` implies `hash(d) == hash(gut.YES)`."""
         return hash(self.outcome)
 
-    def resolve(self, actual: object, *, note: str | None = None) -> ResolutionRecord:
-        """Record what actually happened, under this decision's id.
+    def to_dict(self) -> dict[str, Any]:
+        """Everything about this decision as JSON-compatible data.
 
-        Nothing consumes resolutions yet. They exist so that the question "is this model calibrated
-        on *my* data?" is answerable later from logs already being written, rather than from an
-        instrumentation project started after the fact.
+        Meant for a log line, a metrics event or a trace attribute:
 
-        Args:
-            actual: Ground truth, however you express it -- a bool, an enum member, a level number.
-            note: Anything worth keeping alongside it.
-
-        Returns:
-            The record that was emitted, whether or not a sink kept it.
+        ```python
+        gut.configure(on_decision=lambda d: logger.info("gut", extra=d.to_dict()))
+        ```
         """
-        record = ResolutionRecord(
-            id=self.id,
-            timestamp=_now(),
-            actual=_jsonable(actual),
-            decided=self.outcome.value,
-            note=note,
-        )
-        emit_resolution(record, current_sink())
-        return record
+        record: dict[str, Any] = {
+            "kind": _KINDS[type(self).__name__],
+            "id": self.id,
+            "outcome": self.outcome.value,
+            "question": self.question,
+            "model": self.model,
+            "source": self.source,
+            "latency_ms": self.latency_ms,
+        }
+        record.update(self._details())
+        return {key: value for key, value in record.items() if value is not None}
+
+    def _details(self) -> dict[str, Any]:
+        return {}
 
     def _identity(self) -> tuple[object, ...]:
         return tuple(getattr(self, f.name) for f in dataclasses.fields(self))
@@ -123,7 +125,7 @@ class BaseDecision:
 
 @dataclass(frozen=True, eq=False, kw_only=True)
 class Decision(BaseDecision):
-    """A yes/no judgment, backed by Jev's noul primitive.
+    """A yes/no judgment, from `likely`.
 
     Example:
         ```python
@@ -137,19 +139,17 @@ class Decision(BaseDecision):
     """
 
     p: float
-    """Probability that the answer is yes, and the number the cost rule was applied to.
-
-    When a calibrator is configured this is the corrected value; `raw_p` is what the model said.
-    """
-    raw_p: float | None = None
-    """What the model said before correction, or `None` when nothing corrected it."""
+    """Probability that the answer is yes, and the number the cost rule was applied to."""
     policy: Policy = field(default_factory=lambda: DEFAULT_POLICY)
     """The cost policy that turned `p` into `outcome`."""
+
+    def _details(self) -> dict[str, Any]:
+        return {"p": self.p, "policy": self.policy.describe()}
 
 
 @dataclass(frozen=True, eq=False, kw_only=True)
 class ChoiceDecision(BaseDecision, Generic[E]):
-    """A categorical judgment over the members of an `Enum`, backed by the choice primitive.
+    """A categorical judgment over the members of an `Enum`, from `classify`.
 
     `outcome` is `YES` when a member was selected and `UNSURE` when `confidence` fell below
     `min_confidence`; there is no meaningful `NO` for a classification.
@@ -162,19 +162,25 @@ class ChoiceDecision(BaseDecision, Generic[E]):
     confidence: float
     """How concentrated `probabilities` is, from 0 to 1.
 
-    Uncorrected, this is a spread statistic computed from the distribution the answer already
-    gives, **not** a probability of being correct. A fitted calibrator turns it into one, for the
-    task it was fitted on; `raw_confidence` then holds what the model said.
+    A statistic over the answer's own distribution, **not** a probability of being correct. What
+    exactly it measures is up to the backend; the local and OpenAI-compatible backends report the
+    probability of the top option.
     """
-    raw_confidence: float | None = None
-    """What the model said before correction, or `None` when nothing corrected it."""
     min_confidence: float | None = None
     """The confidence floor applied, if any."""
+
+    def _details(self) -> dict[str, Any]:
+        return {
+            "value": None if self.value is Outcome.UNSURE else self.value.name,
+            "confidence": self.confidence,
+            "min_confidence": self.min_confidence,
+            "probabilities": {member.name: p for member, p in self.probabilities.items()},
+        }
 
 
 @dataclass(frozen=True, eq=False, kw_only=True)
 class ScoreDecision(BaseDecision):
-    """An ordinal judgment against a rubric, backed by the score primitive.
+    """An ordinal judgment against a rubric, from `rate`.
 
     `outcome` is `YES` when a score was accepted and `UNSURE` when `confidence` fell below
     `min_confidence`.
@@ -186,8 +192,6 @@ class ScoreDecision(BaseDecision):
     """Probability of each level, keyed by level number."""
     confidence: float
     """How concentrated `probabilities` is, from 0 to 1 -- see `ChoiceDecision.confidence`."""
-    raw_confidence: float | None = None
-    """What the model said before correction, or `None` when nothing corrected it."""
     levels: tuple[str, ...] = ()
     """The rubric that was asked, in order, so a stored score stays interpretable."""
     min_confidence: float | None = None
@@ -201,3 +205,20 @@ class ScoreDecision(BaseDecision):
         banker's rounding to 2 in some cases and 1 in others.
         """
         return int(self.score + 0.5)
+
+    def _details(self) -> dict[str, Any]:
+        return {
+            "score": self.score,
+            "level": self.levels[self.nearest_level] if self.levels else None,
+            "confidence": self.confidence,
+            "min_confidence": self.min_confidence,
+            "probabilities": {str(level): p for level, p in self.probabilities.items()},
+        }
+
+
+_KINDS: dict[str, str] = {
+    "BaseDecision": "decision",
+    "Decision": "likely",
+    "ChoiceDecision": "classify",
+    "ScoreDecision": "rate",
+}

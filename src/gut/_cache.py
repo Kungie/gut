@@ -1,9 +1,9 @@
 """Answer caching.
 
 Asking the same question about the same state twice is pure waste: the answer is deterministic
-enough that the second call buys nothing, and billing is on input tokens, so the state is paid for
-again every time. An in-memory LRU is on by default; `SQLiteCache` survives process restarts, and
-`NullCache` turns caching off.
+enough that the second call buys nothing, and the subject is read -- and, on a hosted model, paid
+for -- again every time. An in-memory LRU is on by default; `SQLiteCache` survives process
+restarts, and `NullCache` turns caching off.
 
 The key covers the state, the question *and the model asked for*, because an answer is only
 interchangeable with another answer from the same model. See D12 for what that means when the model

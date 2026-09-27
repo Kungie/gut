@@ -9,16 +9,20 @@ from __future__ import annotations
 
 import os
 from collections.abc import Mapping
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import pytest
-import typesafe_sdk as ts
 
 import gut
 from gut._backends.base import ChoiceAnswer, NoulAnswer, ScoreAnswer
 from gut._backends.jev import JevBackend
 from gut._errors import BackendError
 from gut._questions import ChoiceSpec, NoulSpec, ScoreSpec
+
+if TYPE_CHECKING:
+    import typesafe_sdk
+
+ts = pytest.importorskip("typesafe_sdk", reason='the Jev backend needs the extra: "gut[jev]"')
 
 BUG = NoulSpec("is a bug report")
 DESCRIBED = NoulSpec("is this spam", yes_means="unsolicited advertising", no_means="a real message")
@@ -27,12 +31,15 @@ UNNAMED = ChoiceSpec(None, {"A": None, "B": None})
 URGENCY = ScoreSpec(None, ["can wait", "this week", "today"])
 
 
-def response(answers: Mapping[str, Any], model: str = "jev-1.13.0") -> ts.SystemOneResponse:
-    return ts.SystemOneResponse(
+def response(
+    answers: Mapping[str, Any], model: str = "jev-1.13.0"
+) -> typesafe_sdk.SystemOneResponse:
+    built: typesafe_sdk.SystemOneResponse = ts.SystemOneResponse(
         model=model,
         usage=ts.Usage(input_tokens=120, output_tokens=12),
         answers=dict(answers),
     )
+    return built
 
 
 class StubClient:

@@ -14,9 +14,9 @@ answer either, because the scope is keyed by a fingerprint of the real question 
 subject: a plan that guessed wrong just fails to match and the normal path takes over.
 
 **It is speculative.** Questions behind branches that never run are still asked. That is the trade
-the decorator exists to make: billing is on input tokens, the state is paid for once per request,
-and so five questions in one call cost barely more than one. If a question is expensive for reasons
-other than tokens, keep it out of a decorated function.
+the decorator exists to make: reading the subject is the expensive part, every backend reads it
+once per batch, and so five questions in one call cost barely more than one. If a question is
+expensive for reasons other than the subject, keep it out of a decorated function.
 
 Coroutine functions work the same way. The prefetch is the only call that touches the network, so
 it is run in a worker thread and awaited; everything after it is answered from memory and never
