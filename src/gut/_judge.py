@@ -36,6 +36,8 @@ from typing import Generic, Literal, TypeVar, cast
 
 from gut._api import (
     _criteria_from_enum,
+    _resolve_min_confidence,
+    _resolve_policy,
     _Resolved,
     _warn_without_catch_all,
     build_choice_decision,
@@ -48,8 +50,9 @@ from gut._calibrators import correct
 from gut._config import current_backend, current_calibration
 from gut._decision import BaseDecision, ChoiceDecision, Decision, ScoreDecision
 from gut._errors import JudgeClosedError
+from gut._posture import Lean, Stakes
 from gut._questions import ChoiceSpec, NoulSpec, QuestionSpec, ScoreSpec, State
-from gut._rule import Policy, policy
+from gut._rule import Policy
 from gut._site import CallSite, caller_site
 
 E = TypeVar("E", bound=Enum)
@@ -154,6 +157,9 @@ class Judge:
         self,
         question: str,
         *,
+        stakes: Stakes | None = None,
+        lean: Lean | None = None,
+        ask_human: bool = False,
         cost_false_yes: float | None = None,
         cost_false_no: float | None = None,
         cost_human: float | None = None,
@@ -163,7 +169,10 @@ class Judge:
         no_means: str | None = None,
     ) -> Decision:
         """Register a yes/no judgment. See `gut.likely` for the arguments."""
-        rule = policy(
+        rule = _resolve_policy(
+            stakes=stakes,
+            lean=lean,
+            ask_human=ask_human,
             cost_false_yes=cost_false_yes,
             cost_false_no=cost_false_no,
             cost_human=cost_human,
@@ -179,9 +188,14 @@ class Judge:
         enum_class: type[E],
         *,
         question: str | None = None,
+        stakes: Stakes | None = None,
+        ask_human: bool = False,
         min_confidence: float | None = None,
     ) -> ChoiceDecision[E]:
         """Register a categorical judgment. See `gut.classify` for the arguments."""
+        min_confidence = _resolve_min_confidence(
+            stakes=stakes, ask_human=ask_human, min_confidence=min_confidence, kind="classify"
+        )
         criteria = _criteria_from_enum(enum_class)
         _warn_without_catch_all(enum_class)
         spec = ChoiceSpec(instructions=question, criteria=criteria)
@@ -200,9 +214,14 @@ class Judge:
         levels: Sequence[str],
         *,
         question: str | None = None,
+        stakes: Stakes | None = None,
+        ask_human: bool = False,
         min_confidence: float | None = None,
     ) -> ScoreDecision:
         """Register an ordinal judgment. See `gut.rate` for the arguments."""
+        min_confidence = _resolve_min_confidence(
+            stakes=stakes, ask_human=ask_human, min_confidence=min_confidence, kind="rate"
+        )
         spec = ScoreSpec(instructions=question, criteria=levels)
         index = self._register(
             _Registration(spec=spec, site=caller_site(), min_confidence=min_confidence)

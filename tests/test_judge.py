@@ -269,3 +269,26 @@ def test_a_warning_is_still_raised_for_an_enum_without_a_catch_all(
 
     with pytest.warns(UserWarning, match="no catch-all member"), judge("a ticket") as j:
         j.classify(Sentiment)
+
+
+def test_posture_words_work_inside_a_judge_too(backend: FakeBackend) -> None:
+    """Batching should not force a caller back to raw costs just to say "ask a person"."""
+    backend.answers = {"is a bug report": 0.5, "which team": "PLATFORM", "how urgent": 1}
+    with gut.judge("t") as j:
+        bug = j.likely("is a bug report", stakes="high", ask_human=True)
+        leaning = j.likely("is a bug report", lean="yes")
+        team = j.classify(Team, question="which team", stakes="high", ask_human=True)
+        urgency = j.rate(["low", "mid", "high"], question="how urgent", ask_human=True)
+    assert bug == gut.UNSURE
+    assert leaning == gut.YES
+    assert team == gut.YES  # 0.9 clears the 0.8 floor
+    assert team.min_confidence == 0.8
+    assert urgency.min_confidence == 0.65
+    assert j.requests == 1
+
+
+def test_posture_and_costs_cannot_be_mixed_inside_a_judge(backend: FakeBackend) -> None:
+    with gut.judge("t") as j, pytest.raises(gut.PolicyError, match="not both"):
+        j.likely("q", ask_human=True, cost_false_yes=1, cost_false_no=1)
+    with gut.judge("t") as j, pytest.raises(gut.PolicyError, match="not both"):
+        j.classify(Team, stakes="high", ask_human=True, min_confidence=0.5)
