@@ -304,3 +304,24 @@ def test_a_backend_inventing_a_label_is_caught() -> None:
     bogus = ChoiceAnswer(choice="SHIPPING", confidence=0.9, probabilities={"SHIPPING": 0.9})
     with pytest.raises(BackendError, match="not a member of Team"):
         gut.classify("a ticket", Team, backend=WrongShapeBackend(bogus))
+
+
+@pytest.mark.parametrize(
+    "name", ["DIGER", "Diğer", "DİĞER", "HICBIRI", "Hiçbiri", "SONSTIGES", "Autre", "otros"]
+)
+def test_a_catch_all_is_recognised_in_other_languages(name: str) -> None:
+    from gut._api import CATCH_ALL_NAMES, _normalise_name
+
+    assert _normalise_name(name) in CATCH_ALL_NAMES
+
+
+def test_a_turkish_catch_all_keeps_classify_quiet(backend: FakeBackend) -> None:
+    class Kategori(enum.Enum):
+        FATURA = "fatura, ödeme, iade"
+        TEKNIK = "hata, kesinti"
+        DİĞER = "başka bir şey"
+
+    backend.default = "FATURA"
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        assert gut.classify("Faturam iki kez kesildi", Kategori).value is Kategori.FATURA
