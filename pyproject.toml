@@ -43,6 +43,8 @@ jev = ["typesafe-sdk>=0.7"]
 
 [project.urls]
 Homepage = "https://github.com/Kungie/gut"
+Documentation = "https://github.com/Kungie/gut/blob/main/docs/README.md"
+Changelog = "https://github.com/Kungie/gut/releases"
 Repository = "https://github.com/Kungie/gut"
 Issues = "https://github.com/Kungie/gut/issues"
 

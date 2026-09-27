@@ -165,6 +165,20 @@ def test_every_link_in_the_docs_resolves() -> None:
 BACKENDS = ("ZeroShotBackend", "TransformersBackend", "OpenAICompatibleBackend", "JevBackend")
 
 
+def test_the_readmes_links_work_on_pypi_too() -> None:
+    """PyPI renders the README without the repository around it, so a relative link is a dead one.
+
+    Every link into the repository is absolute, and still has to land on a file that exists.
+    """
+    prefix = re.compile(r"https://github\.com/Kungie/gut/(?:blob|tree)/main/([^)#\s]*)")
+    text = read(README)
+    assert not re.findall(r"\]\((?!https?:|#)([^)]+)\)", text), "relative link in the README"
+    targets = prefix.findall(text)
+    assert targets
+    for target in targets:
+        assert (ROOT / target).exists(), f"the README links to {target}, which is not there"
+
+
 def test_the_readme_shows_every_backend_and_the_cascade() -> None:
     """Model-agnostic is the claim, so the pitch has to show the models."""
     text = read(README)

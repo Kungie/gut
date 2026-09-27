@@ -700,6 +700,20 @@ changes: the import, the module directory, every API name and every page of docu
 `gut` under PEP 541 remains possible later; a rename of the distribution would then touch only
 `pyproject.toml` and those commands.
 
+## D47 — Releases publish themselves, with no token anywhere
+
+**Date:** 2026-09-28
+
+0.1.0 went to PyPI by hand, with a token pasted into a terminal. From 0.2.0 on, pushing a `v*` tag
+runs `release.yml`: it refuses a tag that does not match `pyproject.toml`, runs the same checks as
+CI, builds, and publishes through PyPI's trusted publishing, so no secret exists to leak, rotate or
+paste. A test pins `gut.__version__` to the `pyproject.toml` version, since the two are written by
+hand and the tag check reads only one of them.
+
+The README's links are absolute GitHub URLs. PyPI renders the README on its own, so a relative link
+to `docs/backends.md` was a dead link on the page most new users see first; a test now refuses a
+relative link there and still checks every absolute one lands on a file that exists.
+
 ## Retired
 
 Retired on 2026-09-27 with the change of direction (D38). Kept here so the numbers stay meaningful;

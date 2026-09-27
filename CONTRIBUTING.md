@@ -15,7 +15,21 @@ uv sync --extra jev --extra local
 uv run pytest -m local tests/test_local_models.py
 ```
 
-Ground rules:
+## Releasing
+
+Bump the version in both `pyproject.toml` and `src/gut/__init__.py` (a test checks they agree),
+commit, then tag and push:
+
+```bash
+git tag -a v0.2.0 -m "gutfeel 0.2.0" && git push origin main --tags
+```
+
+`.github/workflows/release.yml` checks the tag matches the version, runs the suite, builds, publishes
+`gutfeel` to PyPI and creates a GitHub release. There is no token: PyPI trusts the workflow itself
+(trusted publishing), configured once under the project's *Publishing* settings on pypi.org with
+owner `Kungie`, repository `gut`, workflow `release.yml` and environment `pypi`.
+
+## Ground rules
 
 - **The suite must pass with no model and no API key.** Anything that talks to a model goes behind
   `FakeBackend`, a fake HTTP transport, or the `live` / `local` markers.

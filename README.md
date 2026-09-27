@@ -1,5 +1,7 @@
 # gut
 
+[![PyPI](https://img.shields.io/pypi/v/gutfeel)](https://pypi.org/project/gutfeel/) [![CI](https://github.com/Kungie/gut/actions/workflows/ci.yml/badge.svg)](https://github.com/Kungie/gut/actions/workflows/ci.yml)
+
 **Judgment calls as one line of Python, on models small enough to put inside an `if`.**
 
 Your code keeps running into questions that aren't logic: *Is this comment spam? Which team owns
@@ -69,7 +71,7 @@ gut.configure(backend=gut.Cascade(
 ```
 
 Answers are read from each model's own probabilities, never parsed from text, and `decision.model`
-names the model that gave one. Your own model can be a backend too: [here is how](docs/backends.md).
+names the model that gave one. Your own model can be a backend too: [here is how](https://github.com/Kungie/gut/blob/main/docs/backends.md).
 
 ## Several questions, one pass
 
@@ -100,20 +102,17 @@ No model at hand? `gut.FakeBackend(answers={"is spam": 0.97})` answers from fixt
 
 | | |
 |---|---|
-| [Getting started](docs/getting-started.md) | Install, pick a backend, and the three questions. |
-| [Backends](docs/backends.md) | Every model `gut` can run on, `Cascade`, and writing your own. |
-| [Knowing when it doesn't know](docs/knowing-when-it-doesnt-know.md) | `lean`, `ask_human`, `stakes`, and what `if` and `match` do with `UNSURE`. |
-| [Asking everything at once](docs/batching.md) | `@semantic` and `judge()`: every judgment about one subject, together. |
-| [Exact costs](docs/exact-costs.md) | The cost model under the posture words. |
-| [Caching and observability](docs/caching-and-observability.md) | The cache, and seeing every decision as it is made. |
-| [Honest limitations](docs/limitations.md) | What small models get wrong, and what `gut` does not do. |
+| [Getting started](https://github.com/Kungie/gut/blob/main/docs/getting-started.md) | Install, pick a backend, and the three questions. |
+| [Backends](https://github.com/Kungie/gut/blob/main/docs/backends.md) | Every model `gut` can run on, `Cascade`, and writing your own. |
+| [Knowing when it doesn't know](https://github.com/Kungie/gut/blob/main/docs/knowing-when-it-doesnt-know.md) | `lean`, `ask_human`, `stakes`, and what `if` and `match` do with `UNSURE`. |
+| [Asking everything at once](https://github.com/Kungie/gut/blob/main/docs/batching.md) | `@semantic` and `judge()`: every judgment about one subject, together. |
+| [Exact costs](https://github.com/Kungie/gut/blob/main/docs/exact-costs.md) | The cost model under the posture words. |
+| [Caching and observability](https://github.com/Kungie/gut/blob/main/docs/caching-and-observability.md) | The cache, and seeing every decision as it is made. |
+| [Honest limitations](https://github.com/Kungie/gut/blob/main/docs/limitations.md) | What small models get wrong, and what `gut` does not do. |
 
-[`examples/`](examples/) runs the same code on every backend. Coding agents: read [`SKILL.md`](skills/gut/SKILL.md).
+[`examples/`](https://github.com/Kungie/gut/tree/main/examples/) runs the same code on every backend. Coding agents: read [`SKILL.md`](https://github.com/Kungie/gut/blob/main/skills/gut/SKILL.md).
 
-## Status
+## Status and license
 
-Pre-1.0. Every code block in these docs runs in the test suite; every decision is in [DECISIONS.md](DECISIONS.md).
-
-## License
-
-Apache-2.0 · [contributing](CONTRIBUTING.md)
+Pre-1.0, Apache-2.0. Every code block in these docs runs in the test suite, and every decision is in
+[DECISIONS.md](https://github.com/Kungie/gut/blob/main/DECISIONS.md) · [contributing](https://github.com/Kungie/gut/blob/main/CONTRIBUTING.md)

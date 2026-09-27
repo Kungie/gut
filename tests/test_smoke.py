@@ -30,3 +30,14 @@ def test_every_exported_name_resolves() -> None:
         if name in {"JevBackend", "TransformersBackend", "ZeroShotBackend"}:
             continue  # optional extras; resolved lazily, tested where they are installed
         assert getattr(gut, name) is not None, name
+
+
+def test_the_version_is_the_same_in_both_places() -> None:
+    """The release workflow publishes what pyproject.toml says and refuses a tag that differs."""
+    import re
+    from pathlib import Path
+
+    pyproject = (Path(__file__).parent.parent / "pyproject.toml").read_text(encoding="utf-8")
+    match = re.search(r'^version = "([^"]+)"$', pyproject, re.MULTILINE)
+    assert match is not None
+    assert gut.__version__ == match.group(1)
