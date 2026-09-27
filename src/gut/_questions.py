@@ -1,10 +1,11 @@
 """Backend-agnostic question specifications.
 
-These are `gut`'s own shapes, not the vendor's. Keeping a layer here is what lets a second backend
-exist later without the public API changing, and it is where the limits documented for Jev are
-enforced *before* a request goes out: the SDK's wire schema only requires a score rubric to be
-nonempty, while the API wants at least two levels, so an unchecked one-level rubric costs a round
-trip and returns an opaque 422. See D5 in DECISIONS.md.
+These are `gut`'s own shapes, not any vendor's. Every backend receives the same three -- a yes/no
+question, a choice between named options, a rating against an ordered rubric -- and decides for
+itself how to put them to its model, which is what keeps the public API independent of whichever
+model answers. The limits every backend can honour (two to ten levels, two to 255 options) are
+enforced here, *before* anything is asked, so a malformed question is a readable local error
+rather than a round trip and an opaque 422. See D5 in DECISIONS.md.
 """
 
 from __future__ import annotations

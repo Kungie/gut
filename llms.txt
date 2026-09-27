@@ -1,28 +1,26 @@
 # gut
 
-> A gut feeling that knows when to ask. Judgment as a programming primitive for Python: write a
-> decision that is judgment rather than logic as one readable line, say how careful to be in words
-> instead of thresholds, and get back YES, NO or UNSURE.
+> Judgment calls as one line of Python, on small, fast, cheap models. Write a decision that is
+> judgment rather than logic -- "is this spam?", "which team owns this?" -- as one readable line,
+> say how careful to be in words instead of thresholds, and get back YES, NO or UNSURE. The model is
+> configuration: a local NLI encoder, a local 0.6B LLM, any OpenAI-compatible server, or Jev.
 
-`pip install "gut[jev]"`. Runs on TypeSafe AI's Jev; the backend is a protocol, not a hard
-dependency. Python 3.10+, Apache-2.0.
+Python 3.10+, Apache-2.0. `pip install gut`, plus `gut[local]` for in-process models or `gut[jev]`
+for Jev. Not on PyPI yet; install from https://github.com/Kungie/gut.
 
 ## Start here
 
-- [SKILL.md](skills/gut/SKILL.md): the compact usage guide. Correct spellings, the traps, and the
-  rules of thumb. Read this one if you are writing code that uses gut.
-- [README.md](README.md): the pitch. What problem this solves and what it looks like, in two screens.
+- [SKILL.md](skills/gut/SKILL.md): the compact usage guide. Correct spellings, the traps, the rules
+  of thumb, and which backend to pick. Read this one if you are writing code that uses gut.
+- [README.md](README.md): the pitch. What problem this solves and what it looks like.
 - [docs/README.md](docs/README.md): the full guide, one page per idea.
 
 ## Reference
 
-- [docs/benchmarks.md](docs/benchmarks.md): measurements on four public datasets. Forced to pick
-  one of 151 intents a classifier errs 26%; allowed to decline and to ask a person, 7.6% at 76%
-  coverage. Also where gut loses to a trained model.
-- [DECISIONS.md](DECISIONS.md): every design decision with its reasoning, including the measured
-  findings about model calibration that shaped the API.
-- [examples/support_tickets/](examples/support_tickets/): 101 labelled tickets, the same handler
-  written with and without gut, a posture sweep, and committed recordings so it all runs offline.
+- [docs/backends.md](docs/backends.md): every backend, how each one reads a model's probabilities,
+  `Cascade`, and writing your own.
+- [DECISIONS.md](DECISIONS.md): every design decision with its reasoning.
+- [examples/](examples/): the same handlers on any backend, chosen with `--backend`.
 - [CONTRIBUTING.md](CONTRIBUTING.md): how to run the suite.
 
 ## The parts, in one line each
@@ -31,11 +29,12 @@ dependency. Python 3.10+, Apache-2.0.
   `rate(subject, levels)` — how much.
 - `stakes` / `lean` / `ask_human` — how careful to be, in words. Maps onto a cost model.
 - `cost_false_yes` / `cost_false_no` / `cost_human` — the same thing in numbers, when you know them.
-- `@semantic` and `judge()` — every judgment about one subject in a single request.
-- `gut eval` — accuracy, Brier score and calibration error on your own examples.
-- `gut calibrate` — fit a correction to a model's probabilities, reported out of fold.
-- `FakeBackend`, `CassetteBackend` — develop and test with no API key.
-- `JSONLSink` and `decision.resolve(actual=...)` — record every decision and how it turned out.
+- `@semantic` and `judge()` — every judgment about one subject, handed to the model together.
+- `ZeroShotBackend`, `TransformersBackend` — models in your process. `OpenAICompatibleBackend` —
+  Ollama, vLLM, llama.cpp, OpenAI. `JevBackend` — TypeSafe's Jev.
+- `Cascade(small, bigger)` — the cheap model first; only unsure answers go on.
+- `FakeBackend` — develop and test with no model at all.
+- `configure(on_decision=...)` and `decision.to_dict()` — see every decision as it is made.
 
 ## Traps worth knowing before you write any code
 
@@ -43,7 +42,7 @@ dependency. Python 3.10+, Apache-2.0.
 - `ask_human=True` is required for `UNSURE` to be possible at all.
 - Posture words and exact costs cannot be mixed in one call.
 - `cost_human` above `cfy * cfn / (cfy + cfn)` makes `UNSURE` unreachable; gut warns.
-- `confidence` is a spread statistic, not a probability of being correct. Measure it.
-- `lean` says which mistake *you* find worse, not which way the model already leans; it can make
-  things worse. Measured on a real benchmark.
-- A fitted calibrator can map everything to 0 or 1, which disables `ask_human` silently.
+- `confidence` is a spread statistic, not a probability of being correct.
+- `OpenAICompatibleBackend` needs logprobs: not OpenAI's reasoning models.
+- Text-model backends take at most 26 options in a `classify`.
+- One claim per question: an NLI model reads "A or B" poorly.

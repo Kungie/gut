@@ -5,16 +5,35 @@
 ## Install
 
 ```bash
-pip install "gut[jev]"
-export TYPESAFE_API_KEY=...
+pip install gut                  # core: any OpenAI-compatible server, and FakeBackend
+pip install "gut[local]"         # + models that run in your process (PyTorch)
+pip install "gut[jev]"           # + TypeSafe AI's Jev
 ```
 
-`gut` runs on [TypeSafe AI's Jev](https://docs.typesafe.ai), a fast, cheap model that answers with
-probabilities instead of prose. With the key set it builds a backend the first time you ask
-something; nothing is inferred without one, because a library that starts making billable calls on
-its own is not one you can reason about.
+`gut` is not on PyPI yet. Until the first release, install from GitHub:
+`pip install "gut[local] @ git+https://github.com/Kungie/gut"`.
 
-Everything below runs offline too:
+## Pick a model
+
+`gut` does not come with a model; it makes whichever one you choose answer like a function. Pick
+one once, at startup:
+
+```python
+import gut
+
+gut.configure(backend=gut.ZeroShotBackend())
+```
+
+That is a 70M-parameter NLI model. It downloads once (about 150 MB), runs on a CPU in about a tenth
+of a second per question, costs nothing per call, and never sends your data anywhere. It is a good
+first choice for yes/no questions and routing on short text. [Backends](backends.md) covers the
+others: a small language model on your machine, Ollama, vLLM, OpenAI, Jev, and a `Cascade` that
+combines them.
+
+Nothing is chosen for you. With no backend configured, `gut` raises and lists the options -- except
+that setting `TYPESAFE_API_KEY` selects Jev, since that variable has no other use.
+
+For tests and offline work, `FakeBackend` answers from fixtures and never touches a model:
 
 ```python
 import gut
@@ -24,11 +43,9 @@ gut.configure(backend=gut.FakeBackend(answers={"the customer threatens to cancel
 email = "If this happens again I'm cancelling my subscription."
 decision = gut.likely(email, "the customer threatens to cancel")
 
-assert decision is not None
 assert bool(decision) is True
 assert decision.p == 0.83
 ```
-
 
 ## The three questions you can ask
 
@@ -50,7 +67,8 @@ class Team(Enum):
 
 The enum member **values** are the descriptions the model is shown and the **names** are the labels
 that come back, so the enum is both your type and your prompt. `gut` warns if it has no catch-all
-member, because without one every subject is forced into a category even when none fits.
+member -- `OTHER`, `NONE`, `DIGER` and their kin -- because without one every subject is forced into
+a category even when none fits.
 
 What comes back behaves like the answer you wanted, and carries how it was reached:
 
@@ -58,9 +76,20 @@ What comes back behaves like the answer you wanted, and carries how it was reach
 d = likely(ticket, "is a bug report")
 d.p          # 0.91  — the probability behind the answer
 d.outcome    # YES / NO / UNSURE
-d.id         # stable id for this decision *site*, for tracking it over time
 d.model      # the exact model version that answered
 d.source     # "backend", "cache" or "prefetch"
+d.to_dict()  # all of it, ready for a log line
 ```
 
-`subject` can be a `str`, a `dict`, or a `list[str]`.
+`subject` can be a `str`, a `dict`, or a `list` -- anything JSON can hold. A structured subject is
+shown to the model as JSON.
+
+## Writing questions a small model can answer
+
+- **State one claim.** `"is spam"`, `"asks for a refund"`, `"the customer threatens to cancel"`. A
+  bare predicate like `"is spam"` is read as a claim about the subject.
+- **One idea per question.** An NLI model reads "is spam or abusive" poorly; ask two questions and
+  batch them (see [Asking everything at once](batching.md)).
+- **Let Python do the arithmetic.** Counting, dates and comparisons belong in code.
+- **Pass the narrowest subject that contains the answer.** Irrelevant text is noise to any model,
+  and the smaller the model, the more it hurts.

@@ -45,9 +45,9 @@ cost_false_yes · cost_false_no / (cost_false_yes + cost_false_no)
 ```
 
 `1.92` for `2` and `50`. A `cost_human` of `5` never fires; `1` does. `gut` warns when you cross it,
-and `Policy.max_useful_cost_human` tells you where it is. This is not theoretical — it is the
-mistake the demo shipped with, and the report showed it as *zero tickets sent to a human* with no
-error anywhere.
+and `Policy.max_useful_cost_human` tells you where it is. This is not theoretical — an early demo of
+this library shipped with exactly that mistake, and sent *zero tickets to a human* with no error
+anywhere.
 
 The postures cannot do this to you. They are defined as bands and the costs derived, and a band is
 reachable whenever its ends are in the right order.
@@ -64,3 +64,6 @@ for preset in gut.presets():
 print(gut.policy(cost_false_yes=2, cost_false_no=50, cost_human=1).describe())
 # no below 0.02, ask a person from 0.02 to 0.5, yes above 0.5
 ```
+
+A cost model is a claim about *these* probabilities. Change the backend and the same costs can land
+somewhere else on the new model's distribution; see [limitations](limitations.md).

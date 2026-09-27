@@ -1,8 +1,10 @@
 """Turning many questions about one subject into one request.
 
-Billing is on input tokens, so the expensive part of a request is the state, and it is paid for once
-however many questions ride along. Asking five questions in one call costs barely more than asking
-one; asking them in five calls costs five times the state. That asymmetry is the entire reason
+The expensive part of a judgment is reading the subject, not the question. Every backend exploits
+that in its own way: Jev bills on input and reads the state once per request; the local causal-LM
+backend computes the subject's key-value cache once and reuses it for every question; an
+OpenAI-compatible server gets identical prefixes it can cache. Handing the backend all the
+questions about one subject at once is what lets it do any of that, and is the entire reason
 `@semantic` and `judge()` exist.
 
 The one thing that has to be respected is the context limit. A batch that would exceed it is split,
@@ -44,7 +46,7 @@ def estimate_tokens(value: object) -> int:
 
 
 def _limit(backend: Backend, name: str, default: int) -> int:
-    """Read a backend's own limit if it declares one, otherwise use Jev's documented ceiling."""
+    """Read a backend's own limit if it declares one, otherwise use a generous default."""
     value = getattr(backend, name, default)
     return int(value) if isinstance(value, int) and value > 0 else default
 
@@ -114,7 +116,7 @@ def fetch(
         for name, spec in batch.items():
             if name not in response.answers:
                 raise BackendError(f"Backend answered without {name!r} for a batched question.")
-            entry = CacheEntry(answer=response.answers[name], model=response.model)
+            entry = CacheEntry(answer=response.answers[name], model=response.model_for(name))
             resolved[spec] = entry
             cache.set(cache_key(state, spec, backend.model_id), entry)
 

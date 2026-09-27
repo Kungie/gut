@@ -18,7 +18,8 @@ jobs:
       - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
-      - run: uv sync --all-extras
+      # Not --all-extras: the `local` extra is PyTorch, which the suite deliberately does not need.
+      - run: uv sync --extra jev
       - name: ruff check
         run: uv run ruff check .
       - name: ruff format
@@ -38,10 +39,9 @@ jobs:
         with:
           enable-cache: true
           python-version: ${{ matrix.python-version }}
-      - run: uv sync --all-extras
-      # No TYPESAFE_API_KEY in CI: the whole suite must pass offline.
-      # Coverage runs as `coverage run -m pytest` rather than through pytest-cov, so that it starts
-      # before pytest loads gut's own pytest11 plugin and therefore sees the package import. See D8.
+      - run: uv sync --extra jev
+      # No model and no API key in CI: the whole suite must pass without either. The local-model
+      # tests skip themselves when PyTorch is absent; run them with `pytest -m local`.
       - name: pytest
         run: uv run coverage run -m pytest
       - name: coverage

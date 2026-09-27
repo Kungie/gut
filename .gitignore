@@ -25,17 +25,8 @@ coverage.xml
 
 # gut local state
 .gut_cache/
-*.gut-cassette.json
-decisions.jsonl
 
 # Editors / OS
 .idea/
 .vscode/
 .DS_Store
-benchmarks/.data/
-
-# NLBSE issue text is third-party GitHub content under no declared licence, so its recordings
-# are not redistributable. Regenerate with:
-#   TYPESAFE_API_KEY=... python -m benchmarks nlbse-bug nlbse-kind --record
-benchmarks/cassettes/nlbse-*.json
-benchmarks/cassettes/irony*.json

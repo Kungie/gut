@@ -32,7 +32,7 @@ def test_ids_depend_on_the_question_and_the_place() -> None:
 
 
 def test_ids_ignore_the_line_the_call_sits_on() -> None:
-    """Moving a call down the file must not reset its calibration history. See D11."""
+    """Moving a call down the file must not split its history in a log. See D11."""
     early = CallSite(module="a", function="f", filename="a.py", lineno=3)
     late = CallSite(module="a", function="f", filename="a.py", lineno=300)
     assert decision_id("q1", early) == decision_id("q1", late)
