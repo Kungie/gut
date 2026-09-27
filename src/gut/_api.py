@@ -8,6 +8,7 @@ how these get answered, not how they are written.
 from __future__ import annotations
 
 import time
+import unicodedata
 import warnings
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
@@ -37,8 +38,22 @@ from gut._site import CallSite, caller_site, decision_id
 E = TypeVar("E", bound=Enum)
 A = TypeVar("A", NoulAnswer, ChoiceAnswer, ScoreAnswer)
 
-CATCH_ALL_NAMES = frozenset({"OTHER", "UNKNOWN", "NONE", "MISC", "MISCELLANEOUS", "CATCH_ALL"})
-"""Member names taken as a catch-all, so `classify` stays quiet about forced choices."""
+CATCH_ALL_NAMES = frozenset(
+    {
+        # English
+        "OTHER", "OTHERS", "UNKNOWN", "NONE", "NONE_OF_THESE", "NONE_OF_THE_ABOVE", "MISC",
+        "MISCELLANEOUS", "CATCH_ALL", "UNCLASSIFIED", "UNCATEGORIZED", "UNCATEGORISED",
+        # Turkish
+        "DIGER", "DIGERLERI", "HICBIRI", "BILINMIYOR", "BELIRSIZ", "SINIFLANDIRILMAMIS",
+        # German, Dutch, French, Spanish, Portuguese, Italian
+        "SONSTIGE", "SONSTIGES", "ANDERE", "ANDERES", "OVERIG", "OVERIGE", "AUTRE", "AUTRES",
+        "OTRO", "OTROS", "OTRA", "OTRAS", "OUTRO", "OUTROS", "OUTRA", "OUTRAS", "ALTRO", "ALTRI",
+    }
+)  # fmt: skip
+"""Member names taken as a catch-all, so `classify` stays quiet about forced choices.
+
+Compared after `_normalise_name`, so `DİĞER`, `Diğer` and `DIGER` all count.
+"""
 
 _warned_enums: set[type[Enum]] = set()
 
@@ -417,16 +432,27 @@ def _criteria_from_enum(enum_class: type[E]) -> Mapping[str, str | None]:
     return criteria
 
 
+def _normalise_name(name: str) -> str:
+    """Upper-case and strip accents, so `Diğer`, `DİĞER` and `DIGER` compare equal."""
+    decomposed = unicodedata.normalize("NFKD", name.upper())
+    return "".join(char for char in decomposed if not unicodedata.combining(char))
+
+
+def has_catch_all(enum_class: type[Enum]) -> bool:
+    """Whether some member of `enum_class` is plainly a "none of these" option."""
+    return any(_normalise_name(member.name) in CATCH_ALL_NAMES for member in enum_class)
+
+
 def _warn_without_catch_all(enum_class: type[E]) -> None:
     if enum_class in _warned_enums:
         return
     _warned_enums.add(enum_class)
-    if any(member.name.upper() in CATCH_ALL_NAMES for member in enum_class):
+    if has_catch_all(enum_class):
         return
     warnings.warn(
         f"{enum_class.__name__} has no catch-all member, so every subject is forced into one of "
-        f"its categories even when none fits. Consider adding an OTHER member, or set "
-        f"min_confidence to route weak matches to UNSURE.",
+        f"its categories even when none fits. Consider adding an OTHER member (DIGER, NONE and "
+        f"their equivalents count too), or set min_confidence to route weak matches to UNSURE.",
         UserWarning,
         stacklevel=3,
     )
