@@ -64,7 +64,7 @@ if TYPE_CHECKING:
     from gut._backends.local import ZeroShotBackend as ZeroShotBackend
     from gut._backends.openai import OpenAICompatibleBackend as OpenAICompatibleBackend
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 __all__ = [
     "DEFAULT_POLICY",
