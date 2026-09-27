@@ -14,10 +14,10 @@ gut.configure(backend=gut.ZeroShotBackend())
 
 | backend | runs | install | reach for it when |
 |---|---|---|---|
-| [`ZeroShotBackend`](#zeroshotbackend) | in your process, CPU is fine | `gut[local]` | yes/no and routing on short text, for free |
-| [`TransformersBackend`](#transformersbackend) | in your process, GPU helps | `gut[local]` | you want a small language model and no server |
+| [`ZeroShotBackend`](#zeroshotbackend) | in your process, CPU is fine | `gutfeel[local]` | yes/no and routing on short text, for free |
+| [`TransformersBackend`](#transformersbackend) | in your process, GPU helps | `gutfeel[local]` | you want a small language model and no server |
 | [`OpenAICompatibleBackend`](#openaicompatiblebackend) | Ollama, vLLM, llama.cpp, OpenAI | core | a model is already served somewhere |
-| [`JevBackend`](#jevbackend) | TypeSafe AI's API | `gut[jev]` | a hosted model built for exactly these questions |
+| [`JevBackend`](#jevbackend) | TypeSafe AI's API | `gutfeel[jev]` | a hosted model built for exactly these questions |
 | [`Cascade`](#cascade) | wherever its stages run | core | cheap model first, bigger only when unsure |
 | [`FakeBackend`](#fakebackend) | nowhere | core | tests and offline work |
 | [your own](#writing-your-own) | anywhere | -- | you have a model, or a rule, `gut` does not know |
@@ -113,7 +113,7 @@ import gut
 gut.JevBackend(model="jev-1.13.0")        # pin a version; aliases move
 ```
 
-`pip install "gut[jev]"` and set `TYPESAFE_API_KEY`. It is the one backend `gut` will build without
+`pip install "gutfeel[jev]"` and set `TYPESAFE_API_KEY`. It is the one backend `gut` will build without
 being told to, because that variable exists for nothing else.
 
 ## `Cascade`

@@ -5,8 +5,8 @@
 > say how careful to be in words instead of thresholds, and get back YES, NO or UNSURE. The model is
 > configuration: a local NLI encoder, a local 0.6B LLM, any OpenAI-compatible server, or Jev.
 
-Python 3.10+, Apache-2.0. `pip install gut`, plus `gut[local]` for in-process models or `gut[jev]`
-for Jev. Not on PyPI yet; install from https://github.com/Kungie/gut.
+Python 3.10+, Apache-2.0. `pip install gutfeel` (the PyPI name; the import is `import gut`), plus
+`gutfeel[local]` for in-process models or `gutfeel[jev]` for Jev.
 
 ## Start here
 

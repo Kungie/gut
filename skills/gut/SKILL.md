@@ -8,6 +8,9 @@ description: Write judgment calls in Python with gut — "is this spam?", "which
 Judgment as one line of Python, on any small model. The model is configured once; the call sites
 never name it.
 
+**Install `gutfeel`, import `gut`.** The PyPI name is `gutfeel` (`pip install gutfeel`); `gut` on PyPI
+is someone else's empty project. Every import and every name in code is `gut`.
+
 ## Start here
 
 ```python
@@ -43,11 +46,11 @@ class Team(Enum):
 
 | need | backend | install |
 |---|---|---|
-| free, local, fast yes/no and routing | `gut.ZeroShotBackend()` | `gut[local]` |
-| a small LLM on this machine | `gut.TransformersBackend("Qwen/Qwen3-0.6B")` | `gut[local]` |
+| free, local, fast yes/no and routing | `gut.ZeroShotBackend()` | `gutfeel[local]` |
+| a small LLM on this machine | `gut.TransformersBackend("Qwen/Qwen3-0.6B")` | `gutfeel[local]` |
 | a model already served (Ollama, vLLM, llama.cpp) | `gut.OpenAICompatibleBackend(name, base_url=...)` | core |
 | OpenAI | `gut.OpenAICompatibleBackend("gpt-4.1-nano")` | core |
-| TypeSafe's Jev | `gut.JevBackend()` | `gut[jev]` |
+| TypeSafe's Jev | `gut.JevBackend()` | `gutfeel[jev]` |
 | cheap first, bigger only when unsure | `gut.Cascade(small, bigger)` | core |
 | tests | `gut.FakeBackend(answers={...})` | core |
 

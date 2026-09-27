@@ -22,7 +22,7 @@ from gut._questions import ChoiceSpec, NoulSpec, ScoreSpec
 if TYPE_CHECKING:
     import typesafe_sdk
 
-ts = pytest.importorskip("typesafe_sdk", reason='the Jev backend needs the extra: "gut[jev]"')
+ts = pytest.importorskip("typesafe_sdk", reason='the Jev backend needs the extra: "gutfeel[jev]"')
 
 BUG = NoulSpec("is a bug report")
 DESCRIBED = NoulSpec("is this spam", yes_means="unsolicited advertising", no_means="a real message")

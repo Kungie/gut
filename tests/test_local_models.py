@@ -4,7 +4,7 @@ Skipped unless the `local` extra is installed: these download two small models (
 together) the first time they run. They check plumbing, not quality -- that an obvious case comes
 out the obvious way, and that sharing the subject's computation across a batch changes nothing.
 
-    pip install "gut[local]" && pytest -m local
+    pip install "gutfeel[local]" && pytest -m local
 """
 
 from __future__ import annotations

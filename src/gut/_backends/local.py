@@ -11,8 +11,8 @@ Two kinds, because "small model" covers two very different things:
   generate at all: it scores how strongly the subject *entails* a hypothesis. The default model has
   70M parameters and answers a question in about a tenth of a second on a laptop CPU.
 
-Both need the optional `local` extra (`pip install "gut[local]"`), imported only when one of these
-classes is constructed, so `import gut` never pulls in `torch`.
+Both need the optional `local` extra (`pip install "gutfeel[local]"`), imported only when one of
+these classes is constructed, so `import gut` never pulls in `torch`.
 
 The code that touches `torch` is excluded from the coverage floor: it cannot run in CI without
 downloading models. Everything it feeds -- prompts, label ids, the arithmetic on the logits -- is
@@ -42,7 +42,7 @@ from gut._questions import ChoiceSpec, NoulSpec, QuestionSpec, ScoreSpec, State
 
 MISSING_EXTRA: Final = (
     "Local models need PyTorch and Hugging Face transformers, which are an optional extra. "
-    'Install them with: pip install "gut[local]"'
+    'Install them with: pip install "gutfeel[local]"'
 )
 
 DEFAULT_CAUSAL_MODEL: Final = "Qwen/Qwen3-0.6B"

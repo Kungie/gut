@@ -109,5 +109,5 @@ def test_a_missing_extra_says_how_to_install_it(name: str, monkeypatch: pytest.M
         return real_import(module, *args, **kwargs)  # type: ignore[arg-type]
 
     monkeypatch.setattr(builtins, "__import__", without_torch)
-    with pytest.raises(BackendError, match=r'pip install "gut\[local\]"'):
+    with pytest.raises(BackendError, match=r'pip install "gutfeel\[local\]"'):
         getattr(gut, name)()

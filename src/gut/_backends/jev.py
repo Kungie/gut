@@ -1,6 +1,6 @@
 """The Jev backend, built on TypeSafe AI's Python SDK.
 
-Imported lazily: `typesafe-sdk` is an optional extra (`gut[jev]`), and nothing in the core --
+Imported lazily: `typesafe-sdk` is an optional extra (`gutfeel[jev]`), and nothing in the core --
 the cost rule, decision types, cache, batching, the whole test suite -- may depend on it.
 
 What this module deliberately does **not** do is implement retries. The SDK already retries with
@@ -29,7 +29,7 @@ if TYPE_CHECKING:
 
 MISSING_SDK_HINT: Final = (
     "The Jev backend needs the TypeSafe SDK, which is an optional extra. "
-    'Install it with: pip install "gut[jev]"'
+    'Install it with: pip install "gutfeel[jev]"'
 )
 
 CONTEXT_LIMIT_TOKENS: Final = 64_000

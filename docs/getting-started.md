@@ -5,13 +5,13 @@
 ## Install
 
 ```bash
-pip install gut                  # core: any OpenAI-compatible server, and FakeBackend
-pip install "gut[local]"         # + models that run in your process (PyTorch)
-pip install "gut[jev]"           # + TypeSafe AI's Jev
+pip install gutfeel                  # core: any OpenAI-compatible server, and FakeBackend
+pip install "gutfeel[local]"         # + models that run in your process (PyTorch)
+pip install "gutfeel[jev]"           # + TypeSafe AI's Jev
 ```
 
-`gut` is not on PyPI yet. Until the first release, install from GitHub:
-`pip install "gut[local] @ git+https://github.com/Kungie/gut"`.
+The distribution is called `gutfeel` because `gut` was already taken on PyPI. Everything else --
+the import, the module, every name in these docs -- is `gut`.
 
 ## Pick a model
 

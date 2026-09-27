@@ -88,12 +88,12 @@ over the ticket for a local one.
 ## Install
 
 ```bash
-pip install gut                  # any OpenAI-compatible server; FakeBackend for tests
-pip install "gut[local]"         # + ZeroShotBackend and TransformersBackend (PyTorch)
-pip install "gut[jev]"           # + JevBackend
+pip install gutfeel                  # any OpenAI-compatible server; FakeBackend for tests
+pip install "gutfeel[local]"         # + ZeroShotBackend and TransformersBackend (PyTorch)
+pip install "gutfeel[jev]"           # + JevBackend
 ```
 
-Not on PyPI yet: until the first release, `pip install "gut[local] @ git+https://github.com/Kungie/gut"`.
+The package on PyPI is `gutfeel` (`gut` was taken); the import is plain `import gut`.
 No model at hand? `gut.FakeBackend(answers={"is spam": 0.97})` answers from fixtures, for tests.
 
 ## Docs

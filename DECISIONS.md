@@ -685,6 +685,21 @@ only raw costs, so batching a question meant giving up the words for how careful
 methods now go through the same resolution as the module functions, including the error for mixing
 words with numbers.
 
+## D46 — Published as `gutfeel`, imported as `gut`
+
+**Date:** 2026-09-28
+
+The first upload was refused: `gut` on PyPI is an existing project with no files, owned by someone
+else. D1 recorded the name as available; it had only checked that no release existed, which is not
+the same thing.
+
+The distribution is `gutfeel` -- after the *gut feeling* D1 took the name from -- and nothing else
+changes: the import, the module directory, every API name and every page of documentation still say
+`gut`, the way `scikit-learn` installs `sklearn`. Install commands and the missing-extra hints say
+`gutfeel[...]`, because those are the only places a user types the distribution name. Asking for
+`gut` under PEP 541 remains possible later; a rename of the distribution would then touch only
+`pyproject.toml` and those commands.
+
 ## Retired
 
 Retired on 2026-09-27 with the change of direction (D38). Kept here so the numbers stay meaningful;

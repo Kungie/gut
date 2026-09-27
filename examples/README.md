@@ -4,7 +4,7 @@ The same code on any model. Each example takes `--backend`, and none of them nam
 else:
 
 ```bash
-pip install "gut[local]"
+pip install "gutfeel[local]"
 
 python examples/triage.py                     # a 70M-parameter NLI model, on this machine
 python examples/triage.py --backend qwen      # Qwen3-0.6B, on this machine
