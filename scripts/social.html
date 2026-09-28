@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<!-- The social preview image (1280 x 640): GitHub's repository card, and the site's og:image.
+     Rendered to site/assets/social.png with headless Chrome; see scripts/render_social.sh. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<style>
+@font-face { font-family: "Serif"; font-style: italic; src: url("../site/assets/fonts/32043434.woff2"); }
+@font-face { font-family: "Serif"; font-style: normal; src: url("../site/assets/fonts/3d394417.woff2"); }
+@font-face { font-family: "Sans"; font-weight: 400 600; src: url("../site/assets/fonts/b9e57de3.woff2"); }
+@font-face { font-family: "Mono"; font-weight: 400; src: url("../site/assets/fonts/be4f4b1a.woff2"); }
+@font-face { font-family: "Mono"; font-weight: 500; src: url("../site/assets/fonts/9aaba50f.woff2"); }
+@font-face { font-family: "Mono"; font-weight: 600; src: url("../site/assets/fonts/03920f93.woff2"); }
+
+:root {
+  --paper: #171614; --paper-2: #1F1D1A; --ink: #EDE6D8; --ink-2: #CBC3B4; --muted: #A0988B;
+  --rule: rgba(237, 230, 216, .16); --signal: #E0452B; --signal-ink: #F2694F;
+}
+* { box-sizing: border-box; margin: 0; }
+html, body { width: 1280px; height: 640px; background: var(--paper); color: var(--ink); overflow: hidden; }
+body { padding: 56px 72px 48px; display: grid; grid-template-rows: auto 1fr auto; font-family: "Sans"; }
+
+.top { display: flex; align-items: baseline; justify-content: space-between; }
+.mark { font: italic 400 76px/1 "Serif"; letter-spacing: -.01em; }
+.mark .g { color: var(--signal); }
+.tag { font: 500 20px/1 "Mono"; color: var(--muted); letter-spacing: .02em; }
+
+.mid { display: grid; grid-template-columns: 1fr 470px; gap: 52px; align-items: center; }
+h1 { font: 400 76px/1.02 "Serif"; letter-spacing: -.012em; }
+h1 em { color: var(--signal); }
+.sub { margin-top: 22px; font-size: 25px; line-height: 1.4; color: var(--ink-2); max-width: 640px; }
+
+.listing { border-top: 1.5px solid var(--ink); border-bottom: 1px solid var(--rule); }
+.listing pre { padding: 22px 0 20px; font: 400 22px/1.7 "Mono"; color: var(--ink); white-space: pre; }
+.listing .k { font-weight: 600; }
+.listing .s { color: var(--ink-2); }
+.listing .f { text-decoration: underline; text-decoration-color: rgba(237, 230, 216, .4); text-underline-offset: 5px; }
+.outcomes { display: flex; gap: 12px; margin-top: 20px; }
+.stamp { font: 600 19px/1 "Mono"; letter-spacing: .12em; padding: 10px 14px; border: 1.5px solid var(--ink-2); color: var(--ink-2); }
+.stamp.yes { border-color: var(--signal); color: var(--signal-ink); }
+.stamp.unsure { border-style: dashed; }
+
+.foot { display: flex; justify-content: space-between; align-items: baseline; border-top: 1px solid var(--rule); padding-top: 18px; font: 400 21px/1 "Mono"; color: var(--muted); }
+.foot b { color: var(--ink); font-weight: 500; }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="mark"><span class="g">g</span>ut</div>
+    <div class="tag">Python · Apache-2.0</div>
+  </div>
+
+  <div class="mid">
+    <div>
+      <h1>Judgment calls as <em>one&nbsp;line</em> of&nbsp;Python.</h1>
+      <p class="sub">Answered by small, fast, cheap models: Jev first, and any small model after it.</p>
+    </div>
+    <div>
+      <div class="listing"><pre><span class="k">if</span> gut.<span class="f">likely</span>(comment, <span class="s">"is spam"</span>):
+    hide(comment)</pre></div>
+      <div class="outcomes">
+        <span class="stamp yes">YES</span>
+        <span class="stamp">NO</span>
+        <span class="stamp unsure">UNSURE</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <span><b>gutpy.dev</b></span>
+    <span>pip install <b>gutfeel</b></span>
+  </div>
+</body>
+</html>
