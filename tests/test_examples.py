@@ -22,7 +22,15 @@ from tests._markdown import ROOT
 def examples(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
     monkeypatch.syspath_prepend(str(ROOT / "examples"))
     yield
-    for name in ("triage", "moderation", "custom_backend", "_pick"):
+    for name in (
+        "triage",
+        "moderation",
+        "custom_backend",
+        "commit_roast",
+        "meeting_or_email",
+        "recipe_or_memoir",
+        "_pick",
+    ):
         sys.modules.pop(name, None)
 
 
@@ -138,3 +146,63 @@ def test_the_fake_choice_runs_an_example_end_to_end(
     out = capsys.readouterr().out
     assert out.startswith("Answering with no model at all.")
     assert len(out.strip().splitlines()) == 2 + len(triage.TICKETS)
+
+
+def test_commit_roast_sorts_commits_and_counts_words_itself(examples: None) -> None:
+    roast = load("commit_roast")
+
+    def kind(state: gut.State, name: str, spec: gut.QuestionSpec) -> object:
+        return "FIX" if str(state).lower().startswith("fix") else "CHORE"
+
+    backend = FakeBackend(rule=kind)  # type: ignore[arg-type]
+    gut.configure(backend=backend, cache=gut.NullCache())
+    graded = {item.message: item for item in roast.roast(roast.SAMPLE)}
+
+    assert graded["fix"].vague
+    assert graded["fix"].joke == roast.VAGUE
+    long_fix = graded["Fix off-by-one in pagination that skipped the last page"]
+    assert (long_fix.kind, long_fix.vague) == ("fix", False)
+    assert long_fix.joke == roast.JOKES[roast.Kind.FIX]
+    assert graded["Bump httpx to 0.28 so the new timeout API is available"].kind == "chore"
+    assert backend.call_count == len(set(roast.SAMPLE))  # one each() call, one subject apiece
+
+
+def test_commit_roast_reads_git_or_falls_back(
+    examples: None, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    roast = load("commit_roast")
+    assert roast.commits(limit=3)  # this repository has history
+    monkeypatch.setattr(roast.subprocess, "run", lambda *a, **k: (_ for _ in ()).throw(OSError()))
+    assert roast.commits() == roast.SAMPLE
+
+
+def test_meeting_or_email_gives_all_three_verdicts(examples: None) -> None:
+    meeting = load("meeting_or_email")
+
+    def judge(state: gut.State, name: str, spec: gut.QuestionSpec) -> object:
+        text = str(state)
+        return 0.9 if "launch" in text else 0.5 if "sync" in text else 0.05
+
+    gut.configure(backend=FakeBackend(rule=judge), cache=gut.NullCache())  # type: ignore[arg-type]
+    advice = [meeting.advise(invite) for invite in meeting.INVITES]
+    assert advice[2].startswith("Go.")
+    assert advice[0].startswith("Ask for an agenda.")
+    assert advice[4].startswith("Email.")
+
+
+def test_recipe_or_memoir_covers_every_combination(examples: None) -> None:
+    recipes = load("recipe_or_memoir")
+    pages = ["ingredients only", "ingredients and a story", "story only", "neither"]
+
+    def judge(state: gut.State, name: str, spec: gut.QuestionSpec) -> object:
+        text, claim = str(state), spec.instructions or ""
+        wanted = "ingredients" if "ingredients" in claim else "story"
+        return 0.97 if wanted in text else 0.02
+
+    gut.configure(backend=FakeBackend(rule=judge), cache=gut.NullCache())  # type: ignore[arg-type]
+    assert recipes.verdicts(pages) == [
+        "Straight to the recipe. A rare and beautiful thing.",
+        "Recipe found, after a life story. Scroll on.",
+        "No recipe. Only a memoir.",
+        "Neither a recipe nor a story. What is this page?",
+    ]

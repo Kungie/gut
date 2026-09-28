@@ -20,6 +20,14 @@ python examples/triage.py --backend fake      # no model: arbitrary but stable a
 | [`moderation.py`](moderation.py) | Comments, through a `Cascade`: the local NLI model settles what it can, a bigger model sees the rest. |
 | [`custom_backend.py`](custom_backend.py) | Your old keyword rules as a backend, in a page, and as the free first stage of a cascade. |
 
+And three for fun, each a real use of a different part of `gut`:
+
+| | |
+|---|---|
+| [`commit_roast.py`](commit_roast.py) | Sorts and roasts the commits of whatever repository you run it in: `gut.each()` for what kind of change each one is, plain Python for counting words. |
+| [`meeting_or_email.py`](meeting_or_email.py) | Could this meeting have been an email? One concrete question, and `UNSURE` for the invites nobody can read. |
+| [`recipe_or_memoir.py`](recipe_or_memoir.py) | Finds the recipe pages that open with a life story, through a `Cascade`: the NLI model settles six of eight judgments, a small LLM the rest. |
+
 ## What you will see
 
 The models are small, and it shows -- which is what `UNSURE` and `Cascade` are for. One run of
