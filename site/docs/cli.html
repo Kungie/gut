@@ -84,11 +84,11 @@
 <span class="l">Add the website: the Claude Design page, made to work</span>
 <span class="l">gut: 30 records · 6 yes, 24 no · 29 calls, $0 · 2.3s · MoritzLaurer/deberta-v3-xsmall-zeroshot-…</span></code></pre>
 </figure>
-    <p>The lines the claim is true of go to standard output; the summary — how many, what it cost, how long, which model — goes to standard error, so it never ends up in a pipe. <code class="inline-code">gut</code> comes with the package, and <code class="inline-code">uvx</code> runs it without installing anything:</p>
+    <p>The lines the claim is true of go to standard output; the summary — how many, what it cost, how long, which model — goes to standard error, so it never ends up in a pipe. <code class="inline-code">gut</code> comes with the package; install it with the extra for the model you will ask, or let <code class="inline-code">uvx</code> run it without installing anything:</p>
     <figure class="listing">
   <figcaption class="listing-head" style="margin:0;font:12px/1.3 var(--mono)"><span>terminal</span><span>listing 8.3</span></figcaption>
-  <pre><code><span class="l">pip install gutfeel               <span class="c"># then: gut filter ...</span></span>
-<span class="l">uvx gutfeel filter <span class="s">&quot;is spam&quot;</span> comments.txt</span></code></pre>
+  <pre><code><span class="l">pip install <span class="s">&quot;gutfeel[jev]&quot;</span>        <span class="c"># then: gut filter ...   (Jev, OpenRouter or Ollaya)</span></span>
+<span class="l">uvx --from <span class="s">&quot;gutfeel[jev]&quot;</span> gut filter <span class="s">&quot;is spam&quot;</span> comments.txt</span></code></pre>
 </figure>
     <h2 id="pick-the-model"><span class="sc">8.1</span>Pick the model</h2>
     <p>The same environment variables as the <a href="mcp.html">MCP server</a>: Jev whenever <code class="inline-code">TYPESAFE_API_KEY</code> is set, or <code class="inline-code">GUT_BACKEND</code> for another model, with <code class="inline-code">GUT_MODEL</code> where it takes one.</p>
@@ -100,7 +100,7 @@
 <span class="l">export GUT_BACKEND=ollaya GUT_MODEL=winnow:e4b              <span class="c"># an open decision model, on Ollaya</span></span>
 <span class="l">export GUT_BACKEND=ollama GUT_MODEL=qwen3:0.6b             <span class="c"># a local Ollama server</span></span></code></pre>
 </figure>
-    <p><code class="inline-code">--backend</code> and <code class="inline-code">--model</code> override them for one run. A local model needs the <code class="inline-code">local</code> extra: <code class="inline-code">uvx --from &quot;gutfeel[local]&quot; gut ...</code>.</p>
+    <p><code class="inline-code">--backend</code> and <code class="inline-code">--model</code> override them for one run. Jev, OpenRouter and Ollaya need the <code class="inline-code">jev</code> extra and a model in your process the <code class="inline-code">local</code> one: <code class="inline-code">uvx --from &quot;gutfeel[local]&quot; gut ...</code>.</p>
     <h2 id="filter-the-lines-a-claim-is-true-of"><span class="sc">8.2</span>filter: the lines a claim is true of</h2>
     <figure class="listing">
   <figcaption class="listing-head" style="margin:0;font:12px/1.3 var(--mono)"><span>terminal</span><span>listing 8.5</span></figcaption>

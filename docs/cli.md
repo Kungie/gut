@@ -18,11 +18,12 @@ gut: 30 records · 6 yes, 24 no · 29 calls, $0 · 2.3s · MoritzLaurer/deberta-
 
 The lines the claim is true of go to standard output; the summary -- how many, what it cost, how
 long, which model -- goes to standard error, so it never ends up in a pipe. `gut` comes with the
-package, and `uvx` runs it without installing anything:
+package; install it with the extra for the model you will ask, or let `uvx` run it without
+installing anything:
 
 ```bash
-pip install gutfeel               # then: gut filter ...
-uvx gutfeel filter "is spam" comments.txt
+pip install "gutfeel[jev]"        # then: gut filter ...   (Jev, OpenRouter or Ollaya)
+uvx --from "gutfeel[jev]" gut filter "is spam" comments.txt
 ```
 
 ## Pick the model
@@ -38,8 +39,8 @@ export GUT_BACKEND=ollaya GUT_MODEL=winnow:e4b              # an open decision m
 export GUT_BACKEND=ollama GUT_MODEL=qwen3:0.6b             # a local Ollama server
 ```
 
-`--backend` and `--model` override them for one run. A local model needs the `local` extra:
-`uvx --from "gutfeel[local]" gut ...`.
+`--backend` and `--model` override them for one run. Jev, OpenRouter and Ollaya need the `jev`
+extra and a model in your process the `local` one: `uvx --from "gutfeel[local]" gut ...`.
 
 ## filter: the lines a claim is true of
 
