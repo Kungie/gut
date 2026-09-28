@@ -945,3 +945,22 @@ figcaption .sc { font-style: normal; font-family: var(--sans); font-size: 14px; 
   .printout .row { grid-template-columns: minmax(0, 1fr); }
   .printout .in { color: var(--muted); }
 }
+
+/* ---------- footer install line (in place of the design's "import gut") ---------- */
+.foot-install { display: flex; align-items: center; flex-wrap: wrap; gap: 14px 22px; min-width: 0; }
+.foot .foot-install .big { font: italic 400 clamp(28px, 6.2vw, 84px)/1 var(--mono); letter-spacing: -.04em; }
+.foot .foot-install .big span { font-style: normal; }
+.foot .foot-install .copy { min-height: 44px; border: 1px solid var(--ink); }
+
+/* ---------- the generated documentation pages (scripts/build_site.py) ---------- */
+.doc-body h3 { font: 600 17px/1.35 var(--sans); margin: 34px 0 8px; color: var(--ink); }
+.doc-body ul { padding-left: 1.2em; margin: 12px 0 18px; }
+.doc-body li { margin: 4px 0; }
+.doc-body a { text-underline-offset: 3px; }
+.doc-table { overflow-x: auto; margin: 22px 0 26px; }
+.doc-table .band-table { margin-top: 0; font-size: 12.5px; }
+.doc-table td { vertical-align: top; }
+.doc.doc-index { grid-template-columns: minmax(0, 1fr); }
+.doc-index .doc-body { max-width: 760px; }
+.doc-index .toc { margin: 30px 0 12px; }
+.toc-desc { margin: 8px 0 16px 42px; font-size: 15px !important; line-height: 1.5 !important; color: var(--muted) !important; }

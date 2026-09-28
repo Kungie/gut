@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -8,8 +8,7 @@
 <meta property="og:title" content="gut — judgment calls as one line of Python">
 <meta property="og:description" content="gut turns judgment calls into one line of Python, answered YES, NO or UNSURE by small, fast, cheap models: TypeSafe's Jev first, and any small model after it.">
 <meta property="og:type" content="website">
-<meta name="theme-color" content="#F3EFE6" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#171614" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#171614">
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="preload" href="assets/fonts/9d1b3b9a.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="assets/style.css">
@@ -54,7 +53,6 @@
   <!-- ============ HERO ============ -->
   <section class="hero" aria-labelledby="hero-title">
     <div>
-      <div class="eyebrow"><span>pip install gutfeel</span><span>import gut</span><span>Apache-2.0</span><span>v0.4.0</span></div>
       <h1 id="hero-title">Judgment calls as <em>one line</em> of Python.</h1>
       <p class="lede">“Is this comment spam?” “Which team owns this ticket?” “How urgent is it?” gut asks <strong>small, fast, cheap models</strong> instead of a frontier LLM: TypeSafe's <strong>Jev</strong> first, and any small model after it. Every yes/no answer is YES, NO, or UNSURE — and UNSURE is where a person takes over.</p>
       <div class="install">
@@ -65,7 +63,7 @@
         <a class="btn btn-cta" href="#playground">Try it in your browser</a>
         <a class="btn" href="#docs">Read the docs</a>
       </div>
-      <p class="hero-meta">612 tests · 100% coverage · every code sample in the docs is run by the test suite.</p>
+      <p class="hero-meta">Jev first, any small model after it · every code sample in the docs is run by the test suite.</p>
     </div>
 
     <div>
@@ -569,23 +567,38 @@
   <section class="sec" id="mcp" aria-labelledby="mcp-title">
     <div class="sec-mark">§9<span class="sc">MCP server</span></div>
     <div>
-      <div class="planned"><span>COMING SOON · NOT RELEASED</span></div>
       <h2 id="mcp-title">Let the big model <em>delegate the small calls.</em></h2>
-      <p class="intro">A planned MCP server will let any MCP client, such as Claude or Cursor, hand cheap judgments to gut instead of spending a big model on them.</p>
-      <ul class="tools" aria-label="Planned tools">
-        <li><code>gut_likely</code>YES, NO or UNSURE on one claim.</li>
-        <li><code>gut_classify</code>One of the options you give it.</li>
-        <li><code>gut_rate</code>A rung on the scale you give it.</li>
-        <li><code>gut_each</code>One question over many subjects.</li>
+      <p class="intro"><code class="inline-code">gutfeel-mcp</code> hands any MCP client, such as Claude Code, Claude Desktop or Cursor, gut's judgments as tools, so the cheap calls go to a small model instead of a big one.</p>
+      <ul class="tools" aria-label="The server's tools">
+        <li><code>likely</code>YES, NO or UNSURE on one claim, with its probability.</li>
+        <li><code>classify</code>One of the options you give it.</li>
+        <li><code>rate</code>A rung on the scale you give it.</li>
+        <li><code>each</code>One question over up to a thousand texts.</li>
       </ul>
-      <figure class="listing draft" style="margin:0 0 24px">
-        <figcaption class="listing-head" style="margin:0;font:12px/1.3 var(--mono)"><span>mcp config · planned, not yet published</span><span>listing 6</span></figcaption>
-        <pre><code><span class="l">{"mcpServers": {"gut": {"command": "uvx", "args": ["gutfeel-mcp"]}}}</span></code></pre>
+      <figure class="listing" style="margin:0 0 18px">
+        <figcaption class="listing-head" style="margin:0;font:12px/1.3 var(--mono)"><span>terminal · Claude Code</span><span>listing 6</span></figcaption>
+        <pre><code id="mcp-add"><span class="l">claude mcp add gut --env TYPESAFE_API_KEY=your-key -- uvx --from <span class="s">"gutfeel[mcp]"</span> gutfeel-mcp</span></code></pre>
       </figure>
-      <a class="btn btn-cta" href="https://github.com/Kungie/gut">Watch on GitHub for the release ↗</a>
+      <figure class="listing" style="margin:0 0 24px">
+        <figcaption class="listing-head" style="margin:0;font:12px/1.3 var(--mono)"><span>json · Claude Desktop, Cursor, any MCP client</span><span>listing 7</span></figcaption>
+        <pre><code id="mcp-json"><span class="l">{</span>
+<span class="l">  <span class="s">"mcpServers"</span>: {</span>
+<span class="l">    <span class="s">"gut"</span>: {</span>
+<span class="l">      <span class="s">"command"</span>: <span class="s">"uvx"</span>,</span>
+<span class="l">      <span class="s">"args"</span>: [<span class="s">"--from"</span>, <span class="s">"gutfeel[mcp]"</span>, <span class="s">"gutfeel-mcp"</span>],</span>
+<span class="l">      <span class="s">"env"</span>: { <span class="s">"TYPESAFE_API_KEY"</span>: <span class="s">"your-key"</span> }</span>
+<span class="l">    }</span>
+<span class="l">  }</span>
+<span class="l">}</span></code></pre>
+      </figure>
+      <div class="linkrow" style="margin-top:0">
+        <button class="btn" type="button" data-copy="#mcp-json">Copy the config</button>
+        <a class="btn btn-cta" href="docs/mcp.html">Read the MCP chapter →</a>
+      </div>
     </div>
     <aside class="side">
-      <div class="note"><b><span class="n">o</span>Placeholder</b>The package name and config above are the plan, not a release. Do not paste them yet.</div>
+      <div class="note"><b><span class="n">o</span>Jev by default</b>With <code>TYPESAFE_API_KEY</code> set, the server asks Jev. Set <code>GUT_BACKEND=ollama</code> or <code>zeroshot</code> instead and nothing leaves your machine.</div>
+      <div class="note"><b><span class="n">p</span>Read-only</b>Every tool only reads the text it is given. Mistakes in a call come back as errors the agent can read and fix.</div>
     </aside>
   </section>
 
@@ -594,20 +607,23 @@
     <div class="sec-mark">§10<span class="sc">Docs</span></div>
     <div>
       <h2 id="docs-title">Contents.</h2>
-      <p class="intro">The documentation lives on GitHub for now. Eight chapters, every code sample tested.</p>
+      <p class="intro">Nine chapters, read in order if you are new. Every code sample in them is run by the test suite.</p>
+      <!-- docs:toc (written by scripts/build_site.py) -->
       <ol class="toc">
-        <li><a href="docs/getting-started.html"><span class="t">Getting started</span><span class="dots"></span><span class="go">read here →</span></a></li>
-        <li><a href="https://github.com/Kungie/gut/blob/main/docs/backends.md"><span class="t">Backends</span><span class="dots"></span><span class="go">GitHub ↗</span></a></li>
-        <li><a href="https://github.com/Kungie/gut/blob/main/docs/knowing-when-it-doesnt-know.md"><span class="t">Knowing when it doesn't know</span><span class="dots"></span><span class="go">GitHub ↗</span></a></li>
-        <li><a href="https://github.com/Kungie/gut/blob/main/docs/batching.md"><span class="t">Asking everything at once</span><span class="dots"></span><span class="go">GitHub ↗</span></a></li>
-        <li><a href="https://github.com/Kungie/gut/blob/main/docs/async.md"><span class="t">Async</span><span class="dots"></span><span class="go">GitHub ↗</span></a></li>
-        <li><a href="https://github.com/Kungie/gut/blob/main/docs/exact-costs.md"><span class="t">Exact costs</span><span class="dots"></span><span class="go">GitHub ↗</span></a></li>
-        <li><a href="https://github.com/Kungie/gut/blob/main/docs/caching-and-observability.md"><span class="t">Caching and observability</span><span class="dots"></span><span class="go">GitHub ↗</span></a></li>
-        <li><a href="https://github.com/Kungie/gut/blob/main/docs/limitations.md"><span class="t">Honest limitations</span><span class="dots"></span><span class="go">GitHub ↗</span></a></li>
+        <li><a href="docs/getting-started.html"><span class="t">Getting started</span><span class="dots"></span><span class="go">read →</span></a></li>
+        <li><a href="docs/backends.html"><span class="t">Backends</span><span class="dots"></span><span class="go">read →</span></a></li>
+        <li><a href="docs/knowing-when-it-doesnt-know.html"><span class="t">Knowing when it doesn&#x27;t know</span><span class="dots"></span><span class="go">read →</span></a></li>
+        <li><a href="docs/batching.html"><span class="t">Asking everything at once</span><span class="dots"></span><span class="go">read →</span></a></li>
+        <li><a href="docs/async.html"><span class="t">Async</span><span class="dots"></span><span class="go">read →</span></a></li>
+        <li><a href="docs/exact-costs.html"><span class="t">Exact costs</span><span class="dots"></span><span class="go">read →</span></a></li>
+        <li><a href="docs/caching-and-observability.html"><span class="t">Caching and observability</span><span class="dots"></span><span class="go">read →</span></a></li>
+        <li><a href="docs/mcp.html"><span class="t">MCP server</span><span class="dots"></span><span class="go">read →</span></a></li>
+        <li><a href="docs/limitations.html"><span class="t">Honest limitations</span><span class="dots"></span><span class="go">read →</span></a></li>
       </ol>
+      <!-- /docs:toc -->
     </div>
     <aside class="side">
-      <div class="note"><b><span class="n">p</span>Tested prose</b>Every code sample in the docs is run by the test suite: 612 tests, 100% coverage.</div>
+      <div class="note"><b><span class="n">q</span>Tested prose</b>Every code sample in the docs is run by the test suite, so the prose cannot drift from the library.</div>
     </aside>
   </section>
 
@@ -629,7 +645,10 @@
 <footer class="foot">
   <div class="wrap">
     <div class="foot-in">
-      <div class="big"><span>import</span> gut</div>
+      <div class="foot-install">
+        <code class="big" id="foot-cmd"><span>pip install</span> gutfeel</code>
+        <button class="copy" type="button" data-copy="#foot-cmd">Copy</button>
+      </div>
       <ul>
         <li>Apache-2.0</li>
         <li><a href="https://github.com/Kungie/gut">GitHub</a></li>

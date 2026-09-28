@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Async · gut docs</title>
+<meta name="description" content="Every way of asking has an awaitable twin, for code that runs on an event loop — a FastAPI handler, a Discord bot, an agent loop:">
+<meta property="og:title" content="Async · gut docs">
+<meta property="og:description" content="Every way of asking has an awaitable twin, for code that runs on an event loop — a FastAPI handler, a Discord bot, an agent loop:">
+<meta property="og:type" content="article">
+<meta name="theme-color" content="#171614">
+<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+<link rel="preload" href="../assets/fonts/9d1b3b9a.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/style.css">
+<script>try{var t=localStorage.getItem("gut-theme");if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+</head>
+<body>
+<div style="width: 100%; background-color: var(--paper); color: var(--ink); font-family: var(--sans)">
+<header class="nav">
+  <div class="wrap nav-in">
+    <a class="mark" href="../index.html" aria-label="gut, home"><b>gut</b><small>docs · 0.4.0</small></a>
+    <ul class="nav-links">
+      <li><a href="../index.html#playground">Playground</a></li>
+      <li><a href="../index.html#backends">Backends</a></li>
+      <li><a href="index.html">Docs</a></li>
+      <li><a href="../index.html#agents">Agents</a></li>
+      <li><a href="mcp.html">MCP</a></li>
+      <li><a class="ext" href="https://github.com/Kungie/gut">GitHub</a></li>
+      <li><a class="ext" href="https://pypi.org/project/gutfeel/">PyPI</a></li>
+    </ul>
+    <details class="nav-menu">
+      <summary>Contents</summary>
+      <ul>
+        <li><a href="../index.html">Home</a></li>
+        <li><a href="../index.html#playground">Playground</a></li>
+        <li><a href="index.html">All docs</a></li>
+        <li><a href="https://github.com/Kungie/gut">GitHub ↗</a></li>
+      </ul>
+    </details>
+    <button class="theme-btn" type="button" data-theme-toggle="" aria-label="Switch between light and dark">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><circle cx="8" cy="8" r="6.2"></circle><path d="M8 1.8v12.4A6.2 6.2 0 0 0 8 1.8z" fill="currentColor"></path></svg>
+    </button>
+  </div>
+</header>
+
+<div class="wrap doc">
+  <nav class="doc-nav" aria-label="Documentation">
+    <span class="sc">Contents</span>
+    <ol>
+      <li><a href="getting-started.html">Getting started</a></li>
+      <li><a href="backends.html">Backends</a></li>
+      <li><a href="knowing-when-it-doesnt-know.html">Knowing when it doesn&#x27;t know</a></li>
+      <li><a href="batching.html">Asking everything at once</a></li>
+      <li><a href="async.html" aria-current="page">Async</a></li>
+      <li><a href="exact-costs.html">Exact costs</a></li>
+      <li><a href="caching-and-observability.html">Caching and observability</a></li>
+      <li><a href="mcp.html">MCP server</a></li>
+      <li><a href="limitations.html">Honest limitations</a></li>
+    </ol>
+    <span class="sc">On this page</span>
+    <ol class="onpage">
+      <li><a href="#many-subjects">Many subjects</a></li>
+      <li><a href="#several-questions-about-one-subject">Several questions about one subject</a></li>
+      <li><a href="#what-happens-underneath">What happens underneath</a></li>
+    </ol>
+  </nav>
+
+  <article class="doc-body">
+    <div class="crumbs">docs / 5 / async</div>
+    <h1>Async</h1>
+    <p>Every way of asking has an awaitable twin, for code that runs on an event loop — a FastAPI handler, a Discord bot, an agent loop:</p>
+    <figure class="listing">
+  <figcaption class="listing-head" style="margin:0;font:12px/1.3 var(--mono)"><span>python</span><span>listing 5.1</span></figcaption>
+  <pre><code><span class="l"><span class="k">import</span> asyncio</span>
+<span class="l"> </span>
+<span class="l"><span class="k">import</span> gut</span>
+<span class="l"> </span>
+<span class="l"> </span>
+<span class="l"><span class="k">async</span> <span class="k">def</span> handle(email):</span>
+<span class="l">    <span class="k">if</span> <span class="k">await</span> gut.<span class="f">alikely</span>(email, <span class="s">&quot;the customer threatens to cancel&quot;</span>):</span>
+<span class="l">        <span class="k">return</span> <span class="s">&quot;escalate&quot;</span></span>
+<span class="l">    team = <span class="k">await</span> gut.<span class="f">aclassify</span>(email, Team)</span>
+<span class="l">    urgency = <span class="k">await</span> gut.<span class="f">arate</span>(email, [<span class="s">&quot;can wait&quot;</span>, <span class="s">&quot;this week&quot;</span>, <span class="s">&quot;right now&quot;</span>])</span>
+<span class="l">    <span class="k">return</span> team.value, urgency.nearest_level</span>
+<span class="l"> </span>
+<span class="l"> </span>
+<span class="l">asyncio.run(handle(email))</span></code></pre>
+</figure>
+    <p>The arguments and the decisions are exactly those of <code class="inline-code">likely</code>, <code class="inline-code">classify</code> and <code class="inline-code">rate</code> — the same posture words, the same cache, the same <code class="inline-code">on_decision</code> hook. What changes is that nothing blocks the loop while the model answers.</p>
+    <h2 id="many-subjects"><span class="sc">5.1</span>Many subjects</h2>
+    <figure class="listing">
+  <figcaption class="listing-head" style="margin:0;font:12px/1.3 var(--mono)"><span>python</span><span>listing 5.2</span></figcaption>
+  <pre><code><span class="l"><span class="k">import</span> asyncio</span>
+<span class="l"> </span>
+<span class="l"><span class="k">import</span> gut</span>
+<span class="l"> </span>
+<span class="l"> </span>
+<span class="l"><span class="k">async</span> <span class="k">def</span> triage(comments, tickets):</span>
+<span class="l">    spam = <span class="k">await</span> gut.<span class="f">each</span>(comments).alikely(<span class="s">&quot;is spam&quot;</span>)</span>
+<span class="l">    teams = <span class="k">await</span> gut.<span class="f">each</span>(tickets).aclassify(Team)</span>
+<span class="l">    <span class="k">return</span> spam, teams</span>
+<span class="l"> </span>
+<span class="l"> </span>
+<span class="l">asyncio.run(triage(comments, tickets))</span></code></pre>
+</figure>
+    <p>Or, for unrelated questions, the usual <code class="inline-code">asyncio.gather</code>:</p>
+    <figure class="listing">
+  <figcaption class="listing-head" style="margin:0;font:12px/1.3 var(--mono)"><span>python</span><span>listing 5.3</span></figcaption>
+  <pre><code><span class="l"><span class="k">import</span> asyncio</span>
+<span class="l"> </span>
+<span class="l"><span class="k">import</span> gut</span>
+<span class="l"> </span>
+<span class="l"> </span>
+<span class="l"><span class="k">async</span> <span class="k">def</span> both(email, ticket):</span>
+<span class="l">    <span class="k">return</span> <span class="k">await</span> asyncio.gather(</span>
+<span class="l">        gut.<span class="f">alikely</span>(email, <span class="s">&quot;the customer threatens to cancel&quot;</span>),</span>
+<span class="l">        gut.<span class="f">aclassify</span>(ticket, Team),</span>
+<span class="l">    )</span>
+<span class="l"> </span>
+<span class="l"> </span>
+<span class="l">asyncio.run(both(email, ticket))</span></code></pre>
+</figure>
+    <h2 id="several-questions-about-one-subject"><span class="sc">5.2</span>Several questions about one subject</h2>
+    <p><code class="inline-code">@gut.semantic</code> works on coroutine functions, and collects awaited judgments as well as plain ones:</p>
+    <figure class="listing">
+  <figcaption class="listing-head" style="margin:0;font:12px/1.3 var(--mono)"><span>python</span><span>listing 5.4</span></figcaption>
+  <pre><code><span class="l"><span class="k">import</span> asyncio</span>
+<span class="l"> </span>
+<span class="l"><span class="k">import</span> gut</span>
+<span class="l"> </span>
+<span class="l"> </span>
+<span class="l">@gut.semantic</span>
+<span class="l"><span class="k">async</span> <span class="k">def</span> route(ticket):</span>
+<span class="l">    <span class="k">if</span> <span class="k">await</span> gut.<span class="f">alikely</span>(ticket, <span class="s">&quot;is a bug report&quot;</span>):      <span class="c"># all three were asked together,</span></span>
+<span class="l">        <span class="k">if</span> <span class="k">await</span> gut.<span class="f">alikely</span>(ticket, <span class="s">&quot;is urgent&quot;</span>):         <span class="c"># before the body ran</span></span>
+<span class="l">            <span class="k">return</span> <span class="s">&quot;on-call&quot;</span></span>
+<span class="l">        <span class="k">return</span> <span class="s">&quot;engineering&quot;</span></span>
+<span class="l">    <span class="k">if</span> <span class="k">await</span> gut.<span class="f">alikely</span>(ticket, <span class="s">&quot;asks for a refund&quot;</span>):</span>
+<span class="l">        <span class="k">return</span> <span class="s">&quot;billing&quot;</span></span>
+<span class="l">    <span class="k">return</span> <span class="s">&quot;support&quot;</span></span>
+<span class="l"> </span>
+<span class="l"> </span>
+<span class="l">asyncio.run(route(ticket))</span></code></pre>
+</figure>
+    <p>With <code class="inline-code">judge()</code>, reading a handle cannot await — <code class="inline-code">if bug:</code> is synchronous — so resolve first:</p>
+    <figure class="listing">
+  <figcaption class="listing-head" style="margin:0;font:12px/1.3 var(--mono)"><span>python</span><span>listing 5.5</span></figcaption>
+  <pre><code><span class="l"><span class="k">import</span> asyncio</span>
+<span class="l"> </span>
+<span class="l"><span class="k">import</span> gut</span>
+<span class="l"> </span>
+<span class="l"> </span>
+<span class="l"><span class="k">async</span> <span class="k">def</span> with_a_judge(ticket):</span>
+<span class="l">    <span class="k">with</span> gut.<span class="f">judge</span>(ticket) <span class="k">as</span> j:</span>
+<span class="l">        bug = j.likely(<span class="s">&quot;is a bug report&quot;</span>)</span>
+<span class="l">        team = j.classify(Team)</span>
+<span class="l">    <span class="k">await</span> j.aresolve()        <span class="c"># one request, on the event loop</span></span>
+<span class="l">    <span class="k">return</span> bug.outcome, team.value   <span class="c"># already answered: nothing blocks</span></span>
+<span class="l"> </span>
+<span class="l"> </span>
+<span class="l">asyncio.run(with_a_judge(ticket))</span></code></pre>
+</figure>
+    <h2 id="what-happens-underneath"><span class="sc">5.3</span>What happens underneath</h2>
+    <div class="doc-table"><table class="band-table"><thead><tr><th>backend</th><th>awaited how</th></tr></thead><tbody><tr><td><code class="inline-code">JevBackend</code></td><td>natively, through the SDK's own <code class="inline-code">AsyncTypeSafeClient</code></td></tr><tr><td><code class="inline-code">OpenAICompatibleBackend</code></td><td>natively, through an <code class="inline-code">httpx.AsyncClient</code>, <code class="inline-code">max_concurrency</code> requests at a time</td></tr><tr><td><code class="inline-code">Cascade</code></td><td>stage by stage, each one natively where it can be</td></tr><tr><td><code class="inline-code">ZeroShotBackend</code>, <code class="inline-code">TransformersBackend</code></td><td>in a worker thread: the work is on the CPU or GPU either way</td></tr><tr><td><code class="inline-code">FakeBackend</code>, your own backend</td><td>in a worker thread, unless it defines <code class="inline-code">aask</code></td></tr></tbody></table></div>
+    <p>Async does not make a model answer faster: it lets the rest of your program keep going while it answers. Whether requests in flight together also <em>finish</em> sooner is up to the server — Jev and hosted APIs handle many at once; a local Ollama on a small laptop tends to take them one by one.</p>
+    <p>A backend's clients belong to the event loop they were made on. Each loop that uses a backend gets its own, and <code class="inline-code">await backend.aclose()</code> (or <code class="inline-code">async with backend:</code>) closes them.</p>
+    <nav class="doc-pager" aria-label="Pager">
+      <a href="batching.html"><small>← previous · 4</small><span>Asking everything at once</span></a>
+      <a href="exact-costs.html" style="text-align:right"><small>next · 6</small><span>Exact costs →</span></a>
+    </nav>
+  </article>
+
+  <aside class="side doc-side">
+    <div class="note"><b><span class="n">a</span>Tested</b>Every code sample on this page is run by gut's test suite, so none of it can drift from the library.</div>
+    <div class="note"><b><span class="n">b</span>This page's source</b><a href="https://github.com/Kungie/gut/blob/main/docs/async.md">docs/async.md</a> in the repository. Corrections welcome.</div>
+  </aside>
+</div>
+
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot-in">
+      <div class="foot-install">
+        <code class="big" id="foot-cmd"><span>pip install</span> gutfeel</code>
+        <button class="copy" type="button" data-copy="#foot-cmd">Copy</button>
+      </div>
+      <ul>
+        <li>Apache-2.0</li>
+        <li><a href="https://github.com/Kungie/gut">GitHub</a></li>
+        <li><a href="https://pypi.org/project/gutfeel/">PyPI (gutfeel)</a></li>
+      </ul>
+    </div>
+  </div>
+</footer>
+</div>
+<script src="../assets/site.js" defer></script>
+</body>
+</html>

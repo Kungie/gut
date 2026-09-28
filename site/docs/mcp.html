@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MCP server · gut docs</title>
+<meta name="description" content="gutfeel-mcp gives an agent gut&#x27;s judgments as tools. Claude Code, Claude Desktop, Cursor or any other MCP client can then hand its judgment calls — is this spam, which team owns this, how urgent is it">
+<meta property="og:title" content="MCP server · gut docs">
+<meta property="og:description" content="gutfeel-mcp gives an agent gut&#x27;s judgments as tools. Claude Code, Claude Desktop, Cursor or any other MCP client can then hand its judgment calls — is this spam, which team owns this, how urgent is it">
+<meta property="og:type" content="article">
+<meta name="theme-color" content="#171614">
+<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+<link rel="preload" href="../assets/fonts/9d1b3b9a.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/style.css">
+<script>try{var t=localStorage.getItem("gut-theme");if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+</head>
+<body>
+<div style="width: 100%; background-color: var(--paper); color: var(--ink); font-family: var(--sans)">
+<header class="nav">
+  <div class="wrap nav-in">
+    <a class="mark" href="../index.html" aria-label="gut, home"><b>gut</b><small>docs · 0.4.0</small></a>
+    <ul class="nav-links">
+      <li><a href="../index.html#playground">Playground</a></li>
+      <li><a href="../index.html#backends">Backends</a></li>
+      <li><a href="index.html">Docs</a></li>
+      <li><a href="../index.html#agents">Agents</a></li>
+      <li><a href="mcp.html">MCP</a></li>
+      <li><a class="ext" href="https://github.com/Kungie/gut">GitHub</a></li>
+      <li><a class="ext" href="https://pypi.org/project/gutfeel/">PyPI</a></li>
+    </ul>
+    <details class="nav-menu">
+      <summary>Contents</summary>
+      <ul>
+        <li><a href="../index.html">Home</a></li>
+        <li><a href="../index.html#playground">Playground</a></li>
+        <li><a href="index.html">All docs</a></li>
+        <li><a href="https://github.com/Kungie/gut">GitHub ↗</a></li>
+      </ul>
+    </details>
+    <button class="theme-btn" type="button" data-theme-toggle="" aria-label="Switch between light and dark">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><circle cx="8" cy="8" r="6.2"></circle><path d="M8 1.8v12.4A6.2 6.2 0 0 0 8 1.8z" fill="currentColor"></path></svg>
+    </button>
+  </div>
+</header>
+
+<div class="wrap doc">
+  <nav class="doc-nav" aria-label="Documentation">
+    <span class="sc">Contents</span>
+    <ol>
+      <li><a href="getting-started.html">Getting started</a></li>
+      <li><a href="backends.html">Backends</a></li>
+      <li><a href="knowing-when-it-doesnt-know.html">Knowing when it doesn&#x27;t know</a></li>
+      <li><a href="batching.html">Asking everything at once</a></li>
+      <li><a href="async.html">Async</a></li>
+      <li><a href="exact-costs.html">Exact costs</a></li>
+      <li><a href="caching-and-observability.html">Caching and observability</a></li>
+      <li><a href="mcp.html" aria-current="page">MCP server</a></li>
+      <li><a href="limitations.html">Honest limitations</a></li>
+    </ol>
+    <span class="sc">On this page</span>
+    <ol class="onpage">
+      <li><a href="#add-it-to-your-agent">Add it to your agent</a></li>
+      <li><a href="#pick-the-model">Pick the model</a></li>
+      <li><a href="#the-tools">The tools</a></li>
+      <li><a href="#when-an-agent-should-reach-for-it">When an agent should reach for it</a></li>
+      <li><a href="#what-it-can-and-cannot-do">What it can and cannot do</a></li>
+    </ol>
+  </nav>
+
+  <article class="doc-body">
+    <div class="crumbs">docs / 8 / mcp</div>
+    <h1>MCP server</h1>
+    <p><code class="inline-code">gutfeel-mcp</code> gives an agent gut's judgments as tools. Claude Code, Claude Desktop, Cursor or any other MCP client can then hand its judgment calls — <em>is this spam, which team owns this, how urgent is it</em> — to a small, fast, cheap model, and get back an outcome and a probability.</p>
+    <p>It runs over stdio, and <code class="inline-code">uvx</code> fetches it on first use, so there is nothing to install by hand.</p>
+    <h2 id="add-it-to-your-agent"><span class="sc">8.1</span>Add it to your agent</h2>
+    <p>With Jev, the model gut is built around, the only setting is your TypeSafe key. In Claude Code:</p>
+    <figure class="listing">
+  <figcaption class="listing-head" style="margin:0;font:12px/1.3 var(--mono)"><span>terminal</span><span>listing 8.1</span></figcaption>
+  <pre><code><span class="l">claude mcp add gut --env TYPESAFE_API_KEY=your-key -- uvx --from <span class="s">&quot;gutfeel[mcp]&quot;</span> gutfeel-mcp</span></code></pre>
+</figure>
+    <p>Every other client takes the same thing as JSON — Claude Desktop in <code class="inline-code">claude_desktop_config.json</code>, Cursor in <code class="inline-code">.cursor/mcp.json</code>:</p>
+    <figure class="listing">
+  <figcaption class="listing-head" style="margin:0;font:12px/1.3 var(--mono)"><span>json</span><span>listing 8.2</span></figcaption>
+  <pre><code><span class="l">{</span>
+<span class="l">  <span class="s">&quot;mcpServers&quot;</span>: {</span>
+<span class="l">    <span class="s">&quot;gut&quot;</span>: {</span>
+<span class="l">      <span class="s">&quot;command&quot;</span>: <span class="s">&quot;uvx&quot;</span>,</span>
+<span class="l">      <span class="s">&quot;args&quot;</span>: [<span class="s">&quot;--from&quot;</span>, <span class="s">&quot;gutfeel[mcp]&quot;</span>, <span class="s">&quot;gutfeel-mcp&quot;</span>],</span>
+<span class="l">      <span class="s">&quot;env&quot;</span>: { <span class="s">&quot;TYPESAFE_API_KEY&quot;</span>: <span class="s">&quot;your-key&quot;</span> }</span>
+<span class="l">    }</span>
+<span class="l">  }</span>
+<span class="l">}</span></code></pre>
+</figure>
+    <p>The key stays in your client's configuration and goes to TypeSafe's API, nowhere else.</p>
+    <h2 id="pick-the-model"><span class="sc">8.2</span>Pick the model</h2>
+    <p>The server reads its model from the environment. With none of these set it uses Jev whenever <code class="inline-code">TYPESAFE_API_KEY</code> is there, and otherwise every tool call answers with how to set one.</p>
+    <div class="doc-table"><table class="band-table"><thead><tr><th>variable</th><th>what it does</th></tr></thead><tbody><tr><td><code class="inline-code">TYPESAFE_API_KEY</code></td><td>TypeSafe's Jev: the default whenever it is set</td></tr><tr><td><code class="inline-code">GUT_BACKEND</code></td><td><code class="inline-code">jev</code>, <code class="inline-code">openai</code>, <code class="inline-code">ollama</code>, <code class="inline-code">zeroshot</code>, <code class="inline-code">transformers</code>, or <code class="inline-code">fake</code> for trying the tools without a model</td></tr><tr><td><code class="inline-code">GUT_MODEL</code></td><td>the model to ask; required for <code class="inline-code">openai</code> and <code class="inline-code">ollama</code></td></tr><tr><td><code class="inline-code">GUT_BASE_URL</code></td><td>an OpenAI-compatible server's URL; <code class="inline-code">ollama</code> defaults to <code class="inline-code">http://localhost:11434/v1</code></td></tr></tbody></table></div>
+    <p>A local Ollama model, with nothing leaving your machine:</p>
+    <figure class="listing">
+  <figcaption class="listing-head" style="margin:0;font:12px/1.3 var(--mono)"><span>json</span><span>listing 8.3</span></figcaption>
+  <pre><code><span class="l">{</span>
+<span class="l">  <span class="s">&quot;mcpServers&quot;</span>: {</span>
+<span class="l">    <span class="s">&quot;gut&quot;</span>: {</span>
+<span class="l">      <span class="s">&quot;command&quot;</span>: <span class="s">&quot;uvx&quot;</span>,</span>
+<span class="l">      <span class="s">&quot;args&quot;</span>: [<span class="s">&quot;--from&quot;</span>, <span class="s">&quot;gutfeel[mcp]&quot;</span>, <span class="s">&quot;gutfeel-mcp&quot;</span>],</span>
+<span class="l">      <span class="s">&quot;env&quot;</span>: { <span class="s">&quot;GUT_BACKEND&quot;</span>: <span class="s">&quot;ollama&quot;</span>, <span class="s">&quot;GUT_MODEL&quot;</span>: <span class="s">&quot;qwen3:0.6b&quot;</span> }</span>
+<span class="l">    }</span>
+<span class="l">  }</span>
+<span class="l">}</span></code></pre>
+</figure>
+    <p>The local NLI encoder, which needs PyTorch and so the <code class="inline-code">local</code> extra too:</p>
+    <figure class="listing">
+  <figcaption class="listing-head" style="margin:0;font:12px/1.3 var(--mono)"><span>terminal</span><span>listing 8.4</span></figcaption>
+  <pre><code><span class="l">claude mcp add gut --env GUT_BACKEND=zeroshot -- uvx --from <span class="s">&quot;gutfeel[mcp,local]&quot;</span> gutfeel-mcp</span></code></pre>
+</figure>
+    <p>The model is loaded on the first call rather than at startup, so the client's handshake is instant even when the first answer takes a few seconds. <a href="backends.html">Backends</a> says what each one is good at.</p>
+    <h2 id="the-tools"><span class="sc">8.3</span>The tools</h2>
+    <div class="doc-table"><table class="band-table"><thead><tr><th>tool</th><th>asks</th><th>answers with</th></tr></thead><tbody><tr><td><code class="inline-code">likely</code></td><td>is this claim true of the text?</td><td><code class="inline-code">outcome</code> (yes, no, or unsure) and <code class="inline-code">p</code>, the probability of yes</td></tr><tr><td><code class="inline-code">classify</code></td><td>which of these options fits?</td><td><code class="inline-code">value</code>, the chosen label, every option's probability and a <code class="inline-code">confidence</code></td></tr><tr><td><code class="inline-code">rate</code></td><td>where on this scale is it?</td><td><code class="inline-code">score</code>, which can fall between levels, the nearest <code class="inline-code">level</code> and a <code class="inline-code">confidence</code></td></tr><tr><td><code class="inline-code">each</code></td><td>the same question about up to 1000 texts</td><td><code class="inline-code">results</code>, one answer per text, in order</td></tr></tbody></table></div>
+    <p>They take the same arguments as the Python functions. <code class="inline-code">classify</code> takes its options either as a list of labels or as <code class="inline-code">{label: description}</code>, since a description is what the model reads. <code class="inline-code">ask_human</code>, <code class="inline-code">stakes</code> and <code class="inline-code">lean</code> are the words from <a href="knowing-when-it-doesnt-know.html">Knowing when it doesn't know</a>, and are optional.</p>
+    <p>A <code class="inline-code">likely</code> answer, as the agent receives it:</p>
+    <figure class="listing">
+  <figcaption class="listing-head" style="margin:0;font:12px/1.3 var(--mono)"><span>json</span><span>listing 8.5</span></figcaption>
+  <pre><code><span class="l">{</span>
+<span class="l">  <span class="s">&quot;kind&quot;</span>: <span class="s">&quot;likely&quot;</span>,</span>
+<span class="l">  <span class="s">&quot;outcome&quot;</span>: <span class="s">&quot;yes&quot;</span>,</span>
+<span class="l">  <span class="s">&quot;p&quot;</span>: 0.93,</span>
+<span class="l">  <span class="s">&quot;question&quot;</span>: <span class="s">&quot;asks for a refund&quot;</span>,</span>
+<span class="l">  <span class="s">&quot;model&quot;</span>: <span class="s">&quot;jev-1.13.0&quot;</span>,</span>
+<span class="l">  <span class="s">&quot;policy&quot;</span>: <span class="s">&quot;yes above 0.5, no at or below it&quot;</span>,</span>
+<span class="l">  <span class="s">&quot;latency_ms&quot;</span>: 41.0</span>
+<span class="l">}</span></code></pre>
+</figure>
+    <p><code class="inline-code">unsure</code> is only possible when the agent passes <code class="inline-code">ask_human: true</code>, and means the model could not tell: the agent should read the text itself, or ask you.</p>
+    <h2 id="when-an-agent-should-reach-for-it"><span class="sc">8.4</span>When an agent should reach for it</h2>
+    <p>The agent calling these tools is a far larger model than the one answering them. For one subtle judgment it can simply read the text itself. gut is worth it when the judgment is simple and there is a lot of it: sorting an inbox, filtering search results, labelling every file in a diff, routing a queue. There, one <code class="inline-code">each</code> call answers hundreds of texts at a small model's speed and price, with the same model and the same question every time.</p>
+    <p>The server tells the agent this in its instructions, along with the one habit that matters most for small models: phrase a question as a short, concrete claim about the text ("asks for a refund"), never as an open question or a judgment of quality.</p>
+    <h2 id="what-it-can-and-cannot-do"><span class="sc">8.5</span>What it can and cannot do</h2>
+    <p>Every tool is read-only: asking a model changes nothing, and the same question about the same text gets the same answer, from the cache after the first time. The text is sent to whichever model you configured, and nowhere else.</p>
+    <p>Mistakes in a call come back as errors the agent can read and fix: an option list that would collapse two options into one, a rubric of one level, <code class="inline-code">stakes</code> without <code class="inline-code">ask_human</code>. A program gets a warning for that last one; an agent would never see a warning, so here it is an error.</p>
+    <nav class="doc-pager" aria-label="Pager">
+      <a href="caching-and-observability.html"><small>← previous · 7</small><span>Caching and observability</span></a>
+      <a href="limitations.html" style="text-align:right"><small>next · 9</small><span>Honest limitations →</span></a>
+    </nav>
+  </article>
+
+  <aside class="side doc-side">
+    <div class="note"><b><span class="n">a</span>This page's source</b><a href="https://github.com/Kungie/gut/blob/main/docs/mcp.md">docs/mcp.md</a> in the repository. Corrections welcome.</div>
+  </aside>
+</div>
+
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot-in">
+      <div class="foot-install">
+        <code class="big" id="foot-cmd"><span>pip install</span> gutfeel</code>
+        <button class="copy" type="button" data-copy="#foot-cmd">Copy</button>
+      </div>
+      <ul>
+        <li>Apache-2.0</li>
+        <li><a href="https://github.com/Kungie/gut">GitHub</a></li>
+        <li><a href="https://pypi.org/project/gutfeel/">PyPI (gutfeel)</a></li>
+      </ul>
+    </div>
+  </div>
+</footer>
+</div>
+<script src="../assets/site.js" defer></script>
+</body>
+</html>

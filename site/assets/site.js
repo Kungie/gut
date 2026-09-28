@@ -18,10 +18,11 @@
 
   $$("[data-theme-toggle]").forEach((button) => {
     button.addEventListener("click", () => {
-      const current =
-        root.dataset.theme || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      const current = root.dataset.theme || "dark";
       const next = current === "dark" ? "light" : "dark";
       root.dataset.theme = next;
+      const meta = $('meta[name="theme-color"]');
+      if (meta) meta.content = next === "dark" ? "#171614" : "#F3EFE6";
       try {
         localStorage.setItem("gut-theme", next);
       } catch (error) {
@@ -31,6 +32,7 @@
   });
 
   $$("[data-copy]").forEach((button) => {
+    const label = button.textContent;
     button.addEventListener("click", async () => {
       const source = $(button.dataset.copy);
       if (!source) return;
@@ -48,7 +50,7 @@
       button.textContent = "Copied";
       setTimeout(() => {
         delete button.dataset.copied;
-        button.textContent = "Copy";
+        button.textContent = label;
       }, 1600);
     });
   });

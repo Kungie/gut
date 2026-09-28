@@ -15,10 +15,22 @@ uv sync --extra jev --extra local
 uv run pytest -m local tests/test_local_models.py
 ```
 
+## The website
+
+`site/` is published to <https://kungie.github.io/gut/> on every push to `main` that touches it.
+`site/index.html` is written by hand; the documentation pages under `site/docs/` are built from
+`docs/*.md`, which stay the only source. After changing a page in `docs/`, rebuild:
+
+```bash
+uv run python scripts/build_site.py
+```
+
+A test fails while the built pages are behind the markdown, so they cannot drift apart.
+
 ## Releasing
 
 Bump the version in both `pyproject.toml` and `src/gut/__init__.py` (a test checks they agree),
-commit, then tag and push:
+rebuild the site so it shows the new version, commit, then tag and push:
 
 ```bash
 git tag -a v0.2.0 -m "gutfeel 0.2.0" && git push origin main --tags
@@ -34,7 +46,7 @@ owner `Kungie`, repository `gut`, workflow `release.yml` and environment `pypi`.
 - **The suite must pass with no model and no API key.** Anything that talks to a model goes behind
   `FakeBackend`, a fake HTTP transport, or the `live` / `local` markers.
 - **Test `gut`, not a model.** How accurate some model is on some dataset is its maker's question.
-  What belongs here is whether `gut` asked it the right thing and read its answer correctly (D38).
+  What belongs here is whether `gut` asked it the right thing and read its answer correctly.
 - **Never silently change user code behavior.** When `gut` cannot prove something statically
   (batching, in particular), it falls back to the slow-but-correct path rather than guessing.
 - **A backend that cannot answer raises `BackendError`.** Never a made-up probability.

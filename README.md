@@ -84,7 +84,7 @@ gut.configure(backend=gut.Cascade(
 ```
 
 Every answer is a model's own probabilities, never parsed from text, and `decision.model` names the
-model that gave it. Your own model can be a backend too: [here is how](https://github.com/Kungie/gut/blob/main/docs/backends.md).
+model that gave it. Your own model can be a backend too: [here is how](https://kungie.github.io/gut/docs/backends.html#writing-your-own).
 
 ## Install
 
@@ -92,25 +92,25 @@ model that gave it. Your own model can be a backend too: [here is how](https://g
 pip install "gutfeel[jev]"           # + JevBackend
 pip install "gutfeel[local]"         # + ZeroShotBackend and TransformersBackend (PyTorch)
 pip install gutfeel                  # core: any OpenAI-compatible server; FakeBackend for tests
+pip install "gutfeel[mcp]"           # + the MCP server, gutfeel-mcp
 ```
 
 The package on PyPI is `gutfeel` (`gut` was taken); the import is plain `import gut`.
 No model at hand? `gut.FakeBackend(answers={"is spam": 0.97})` answers from fixtures, for tests.
 
+## For agents
+
+`gutfeel-mcp` hands Claude Code, Claude Desktop, Cursor or any MCP client gut's judgments as tools, so an agent's cheap calls go to a small model:
+
+```bash
+claude mcp add gut --env TYPESAFE_API_KEY=your-key -- uvx --from "gutfeel[mcp]" gutfeel-mcp
+```
+
+Writing code that uses gut? Point the coding agent at [`SKILL.md`](https://github.com/Kungie/gut/blob/main/skills/gut/SKILL.md).
+
 ## Docs
 
-| | |
-|---|---|
-| [Getting started](https://github.com/Kungie/gut/blob/main/docs/getting-started.md) | Install, pick a backend, and the three questions. |
-| [Backends](https://github.com/Kungie/gut/blob/main/docs/backends.md) | Jev, every other model `gut` runs on, `Cascade`, and writing your own. |
-| [Knowing when it doesn't know](https://github.com/Kungie/gut/blob/main/docs/knowing-when-it-doesnt-know.md) | `lean`, `ask_human`, `stakes`, and what `if` and `match` do with `UNSURE`. |
-| [Asking everything at once](https://github.com/Kungie/gut/blob/main/docs/batching.md) | `each()`, `@semantic` and `judge()`: many subjects, or many questions, together. |
-| [Async](https://github.com/Kungie/gut/blob/main/docs/async.md) | `await gut.alikely(...)` and friends: nothing blocks the event loop. |
-| [Exact costs](https://github.com/Kungie/gut/blob/main/docs/exact-costs.md) | The cost model under the posture words. |
-| [Caching and observability](https://github.com/Kungie/gut/blob/main/docs/caching-and-observability.md) | The cache, and seeing every decision as it is made. |
-| [Honest limitations](https://github.com/Kungie/gut/blob/main/docs/limitations.md) | What small models get wrong, and what `gut` does not do. |
-
-[`examples/`](https://github.com/Kungie/gut/tree/main/examples/) runs the same code on every backend. Coding agents: read [`SKILL.md`](https://github.com/Kungie/gut/blob/main/skills/gut/SKILL.md).
+**[The documentation](https://kungie.github.io/gut/docs/)**, one page per idea: [Getting started](https://kungie.github.io/gut/docs/getting-started.html) · [Backends](https://kungie.github.io/gut/docs/backends.html) · [Knowing when it doesn't know](https://kungie.github.io/gut/docs/knowing-when-it-doesnt-know.html) · [Asking everything at once](https://kungie.github.io/gut/docs/batching.html) · [Async](https://kungie.github.io/gut/docs/async.html) · [Exact costs](https://kungie.github.io/gut/docs/exact-costs.html) · [Caching and observability](https://kungie.github.io/gut/docs/caching-and-observability.html) · [MCP server](https://kungie.github.io/gut/docs/mcp.html) · [Honest limitations](https://kungie.github.io/gut/docs/limitations.html). [`examples/`](https://github.com/Kungie/gut/tree/main/examples/) runs the same code on every backend.
 
 ## Status and license
 

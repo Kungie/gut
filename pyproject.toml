@@ -48,7 +48,7 @@ gutfeel-mcp = "gut._mcp:main"
 
 [project.urls]
 Homepage = "https://kungie.github.io/gut/"
-Documentation = "https://github.com/Kungie/gut/blob/main/docs/README.md"
+Documentation = "https://kungie.github.io/gut/docs/"
 Changelog = "https://github.com/Kungie/gut/releases"
 Repository = "https://github.com/Kungie/gut"
 Issues = "https://github.com/Kungie/gut/issues"
@@ -100,6 +100,8 @@ select = [
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["S101"]
+# The site builder is mostly HTML templates, whose lines are as long as the markup.
+"scripts/build_site.py" = ["E501"]
 
 [[tool.mypy.overrides]]
 # The `local` extra, absent from a core install and from CI. Used only through `Any`.
@@ -109,7 +111,7 @@ ignore_missing_imports = true
 [tool.mypy]
 python_version = "3.10"
 strict = true
-files = ["src", "tests", "examples"]
+files = ["src", "tests", "examples", "scripts"]
 mypy_path = "examples"
 warn_unreachable = true
 disallow_any_unimported = true
