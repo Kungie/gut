@@ -64,6 +64,9 @@ class BackendResponse:
     """The exact versioned model that answered, never an alias."""
     input_tokens: int | None = None
     """Billable input tokens, when the backend reports them."""
+    cost: float | None = None
+    """What the call cost, in US dollars: `0.0` for a model that runs in your process, the
+    service's own figure when it reports one (OpenRouter does), and `None` when it is unknown."""
     models: Mapping[str, str] | None = None
     """Per-answer models, for a response assembled from more than one model -- a `Cascade` that
     escalated some questions and not others. `None` means `model` answered everything."""
@@ -105,3 +108,17 @@ class Backend(Protocol):
             One answer per name in `questions`, plus the model that produced them.
         """
         ...
+
+
+def add_cost(total: float | None, cost: float | None) -> float | None:
+    """A running total that stays unknown once any part of it is."""
+    return None if total is None or cost is None else total + cost
+
+
+def reported_cost(usage: object) -> float | None:
+    """The dollar cost in a response's `usage` object, if the service put one there."""
+    if isinstance(usage, Mapping):
+        cost = usage.get("cost")
+        if isinstance(cost, (int, float)) and not isinstance(cost, bool) and cost >= 0:
+            return float(cost)
+    return None

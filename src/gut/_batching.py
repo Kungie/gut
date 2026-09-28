@@ -22,6 +22,7 @@ from gut._cache import CacheEntry, cache_key
 from gut._config import current_cache
 from gut._errors import BackendError
 from gut._questions import QuestionSpec, State, canonical_json
+from gut._usage import after_call, before_call
 
 CONTEXT_LIMIT_TOKENS = 64_000
 """Documented ceiling for state plus every question in one request."""
@@ -138,7 +139,10 @@ def fetch(
     """
     resolved, outstanding = _split(state, specs, backend)
     for batch in plan_batches(state, outstanding, backend):
-        _store(state, batch, backend.ask(state, batch), backend, resolved)
+        before_call()
+        response = backend.ask(state, batch)
+        after_call([response])
+        _store(state, batch, response, backend, resolved)
     return resolved
 
 
@@ -150,7 +154,10 @@ async def afetch(
     """`fetch` without blocking the event loop; the parts of a split batch go out concurrently."""
     resolved, outstanding = _split(state, specs, backend)
     batches = plan_batches(state, outstanding, backend)
+    if batches:
+        before_call()
     responses = await asyncio.gather(*(aask_one(backend, state, batch) for batch in batches))
+    after_call(responses)
     for batch, response in zip(batches, responses, strict=True):
         _store(state, batch, response, backend, resolved)
     return resolved

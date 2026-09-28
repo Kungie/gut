@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Command line · gut docs</title>
+<meta name="description" content="gut also runs from a shell, over lines of text: grep, but for meaning. It is the quickest way to try a question on real data, and the simplest way for a coding agent to judge a thousand things without">
+<meta property="og:title" content="Command line · gut docs">
+<meta property="og:description" content="gut also runs from a shell, over lines of text: grep, but for meaning. It is the quickest way to try a question on real data, and the simplest way for a coding agent to judge a thousand things without">
+<meta property="og:type" content="article">
+<meta name="theme-color" content="#171614">
+<link rel="icon" href="../assets/favicon.svg?v=2" type="image/svg+xml">
+<link rel="preload" href="../assets/fonts/9d1b3b9a.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/style.css">
+<script>try{var t=localStorage.getItem("gut-theme");if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+</head>
+<body>
+<div style="width: 100%; background-color: var(--paper); color: var(--ink); font-family: var(--sans)">
+<header class="nav">
+  <div class="wrap nav-in">
+    <a class="mark" href="../index.html" aria-label="gut, home"><b>gut</b><small>docs · 0.5.0</small></a>
+    <ul class="nav-links">
+      <li><a href="../index.html#playground">Playground</a></li>
+      <li><a href="../index.html#backends">Backends</a></li>
+      <li><a href="index.html">Docs</a></li>
+      <li><a href="../index.html#agents">Agents</a></li>
+      <li><a href="mcp.html">MCP</a></li>
+      <li><a class="ext" href="https://github.com/Kungie/gut">GitHub</a></li>
+      <li><a class="ext" href="https://pypi.org/project/gutfeel/">PyPI</a></li>
+    </ul>
+    <details class="nav-menu">
+      <summary>Contents</summary>
+      <ul>
+        <li><a href="../index.html">Home</a></li>
+        <li><a href="../index.html#playground">Playground</a></li>
+        <li><a href="index.html">All docs</a></li>
+        <li><a href="https://github.com/Kungie/gut">GitHub ↗</a></li>
+      </ul>
+    </details>
+    <button class="theme-btn" type="button" data-theme-toggle="" aria-label="Switch between light and dark">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><circle cx="8" cy="8" r="6.2"></circle><path d="M8 1.8v12.4A6.2 6.2 0 0 0 8 1.8z" fill="currentColor"></path></svg>
+    </button>
+  </div>
+</header>
+
+<div class="wrap doc">
+  <nav class="doc-nav" aria-label="Documentation">
+    <span class="sc">Contents</span>
+    <ol>
+      <li><a href="getting-started.html">Getting started</a></li>
+      <li><a href="backends.html">Backends</a></li>
+      <li><a href="knowing-when-it-doesnt-know.html">Knowing when it doesn&#x27;t know</a></li>
+      <li><a href="batching.html">Asking everything at once</a></li>
+      <li><a href="async.html">Async</a></li>
+      <li><a href="exact-costs.html">Exact costs</a></li>
+      <li><a href="caching-and-observability.html">Caching and observability</a></li>
+      <li><a href="cli.html" aria-current="page">Command line</a></li>
+      <li><a href="mcp.html">MCP server</a></li>
+      <li><a href="limitations.html">Honest limitations</a></li>
+    </ol>
+    <span class="sc">On this page</span>
+    <ol class="onpage">
+      <li><a href="#pick-the-model">Pick the model</a></li>
+      <li><a href="#filter-the-lines-a-claim-is-true-of">filter: the lines a claim is true of</a></li>
+      <li><a href="#map-every-answer-as-json">map: every answer, as JSON</a></li>
+      <li><a href="#knowing-when-it-doesnt-know">Knowing when it doesn't know</a></li>
+      <li><a href="#a-budget">A budget</a></li>
+      <li><a href="#exit-status">Exit status</a></li>
+      <li><a href="#for-coding-agents">For coding agents</a></li>
+    </ol>
+  </nav>
+
+  <article class="doc-body">
+    <div class="crumbs">docs / 8 / cli</div>
+    <h1>Command line</h1>
+    <p><code class="inline-code">gut</code> also runs from a shell, over lines of text: grep, but for meaning. It is the quickest way to try a question on real data, and the simplest way for a coding agent to judge a thousand things without reading them all itself.</p>
+    <figure class="listing">
+  <figcaption class="listing-head" style="margin:0;font:12px/1.3 var(--mono)"><span>terminal</span><span>listing 8.1</span></figcaption>
+  <pre><code><span class="l">git log --format=%s | gut filter <span class="s">&quot;adds a new feature&quot;</span></span></code></pre>
+</figure>
+    <figure class="listing">
+  <figcaption class="listing-head" style="margin:0;font:12px/1.3 var(--mono)"><span>text</span><span>listing 8.2</span></figcaption>
+  <pre><code><span class="l">Add gutfeel-mcp, so an agent can hand its judgment calls to a small model</span>
+<span class="l">Add the website: the Claude Design page, made to work</span>
+<span class="l">gut: 30 records · 6 yes, 24 no · 29 calls, $0 · 2.3s · MoritzLaurer/deberta-v3-xsmall-zeroshot-…</span></code></pre>
+</figure>
+    <p>The lines the claim is true of go to standard output; the summary — how many, what it cost, how long, which model — goes to standard error, so it never ends up in a pipe. <code class="inline-code">gut</code> comes with the package, and <code class="inline-code">uvx</code> runs it without installing anything:</p>
+    <figure class="listing">
+  <figcaption class="listing-head" style="margin:0;font:12px/1.3 var(--mono)"><span>terminal</span><span>listing 8.3</span></figcaption>
+  <pre><code><span class="l">pip install gutfeel               <span class="c"># then: gut filter ...</span></span>
+<span class="l">uvx gutfeel filter <span class="s">&quot;is spam&quot;</span> comments.txt</span></code></pre>
+</figure>
+    <h2 id="pick-the-model"><span class="sc">8.1</span>Pick the model</h2>
+    <p>The same environment variables as the <a href="mcp.html">MCP server</a>: Jev whenever <code class="inline-code">TYPESAFE_API_KEY</code> is set, or <code class="inline-code">GUT_BACKEND</code> for another model, with <code class="inline-code">GUT_MODEL</code> where it takes one.</p>
+    <figure class="listing">
+  <figcaption class="listing-head" style="margin:0;font:12px/1.3 var(--mono)"><span>terminal</span><span>listing 8.4</span></figcaption>
+  <pre><code><span class="l">export TYPESAFE_API_KEY=...                                <span class="c"># Jev</span></span>
+<span class="l">export GUT_BACKEND=openrouter OPENROUTER_API_KEY=...       <span class="c"># Jev, through OpenRouter</span></span>
+<span class="l">export GUT_BACKEND=zeroshot                                <span class="c"># on your machine, free</span></span>
+<span class="l">export GUT_BACKEND=ollama GUT_MODEL=qwen3:0.6b             <span class="c"># a local Ollama server</span></span></code></pre>
+</figure>
+    <p><code class="inline-code">--backend</code> and <code class="inline-code">--model</code> override them for one run. A local model needs the <code class="inline-code">local</code> extra: <code class="inline-code">uvx --from &quot;gutfeel[local]&quot; gut ...</code>.</p>
+    <h2 id="filter-the-lines-a-claim-is-true-of"><span class="sc">8.2</span>filter: the lines a claim is true of</h2>
+    <figure class="listing">
+  <figcaption class="listing-head" style="margin:0;font:12px/1.3 var(--mono)"><span>terminal</span><span>listing 8.5</span></figcaption>
+  <pre><code><span class="l">gut filter <span class="s">&quot;is an error worth a closer look&quot;</span> app.log</span>
+<span class="l">git ls-files | gut filter <span class="s">&quot;retries failed requests&quot;</span> --read-files</span>
+<span class="l">gut filter <span class="s">&quot;asks for a refund&quot;</span> inbox.txt --show no          <span class="c"># the ones that do not</span></span></code></pre>
+</figure>
+    <p>It reads the files named, or standard input, one record per line; blank lines are skipped. With <code class="inline-code">--read-files</code>, each line is a path and the file it names is judged instead, and the path is what gets printed. Binary files and files over 200,000 characters are skipped, and listed.</p>
+    <p>Like grep, it exits with 1 when nothing matched.</p>
+    <h2 id="map-every-answer-as-json"><span class="sc">8.3</span>map: every answer, as JSON</h2>
+    <p>Several questions about each line, asked together — one request per line, whatever their number. One JSON object comes out per line, shaped like the one below:</p>
+    <figure class="listing">
+  <figcaption class="listing-head" style="margin:0;font:12px/1.3 var(--mono)"><span>terminal</span><span>listing 8.6</span></figcaption>
+  <pre><code><span class="l">gut map tickets.txt \</span>
+<span class="l">  --likely  refund=<span class="s">&quot;asks for a refund&quot;</span> \</span>
+<span class="l">  --classify team=billing,platform,other \</span>
+<span class="l">  --rate    urgency=<span class="s">&quot;can wait,this week,right now&quot;</span></span></code></pre>
+</figure>
+    <figure class="listing">
+  <figcaption class="listing-head" style="margin:0;font:12px/1.3 var(--mono)"><span>json</span><span>listing 8.7</span></figcaption>
+  <pre><code><span class="l">{<span class="s">&quot;line&quot;</span>: 1, <span class="s">&quot;text&quot;</span>: <span class="s">&quot;I was charged twice…&quot;</span>, <span class="s">&quot;refund&quot;</span>: {<span class="s">&quot;outcome&quot;</span>: <span class="s">&quot;yes&quot;</span>, <span class="s">&quot;p&quot;</span>: 0.97}, <span class="s">&quot;team&quot;</span>: {<span class="s">&quot;outcome&quot;</span>: <span class="s">&quot;yes&quot;</span>, <span class="s">&quot;value&quot;</span>: <span class="s">&quot;billing&quot;</span>, <span class="s">&quot;confidence&quot;</span>: 0.99}, <span class="s">&quot;urgency&quot;</span>: {<span class="s">&quot;outcome&quot;</span>: <span class="s">&quot;yes&quot;</span>, <span class="s">&quot;score&quot;</span>: 1.2, <span class="s">&quot;level&quot;</span>: <span class="s">&quot;this week&quot;</span>, <span class="s">&quot;confidence&quot;</span>: 0.71}}</span></code></pre>
+</figure>
+    <p>Options can carry descriptions, which is what the model reads: <code class="inline-code">--classify &#x27;team={&quot;billing&quot;: &quot;invoices and refunds&quot;, &quot;platform&quot;: &quot;outages and bugs&quot;, &quot;other&quot;: &quot;anything else&quot;}&#x27;</code>. Each answer is a compact <code class="inline-code">Decision.to_dict()</code>, and the output is ready for <code class="inline-code">jq</code>.</p>
+    <h2 id="knowing-when-it-doesnt-know"><span class="sc">8.4</span>Knowing when it doesn't know</h2>
+    <p><code class="inline-code">--ask-human</code> makes <code class="inline-code">unsure</code> a possible answer, exactly as <code class="inline-code">ask_human=True</code> does in code, and <code class="inline-code">--stakes</code> and <code class="inline-code">--lean</code> are the same words as in <a href="knowing-when-it-doesnt-know.html">Knowing when it doesn't know</a>. With <code class="inline-code">filter</code>, <code class="inline-code">--show</code> picks which answers are printed, so the lines a person should read are one command away:</p>
+    <figure class="listing">
+  <figcaption class="listing-head" style="margin:0;font:12px/1.3 var(--mono)"><span>terminal</span><span>listing 8.8</span></figcaption>
+  <pre><code><span class="l">gut filter <span class="s">&quot;threatens to cancel&quot;</span> emails.txt --ask-human --show unsure</span></code></pre>
+</figure>
+    <h2 id="a-budget"><span class="sc">8.5</span>A budget</h2>
+    <p><code class="inline-code">--max-cost</code> stops sending requests once a run has spent that many dollars, and says where to pick up again, along these lines:</p>
+    <figure class="listing">
+  <figcaption class="listing-head" style="margin:0;font:12px/1.3 var(--mono)"><span>terminal</span><span>listing 8.9</span></figcaption>
+  <pre><code><span class="l">gut filter <span class="s">&quot;is spam&quot;</span> comments.txt --max-cost 0.50</span></code></pre>
+</figure>
+    <figure class="listing">
+  <figcaption class="listing-head" style="margin:0;font:12px/1.3 var(--mono)"><span>text</span><span>listing 8.10</span></figcaption>
+  <pre><code><span class="l">gut: Stopped before the next call: $0.5003 spent of a $0.5 budget, over 41,702 calls.</span>
+<span class="l">gut: resume from line 41703: tail -n +41703 FILE | gut ...</span></code></pre>
+</figure>
+    <p>It needs a backend that says what its calls cost: Jev through OpenRouter does, and a model on your machine costs nothing, so <code class="inline-code">--max-cost 0</code> allows it and nothing else. TypeSafe's own API reports tokens rather than dollars; with it, <code class="inline-code">--max-cost</code> stops after the first line and says why rather than guess. In Python, the same budget is <code class="inline-code">gut.usage(max_cost=0.50)</code> — see <a href="caching-and-observability.html">Caching and observability</a>.</p>
+    <h2 id="exit-status"><span class="sc">8.6</span>Exit status</h2>
+    <div class="doc-table"><table class="band-table"><thead><tr><th>status</th><th>meaning</th></tr></thead><tbody><tr><td>0</td><td>done, and something was printed</td></tr><tr><td>1</td><td><code class="inline-code">filter</code> matched nothing</td></tr><tr><td>2</td><td>a mistake on the command line, or no model configured</td></tr><tr><td>3</td><td>the budget stopped the run</td></tr></tbody></table></div>
+    <h2 id="for-coding-agents"><span class="sc">8.7</span>For coding agents</h2>
+    <p>An agent with a shell needs nothing else: <code class="inline-code">gut filter</code> over <code class="inline-code">git ls-files</code>, a log, or search results settles in one command what would otherwise mean reading every item. Give it the skill, and it knows when to reach for this:</p>
+    <figure class="listing">
+  <figcaption class="listing-head" style="margin:0;font:12px/1.3 var(--mono)"><span>terminal</span><span>listing 8.11</span></figcaption>
+  <pre><code><span class="l">npx skills add Kungie/gut --skill gut</span></code></pre>
+</figure>
+    <p>With an MCP client, the <a href="mcp.html">MCP server</a> offers the same calls as tools.</p>
+    <nav class="doc-pager" aria-label="Pager">
+      <a href="caching-and-observability.html"><small>← previous · 7</small><span>Caching and observability</span></a>
+      <a href="mcp.html" style="text-align:right"><small>next · 9</small><span>MCP server →</span></a>
+    </nav>
+  </article>
+
+  <aside class="side doc-side">
+    <div class="note"><b><span class="n">a</span>This page's source</b><a href="https://github.com/Kungie/gut/blob/main/docs/cli.md">docs/cli.md</a> in the repository. Corrections welcome.</div>
+  </aside>
+</div>
+
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot-in">
+      <div class="foot-install">
+        <code class="big" id="foot-cmd"><span>pip install</span> gutfeel</code>
+        <button class="copy" type="button" data-copy="#foot-cmd">Copy</button>
+      </div>
+      <ul>
+        <li>Apache-2.0</li>
+        <li><a href="https://github.com/Kungie/gut">GitHub</a></li>
+        <li><a href="https://pypi.org/project/gutfeel/">PyPI (gutfeel)</a></li>
+      </ul>
+    </div>
+  </div>
+</footer>
+</div>
+<script src="../assets/site.js" defer></script>
+</body>
+</html>

@@ -78,6 +78,10 @@ class StandIn(gut.FakeBackend):
     def __init__(self, model: str = "stand-in", **options: object) -> None:
         super().__init__(rule=gut.deterministic_rule, model=model)
 
+    @classmethod
+    def openrouter(cls, **options: object) -> StandIn:
+        return cls(**options)  # type: ignore[arg-type]
+
 
 @pytest.fixture
 def sandbox(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:

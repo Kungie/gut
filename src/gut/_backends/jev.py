@@ -12,8 +12,11 @@ own `RetryPolicy` rather than replacing it.
 from __future__ import annotations
 
 import asyncio
+import functools
 import json
+import os
 from collections.abc import Mapping
+from contextvars import ContextVar
 from typing import TYPE_CHECKING, Any, Final
 
 from gut._backends.base import (
@@ -21,6 +24,7 @@ from gut._backends.base import (
     ChoiceAnswer,
     NoulAnswer,
     ScoreAnswer,
+    reported_cost,
 )
 from gut._errors import BackendError
 from gut._questions import ChoiceSpec, NoulSpec, QuestionSpec, ScoreSpec, State
@@ -38,6 +42,74 @@ CONTEXT_LIMIT_TOKENS: Final = 64_000
 
 SINGLE_QUESTION_LIMIT_TOKENS: Final = 32_000
 """Documented ceiling for state plus the single longest question."""
+
+
+OPENROUTER_BASE_URL: Final = "https://openrouter.ai/api"
+"""OpenRouter serves Jev at `/v1/systemone` under this, speaking the same protocol as TypeSafe."""
+
+OPENROUTER_MODEL: Final = "~typesafe/jev-latest"
+"""OpenRouter's name for the latest Jev. Pin a version, such as `typesafe/jev-1.13`, to keep it."""
+
+# The SDK parses `usage` into token counts and drops everything else, including the `cost` that
+# OpenRouter reports. The transport below reads it off the wire into the slot of the call that is
+# waiting for it: a context variable, so concurrent calls -- threads or tasks -- never mix them up.
+_cost_slot: ContextVar[list[float | None] | None] = ContextVar("gut_jev_cost", default=None)
+
+
+def _record_cost(response: Any) -> None:
+    slot = _cost_slot.get()
+    if slot is None or response.status_code != 200:
+        return
+    try:
+        slot[0] = reported_cost(json.loads(response.content).get("usage"))
+    except (ValueError, AttributeError):
+        slot[0] = None
+
+
+def _inner_transport() -> Any:
+    import httpx2
+
+    return httpx2.HTTPTransport()
+
+
+def _inner_async_transport() -> Any:
+    import httpx2
+
+    return httpx2.AsyncHTTPTransport()
+
+
+@functools.cache
+def _cost_reading_transports() -> tuple[type[Any], type[Any]]:
+    """Transports that pass everything through and note the cost of each answer."""
+    import httpx2
+
+    class CostReading(httpx2.BaseTransport):
+        def __init__(self) -> None:
+            self._inner = _inner_transport()
+
+        def handle_request(self, request: Any) -> Any:
+            response = self._inner.handle_request(request)
+            response.read()
+            _record_cost(response)
+            return response
+
+        def close(self) -> None:
+            self._inner.close()
+
+    class AsyncCostReading(httpx2.AsyncBaseTransport):
+        def __init__(self) -> None:
+            self._inner = _inner_async_transport()
+
+        async def handle_async_request(self, request: Any) -> Any:
+            response = await self._inner.handle_async_request(request)
+            await response.aread()
+            _record_cost(response)
+            return response
+
+        async def aclose(self) -> None:
+            await self._inner.aclose()
+
+    return CostReading, AsyncCostReading
 
 
 def _sdk() -> Any:
@@ -157,7 +229,7 @@ class JevBackend:
         # With only an async client supplied, the blocking one is built if and when it is needed.
         self._client: typesafe_sdk.TypeSafeClient | None = client
         if client is None and async_client is None:
-            self._client = sdk.TypeSafeClient(**connection)
+            self._client = self._new_client()
         self._supplied_async = async_client
         self._async: tuple[asyncio.AbstractEventLoop, typesafe_sdk.AsyncTypeSafeClient] | None = (
             None
@@ -172,9 +244,54 @@ class JevBackend:
     def client(self) -> typesafe_sdk.TypeSafeClient:
         """The underlying blocking SDK client."""
         if self._client is None:
-            assert self._connection is not None  # only unset when an async client was supplied
-            self._client = self._sdk.TypeSafeClient(**self._connection)
+            self._client = self._new_client()
         return self._client
+
+    @classmethod
+    def openrouter(
+        cls,
+        *,
+        model: str | None = None,
+        api_key: str | None = None,
+        timeout: float | None = None,
+        max_retries: int | None = None,
+    ) -> JevBackend:
+        """Jev through OpenRouter, billed to your OpenRouter credit.
+
+        The same model and the same answers as `JevBackend()`, for when you have an OpenRouter
+        account rather than a TypeSafe key. OpenRouter reports what every call cost, and gut passes
+        it on: see `gut.usage()`.
+
+        Args:
+            model: OpenRouter's name for the model. Defaults to the latest Jev.
+            api_key: Overrides `OPENROUTER_API_KEY`.
+            timeout: Seconds per HTTP operation.
+            max_retries: How often the SDK retries a failed request.
+
+        Raises:
+            BackendError: No OpenRouter key was given or found.
+        """
+        key = api_key or os.environ.get("OPENROUTER_API_KEY", "").strip() or None
+        if key is None:
+            raise BackendError(
+                "Jev through OpenRouter needs an OpenRouter key: set OPENROUTER_API_KEY, or pass "
+                "api_key=."
+            )
+        return cls(
+            model=model or OPENROUTER_MODEL,
+            api_key=key,
+            base_url=OPENROUTER_BASE_URL,
+            timeout=timeout,
+            max_retries=max_retries,
+        )
+
+    def _new_client(self) -> typesafe_sdk.TypeSafeClient:
+        assert self._connection is not None  # only unset when a client was supplied
+        reading, _ = _cost_reading_transports()
+        client: typesafe_sdk.TypeSafeClient = self._sdk.TypeSafeClient(
+            **self._connection, transport=reading()
+        )
+        return client
 
     def ask(self, state: State, questions: Mapping[str, QuestionSpec]) -> BackendResponse:
         """Answer every question in one request.
@@ -184,11 +301,15 @@ class JevBackend:
                 for. The originating SDK exception is kept as the cause.
         """
         payload = self._payload(questions)
+        slot: list[float | None] = [None]
+        token = _cost_slot.set(slot)
         try:
             response = self.client.system_one(state=state, questions=payload, model=self._model)
         except self._sdk.TypeSafeError as error:
             raise BackendError(f"Jev request failed: {error}") from error
-        return self._response(questions, response)
+        finally:
+            _cost_slot.reset(token)
+        return self._response(questions, response, slot[0])
 
     async def aask(self, state: State, questions: Mapping[str, QuestionSpec]) -> BackendResponse:
         """`ask`, awaitable, through the SDK's own async client: no thread involved."""
@@ -196,18 +317,24 @@ class JevBackend:
         if client is None:
             return await asyncio.to_thread(self.ask, state, questions)
         payload = self._payload(questions)
+        slot: list[float | None] = [None]
+        token = _cost_slot.set(slot)
         try:
             response = await client.system_one(state=state, questions=payload, model=self._model)
         except self._sdk.TypeSafeError as error:
             raise BackendError(f"Jev request failed: {error}") from error
-        return self._response(questions, response)
+        finally:
+            _cost_slot.reset(token)
+        return self._response(questions, response, slot[0])
 
     def _payload(self, questions: Mapping[str, QuestionSpec]) -> dict[str, Any]:
         if not questions:
             raise BackendError("A backend call needs at least one question.")
         return {name: _to_sdk_question(spec, self._sdk) for name, spec in questions.items()}
 
-    def _response(self, questions: Mapping[str, QuestionSpec], response: Any) -> BackendResponse:
+    def _response(
+        self, questions: Mapping[str, QuestionSpec], response: Any, cost: float | None = None
+    ) -> BackendResponse:
         missing = set(questions) - set(response.answers)
         if missing:
             names = ", ".join(sorted(repr(name) for name in missing))
@@ -221,6 +348,7 @@ class JevBackend:
             # The resolved version, never the alias that was asked for.
             model=response.model,
             input_tokens=response.usage.input_tokens,
+            cost=cost,
         )
 
     def _async_client(self) -> typesafe_sdk.AsyncTypeSafeClient | None:
@@ -231,7 +359,11 @@ class JevBackend:
             return None
         loop = asyncio.get_running_loop()
         if self._async is None or self._async[0] is not loop:
-            self._async = (loop, self._sdk.AsyncTypeSafeClient(**self._connection))
+            _, reading = _cost_reading_transports()
+            self._async = (
+                loop,
+                self._sdk.AsyncTypeSafeClient(**self._connection, transport=reading()),
+            )
         return self._async[1]
 
     def close(self) -> None:

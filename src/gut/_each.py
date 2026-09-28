@@ -47,6 +47,7 @@ from gut._errors import BackendError
 from gut._posture import Lean, Stakes
 from gut._questions import ChoiceSpec, NoulSpec, QuestionSpec, ScoreSpec, State, canonical_json
 from gut._site import caller_site
+from gut._usage import after_call, before_call
 
 E = TypeVar("E", bound=Enum)
 
@@ -222,13 +223,21 @@ class Each:
     def _answers(self, spec: QuestionSpec) -> list[_Resolved]:
         """One answer per subject, in order: from the cache where possible, the rest in one go."""
         batch = _Batch.plan(self.subjects, spec, self._backend)
-        responses = ask_all(batch.backend, batch.items(), concurrency=self._concurrency)
+        items = batch.items()
+        if items:
+            before_call()
+        responses = ask_all(batch.backend, items, concurrency=self._concurrency)
+        after_call(responses)
         return batch.finish(responses)
 
     async def _aanswers(self, spec: QuestionSpec) -> list[_Resolved]:
         """`_answers` without blocking the event loop."""
         batch = _Batch.plan(self.subjects, spec, self._backend)
-        responses = await aask_all(batch.backend, batch.items(), concurrency=self._concurrency)
+        items = batch.items()
+        if items:
+            before_call()
+        responses = await aask_all(batch.backend, items, concurrency=self._concurrency)
+        after_call(responses)
         return batch.finish(responses)
 
 

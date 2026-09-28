@@ -35,6 +35,7 @@ from gut._questions import ChoiceSpec, NoulSpec, QuestionSpec, ScoreSpec, State
 from gut._rule import Policy, policy
 from gut._scope import current_prefetch
 from gut._site import CallSite, caller_site, decision_id
+from gut._usage import after_call, before_call
 
 E = TypeVar("E", bound=Enum)
 A = TypeVar("A", NoulAnswer, ChoiceAnswer, ScoreAnswer)
@@ -117,7 +118,10 @@ def _ask(state: State, spec: QuestionSpec, backend: Backend | None) -> _Resolved
     if stored is not None:
         return stored
     started = time.perf_counter()
-    return _answered(state, spec, chosen, chosen.ask(state, {"q": spec}), started)
+    before_call()
+    response = chosen.ask(state, {"q": spec})
+    after_call([response])
+    return _answered(state, spec, chosen, response, started)
 
 
 async def _aask(state: State, spec: QuestionSpec, backend: Backend | None) -> _Resolved:
@@ -127,7 +131,9 @@ async def _aask(state: State, spec: QuestionSpec, backend: Backend | None) -> _R
     if stored is not None:
         return stored
     started = time.perf_counter()
+    before_call()
     response = await aask_one(chosen, state, {"q": spec})
+    after_call([response])
     return _answered(state, spec, chosen, response, started)
 
 

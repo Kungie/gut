@@ -476,3 +476,18 @@ async def test_a_supplied_async_client_is_left_open() -> None:
     await backend.aclose()
     assert not supplied.is_closed
     await supplied.aclose()
+
+
+def test_a_server_that_reports_cost_has_it_summed_over_both_readings() -> None:
+    def priced(prompt: str) -> dict[str, Any]:
+        reply = FakeServer.default(prompt)
+        reply["usage"]["cost"] = 0.00001
+        return reply
+
+    response = FakeServer(priced).backend().ask("the ticket", {"q": NoulSpec("is a bug report")})
+    assert response.cost == pytest.approx(0.00002)
+
+
+def test_a_server_that_does_not_report_cost_leaves_it_unknown() -> None:
+    response = FakeServer().backend().ask("the ticket", {"q": NoulSpec("is a bug report")})
+    assert response.cost is None

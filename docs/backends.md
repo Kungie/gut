@@ -45,6 +45,23 @@ without being told to, because that variable exists for nothing else. Retries an
 SDK's own: it backs off on a 429 and honours `retry-after`, and `each()` keeps its requests well under
 the API's limit.
 
+### Through OpenRouter
+
+The same Jev is also served by OpenRouter, billed to your OpenRouter credit. If you have an
+OpenRouter account rather than a TypeSafe key:
+
+```python
+import gut
+
+gut.configure(backend=gut.JevBackend.openrouter())    # reads OPENROUTER_API_KEY
+gut.JevBackend.openrouter(model="typesafe/jev-1.13")  # pin a version
+```
+
+The answers are the same; what OpenRouter adds is the price of every call, which `gut` passes on,
+so `gut.usage()` can count dollars and keep a budget -- see
+[Caching and observability](caching-and-observability.md#what-it-costs). `gut` never picks
+OpenRouter on its own: an OpenRouter key on a machine says nothing about wanting to spend it here.
+
 ## `ZeroShotBackend`
 
 A natural-language-inference model: it reads the subject and a *hypothesis* and scores how strongly

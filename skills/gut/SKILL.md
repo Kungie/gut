@@ -1,6 +1,6 @@
 ---
 name: gut
-description: Write judgment calls in Python with gut — "is this spam?", "which team owns this?", "how urgent is this?" — as one readable line that runs on a small, cheap model (local NLI, a local 0.6B LLM, Ollama, OpenAI, Jev) and can also answer UNSURE. Use when code needs a decision that is judgment rather than logic, or when replacing a regex, or an LLM call plus a hard-coded threshold, for a classification-sized task.
+description: Judgment calls on a small, cheap model (Jev first; local NLI, Ollama, OpenAI) answering YES, NO or UNSURE — "is this spam?", "which team owns this?" as one line of Python, or `gut filter` over thousands of lines or files from a shell. Use when code needs a decision that is judgment rather than logic, when replacing a regex or an LLM call plus a threshold, or instead of reading many items one by one to sort, filter or label them.
 ---
 
 # gut
@@ -188,13 +188,30 @@ gut.configure(on_decision=lambda d: logger.info("gut", extra=d.to_dict()))
 Full documentation: [`docs/`](../../docs/README.md), also at <https://kungie.github.io/gut/docs/>.
 Backends in depth: [`docs/backends.md`](../../docs/backends.md).
 
-## Without writing code: the MCP server
+## Without writing code: the command line and the MCP server
 
-When the judgment is yours to make during a task rather than your program's -- sorting an inbox,
-filtering search results -- `gutfeel-mcp` offers the same calls as MCP tools: `likely`,
-`classify` (options as a list or `{label: description}`), `rate` and `each`, for up to 1000 texts
-at once. Set up with `uvx --from "gutfeel[mcp]" gutfeel-mcp` and a `TYPESAFE_API_KEY`, or
-`GUT_BACKEND=ollama` / `zeroshot` to stay local. See [`docs/mcp.md`](../../docs/mcp.md).
+When the judgment is yours to make during a task rather than your program's -- which of these files
+retry requests, which commits add features, which log lines are worth a look -- do not read every
+item yourself. Hand them to a small model in one command:
+
+```bash
+git ls-files | gut filter "retries failed requests" --read-files
+git log --format=%s | gut filter "adds a new feature"
+gut map tickets.txt --classify team=billing,platform,other --rate urgency="can wait,today,now"
+gut filter "threatens to cancel" emails.txt --ask-human --show unsure   # the ones to read yourself
+```
+
+`filter` prints the lines (or, with `--read-files`, the paths) a claim is true of; `map` prints one
+JSON object per line. A summary with the cost goes to stderr, and `--max-cost 0.50` stops a run at
+a budget. Run it with `uvx gutfeel filter ...` if it is not installed. The model comes from
+`TYPESAFE_API_KEY` (Jev), or `GUT_BACKEND=openrouter` / `zeroshot` / `ollama`. Each item is judged
+on its own, so ask what the item itself can answer. See [`docs/cli.md`](../../docs/cli.md).
+
+`gutfeel-mcp` offers the same as MCP tools -- `likely`, `classify`, `rate` and `each` -- for an MCP
+client: `uvx --from "gutfeel[mcp]" gutfeel-mcp`. See [`docs/mcp.md`](../../docs/mcp.md).
+
+To count what code spends, wrap it in `with gut.usage(max_cost=0.50) as spent:`; past the budget
+the next call raises `gut.BudgetExceeded`.
 
 ## Rules of thumb
 

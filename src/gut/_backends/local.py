@@ -182,7 +182,7 @@ class TransformersBackend:
                     }
                     readings.append((prompt, mass))
                 answers[name] = answer_from(questions[name], readings)
-            responses.append(BackendResponse(answers=answers, model=self._resolved))
+            responses.append(BackendResponse(answers=answers, model=self._resolved, cost=0.0))
         return responses
 
     def _encode(self, prompt: Prompt) -> list[int]:  # pragma: no cover - needs a tokenizer
@@ -421,7 +421,7 @@ class ZeroShotBackend:
                     questions[name], scores[start : start + count]
                 )
                 start += count
-            responses.append(BackendResponse(answers=answers, model=self._resolved))
+            responses.append(BackendResponse(answers=answers, model=self._resolved, cost=0.0))
         return responses
 
     def _log_odds(self, pairs: Sequence[tuple[str, str]]) -> list[float]:  # pragma: no cover

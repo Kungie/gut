@@ -54,6 +54,45 @@ came from its own call, the cache, or a batch fetched by `@semantic` or `judge()
 Nothing is observed unless you ask, and a hook that raises is logged and swallowed: a broken log
 line must never break a decision.
 
+## What it costs
+
+`gut.usage()` counts the calls made inside it, and what they cost:
+
+```python
+import gut
+
+with gut.usage() as spent:
+    flagged = gut.each(comments).likely("is spam")
+print(spent)            # 2 calls, $0.00004
+print(spent.to_dict())  # calls, input_tokens, cost, unpriced_calls, max_cost
+```
+
+The cost is whatever the backend reports: `0.0` for a model in your process, OpenRouter's own price
+for [Jev through OpenRouter](backends.md#through-openrouter), and nothing for a service that does
+not say -- TypeSafe's API reports input tokens instead, which are counted either way. A call whose
+cost is unknown is counted in `unpriced_calls` rather than guessed at. Answers from the cache cost
+nothing and are not counted.
+
+Give it a budget, and once it is spent the next call raises `BudgetExceeded` instead of being made:
+
+```python
+import gut
+
+try:
+    with gut.usage(max_cost=0.50):
+        for comment in comments:
+            if gut.likely(comment, "is spam"):
+                hide(comment)
+except gut.BudgetExceeded as stopped:
+    print(stopped)      # Stopped before the next call: $0.5001 spent of a $0.5 budget, ...
+```
+
+A call already under way finishes, and an `each()` batch is one decision to spend, so the batch
+that reaches the budget can pass it; ask in smaller batches for a tighter stop. A budget cannot be
+kept without knowing prices, so with a backend that does not report them, the second call raises
+and says why. Blocks nest, each with its own budget, and follow the code into threads and `asyncio`
+tasks. The [command line](cli.md)'s `--max-cost` is this.
+
 ## Backends
 
 What answers a question is [its own page](backends.md).

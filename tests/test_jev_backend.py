@@ -440,3 +440,114 @@ def test_with_only_an_async_client_the_blocking_one_is_built_on_demand(
     assert isinstance(backend.client, ts.TypeSafeClient)
     assert backend.client is backend.client
     backend.close()
+
+
+# --------------------------------------------------------------------------- through OpenRouter
+
+
+def openrouter_reply(cost: object = 0.000012, status: int = 200) -> Any:
+    """What OpenRouter's /v1/systemone answers: Jev's response, with a cost in `usage`."""
+    import httpx2
+
+    seen: list[Any] = []
+
+    def handler(request: Any) -> Any:
+        seen.append(request)
+        usage: dict[str, Any] = {"input_tokens": 120, "output_tokens": 1}
+        if cost is not None:
+            usage["cost"] = cost
+        body = {
+            "model": "typesafe/jev-1.13",
+            "usage": usage,
+            "answers": {"q": {"type": "noul", "noul": 0.9}},
+        }
+        return httpx2.Response(status, json=body)
+
+    return handler, seen
+
+
+@pytest.fixture
+def wire(monkeypatch: pytest.MonkeyPatch) -> Any:
+    """Route the backend's HTTP to a handler instead of the network."""
+    import httpx2
+
+    from gut._backends import jev
+
+    def install(handler: Any) -> None:
+        monkeypatch.setattr(jev, "_inner_transport", lambda: httpx2.MockTransport(handler))
+        monkeypatch.setattr(jev, "_inner_async_transport", lambda: httpx2.MockTransport(handler))
+
+    return install
+
+
+def test_openrouter_needs_a_key(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
+    with pytest.raises(BackendError, match="OPENROUTER_API_KEY"):
+        JevBackend.openrouter()
+
+
+def test_openrouter_asks_jev_there_and_reports_the_cost(
+    wire: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    handler, seen = openrouter_reply(cost=0.000012)
+    wire(handler)
+    monkeypatch.setenv("OPENROUTER_API_KEY", "sk-or-test")
+    backend = JevBackend.openrouter()
+    response = backend.ask("WIN a FREE iPhone", {"q": BUG})
+    assert backend.model_id == "~typesafe/jev-latest"
+    assert str(seen[0].url) == "https://openrouter.ai/api/v1/systemone"
+    assert seen[0].headers["authorization"] == "Bearer sk-or-test"
+    assert response.answers["q"] == NoulAnswer(p=0.9)
+    assert response.model == "typesafe/jev-1.13"
+    assert response.cost == pytest.approx(0.000012)
+    assert response.input_tokens == 120
+
+
+@pytest.mark.anyio
+async def test_openrouter_reports_the_cost_when_awaited(wire: Any) -> None:
+    handler, _ = openrouter_reply(cost=0.00002)
+    wire(handler)
+    backend = JevBackend.openrouter(api_key="sk-or-test", model="typesafe/jev-1.13")
+    response = await backend.aask("text", {"q": BUG})
+    await backend.aclose()
+    assert response.cost == pytest.approx(0.00002)
+
+
+@pytest.mark.parametrize("cost", [None, "free", -1, True])
+def test_a_cost_that_is_missing_or_not_a_price_is_unknown(wire: Any, cost: object) -> None:
+    handler, _ = openrouter_reply(cost=cost)
+    wire(handler)
+    response = JevBackend.openrouter(api_key="k").ask("text", {"q": BUG})
+    assert response.cost is None
+
+
+def test_typesafe_itself_reports_tokens_and_no_cost(wire: Any) -> None:
+    handler, seen = openrouter_reply(cost=None)
+    wire(handler)
+    response = JevBackend(api_key="k").ask("text", {"q": BUG})
+    assert str(seen[0].url).startswith(ts.constants.DEFAULT_BASE_URL)
+    assert response.cost is None
+    assert response.input_tokens == 120
+
+
+def test_a_failed_request_records_no_cost(wire: Any) -> None:
+    handler, _ = openrouter_reply(status=401)
+    wire(handler)
+    with pytest.raises(BackendError):
+        JevBackend.openrouter(api_key="k", max_retries=0).ask("text", {"q": BUG})
+
+
+def test_a_body_that_is_not_json_leaves_the_cost_unknown() -> None:
+    from gut._backends import jev
+
+    class Broken:
+        status_code = 200
+        content = b"not json"
+
+    slot: list[float | None] = [0.5]
+    token = jev._cost_slot.set(slot)
+    try:
+        jev._record_cost(Broken())
+    finally:
+        jev._cost_slot.reset(token)
+    assert slot == [None]

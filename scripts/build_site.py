@@ -32,6 +32,7 @@ CHAPTERS = [
     ("async", "Async"),
     ("exact-costs", "Exact costs"),
     ("caching-and-observability", "Caching and observability"),
+    ("cli", "Command line"),
     ("mcp", "MCP server"),
     ("limitations", "Honest limitations"),
 ]

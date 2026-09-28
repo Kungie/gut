@@ -531,22 +531,22 @@
     <div class="sec-mark">§8<span class="sc">For agents</span></div>
     <div>
       <h2 id="ag-title">Your coding agent <em>can learn it too.</em></h2>
-      <p class="intro">gut ships an agent skill, <code class="inline-code">skills/gut/SKILL.md</code>, and an <code class="inline-code">llms.txt</code>. Give either to your agent and it writes gut the way the docs do.</p>
+      <p class="intro">The big model thinks; the small one decides, fast. From a shell, <code class="inline-code">gut filter</code> judges a thousand files, commits or log lines in one command, so an agent never has to read them all. The skill teaches it when to reach for that, and how to write gut in code.</p>
       <div class="agents">
         <div>
           <figure class="listing" style="margin:0">
             <figcaption class="listing-head" style="margin:0;font:12px/1.3 var(--mono)"><span>terminal</span><span>listing 5</span></figcaption>
-            <pre><code><span class="l"><span class="c"># Claude Code: copy the skill into your project</span></span>
-<span class="l">mkdir -p .claude/skills/gut</span>
-<span class="l">curl -L -o .claude/skills/gut/SKILL.md \</span>
-<span class="l">  https://raw.githubusercontent.com/Kungie/gut/main/skills/gut/SKILL.md</span>
+            <pre><code><span class="l"><span class="c"># teach your coding agent the skill</span></span>
+<span class="l">npx skills add Kungie/gut --skill gut</span>
 <span class="l"> </span>
-<span class="l"><span class="c"># Cursor, or any other agent: add SKILL.md to its</span></span>
-<span class="l"><span class="c"># rules or context, or point it at llms.txt</span></span></code></pre>
+<span class="l"><span class="c"># then it can judge at scale, with a budget</span></span>
+<span class="l">git ls-files | gut filter <span class="s">"retries failed requests"</span> \</span>
+<span class="l">  --read-files --max-cost 0.50</span></code></pre>
           </figure>
           <div class="linkrow">
             <a class="btn" href="https://github.com/Kungie/gut/blob/main/skills/gut/SKILL.md">SKILL.md ↗</a>
             <a class="btn" href="https://github.com/Kungie/gut/blob/main/llms.txt">llms.txt ↗</a>
+            <a class="btn" href="docs/cli.html">Command line →</a>
           </div>
         </div>
         <ol class="rules" aria-label="Rules from SKILL.md">
@@ -607,7 +607,7 @@
     <div class="sec-mark">§10<span class="sc">Docs</span></div>
     <div>
       <h2 id="docs-title">Contents.</h2>
-      <p class="intro">Nine chapters, read in order if you are new. Every code sample in them is run by the test suite.</p>
+      <p class="intro">Ten chapters, read in order if you are new. Every code sample in them is run by the test suite.</p>
       <!-- docs:toc (written by scripts/build_site.py) -->
       <ol class="toc">
         <li><a href="docs/getting-started.html"><span class="t">Getting started</span><span class="dots"></span><span class="go">read →</span></a></li>
@@ -617,6 +617,7 @@
         <li><a href="docs/async.html"><span class="t">Async</span><span class="dots"></span><span class="go">read →</span></a></li>
         <li><a href="docs/exact-costs.html"><span class="t">Exact costs</span><span class="dots"></span><span class="go">read →</span></a></li>
         <li><a href="docs/caching-and-observability.html"><span class="t">Caching and observability</span><span class="dots"></span><span class="go">read →</span></a></li>
+        <li><a href="docs/cli.html"><span class="t">Command line</span><span class="dots"></span><span class="go">read →</span></a></li>
         <li><a href="docs/mcp.html"><span class="t">MCP server</span><span class="dots"></span><span class="go">read →</span></a></li>
         <li><a href="docs/limitations.html"><span class="t">Honest limitations</span><span class="dots"></span><span class="go">read →</span></a></li>
       </ol>

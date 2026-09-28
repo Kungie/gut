@@ -98,19 +98,20 @@ pip install "gutfeel[mcp]"           # + the MCP server, gutfeel-mcp
 The package on PyPI is `gutfeel` (`gut` was taken); the import is plain `import gut`.
 No model at hand? `gut.FakeBackend(answers={"is spam": 0.97})` answers from fixtures, for tests.
 
-## For agents
+## From a shell, and for agents
 
-`gutfeel-mcp` hands Claude Code, Claude Desktop, Cursor or any MCP client gut's judgments as tools, so an agent's cheap calls go to a small model:
+The big model thinks; the small one decides, fast. An agent with `gut` judges a thousand files,
+commits or search results in one command instead of reading each one itself:
 
 ```bash
+git ls-files | gut filter "retries failed requests" --read-files --max-cost 0.50
 claude mcp add gut --env TYPESAFE_API_KEY=your-key -- uvx --from "gutfeel[mcp]" gutfeel-mcp
+npx skills add Kungie/gut --skill gut     # teaches a coding agent when to reach for it
 ```
-
-Writing code that uses gut? Point the coding agent at [`SKILL.md`](https://github.com/Kungie/gut/blob/main/skills/gut/SKILL.md).
 
 ## Docs
 
-**[The documentation](https://kungie.github.io/gut/docs/)**, one page per idea: [Getting started](https://kungie.github.io/gut/docs/getting-started.html) · [Backends](https://kungie.github.io/gut/docs/backends.html) · [Knowing when it doesn't know](https://kungie.github.io/gut/docs/knowing-when-it-doesnt-know.html) · [Asking everything at once](https://kungie.github.io/gut/docs/batching.html) · [Async](https://kungie.github.io/gut/docs/async.html) · [Exact costs](https://kungie.github.io/gut/docs/exact-costs.html) · [Caching and observability](https://kungie.github.io/gut/docs/caching-and-observability.html) · [MCP server](https://kungie.github.io/gut/docs/mcp.html) · [Honest limitations](https://kungie.github.io/gut/docs/limitations.html). [`examples/`](https://github.com/Kungie/gut/tree/main/examples/) runs the same code on every backend.
+**[The documentation](https://kungie.github.io/gut/docs/)**, one page per idea: [Getting started](https://kungie.github.io/gut/docs/getting-started.html) · [Backends](https://kungie.github.io/gut/docs/backends.html) · [Knowing when it doesn't know](https://kungie.github.io/gut/docs/knowing-when-it-doesnt-know.html) · [Asking everything at once](https://kungie.github.io/gut/docs/batching.html) · [Async](https://kungie.github.io/gut/docs/async.html) · [Exact costs](https://kungie.github.io/gut/docs/exact-costs.html) · [Caching and observability](https://kungie.github.io/gut/docs/caching-and-observability.html) · [Command line](https://kungie.github.io/gut/docs/cli.html) · [MCP server](https://kungie.github.io/gut/docs/mcp.html) · [Honest limitations](https://kungie.github.io/gut/docs/limitations.html). [`examples/`](https://github.com/Kungie/gut/tree/main/examples/) runs the same code on every backend.
 
 ## Status and license
 

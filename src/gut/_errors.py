@@ -64,3 +64,16 @@ class BackendError(GutError):
 
 class JudgeClosedError(GutError):
     """A question was registered after its `judge()` block had ended."""
+
+
+class BudgetExceeded(GutError):  # noqa: N818 - named for what happened, like UnsureDecision.
+    """A `gut.usage(max_cost=...)` budget would be passed by the next call, so it was not made.
+
+    Also raised when a budget cannot be kept at all, because the backend does not report what its
+    calls cost: guessing would make the budget a promise gut cannot keep.
+    """
+
+    def __init__(self, usage: object, message: str) -> None:
+        self.usage = usage
+        """The `Usage` whose budget stopped the call: what was spent, over how many calls."""
+        super().__init__(message)

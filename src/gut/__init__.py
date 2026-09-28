@@ -46,6 +46,7 @@ from gut._decision import BaseDecision, ChoiceDecision, Decision, ScoreDecision
 from gut._each import Each, each
 from gut._errors import (
     BackendError,
+    BudgetExceeded,
     ConfigurationError,
     GutError,
     JudgeClosedError,
@@ -59,6 +60,7 @@ from gut._posture import Lean, Preset, Stakes, presets
 from gut._questions import ChoiceSpec, NoulSpec, QuestionSpec, ScoreSpec, State
 from gut._rule import DEFAULT_POLICY, Policy, policy
 from gut._semantic import Plan, PlannedQuestion, semantic
+from gut._usage import Usage, usage
 
 if TYPE_CHECKING:
     from gut._backends.jev import JevBackend as JevBackend
@@ -78,6 +80,7 @@ __all__ = [
     "BackendError",
     "BackendResponse",
     "BaseDecision",
+    "BudgetExceeded",
     "Cache",
     "CacheEntry",
     "Cascade",
@@ -115,6 +118,7 @@ __all__ = [
     "State",
     "TransformersBackend",
     "UnsureDecision",
+    "Usage",
     "ZeroShotBackend",
     "__version__",
     "aclassify",
@@ -131,6 +135,7 @@ __all__ = [
     "presets",
     "rate",
     "semantic",
+    "usage",
 ]
 
 

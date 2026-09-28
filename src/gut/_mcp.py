@@ -9,7 +9,7 @@ probability and which model gave it. The model comes from the environment, Jev f
 | variable | meaning |
 |---|---|
 | `TYPESAFE_API_KEY` | use TypeSafe's Jev -- the default whenever it is set |
-| `GUT_BACKEND` | `jev`, `openai`, `ollama`, `zeroshot`, `transformers` or `fake` |
+| `GUT_BACKEND` | `jev`, `openrouter`, `openai`, `ollama`, `zeroshot`, `transformers` or `fake` |
 | `GUT_MODEL` | the model to ask, for backends that take one |
 | `GUT_BASE_URL` | an OpenAI-compatible server's URL, for `openai` and `ollama` |
 
@@ -20,27 +20,26 @@ local model that takes a few seconds to load.
 from __future__ import annotations
 
 import functools
-import os
-import threading
-from collections.abc import Awaitable, Callable, Mapping, Sequence
-from enum import Enum
+from collections.abc import Awaitable, Callable, Sequence
 from typing import TYPE_CHECKING, Annotated, Any
 
 import anyio.to_thread
 from pydantic import Field
 
-from gut._api import _warned_enums, aclassify, alikely, arate, has_catch_all
-from gut._backends import Backend, FakeBackend, deterministic_rule
+from gut._api import aclassify, alikely, arate
+from gut._backends import Backend
 from gut._decision import BaseDecision
 from gut._each import each as each_subject
+from gut._env import NO_MODEL, FromEnvironment
 from gut._errors import ConfigurationError, GutError
+from gut._options import catch_all_note as _note
+from gut._options import options_enum
 from gut._posture import Lean, Stakes
+from gut._usage import usage
 
 if TYPE_CHECKING:
     from mcp.server.mcpserver import MCPServer
 
-BACKENDS = ("jev", "openai", "ollama", "zeroshot", "transformers", "fake")
-OLLAMA_URL = "http://localhost:11434/v1"
 MAX_SUBJECTS = 1000
 
 INSTRUCTIONS = """\
@@ -59,15 +58,6 @@ user. Confidence is how peaked the model's answer is, not the probability that i
 Questions work best as short, concrete claims about the text ("asks for a refund", "is written \
 in German"), not as open questions or judgments of quality.
 """
-
-NO_MODEL = (
-    "No model is configured for the gut MCP server. Set one of these in the server's env:\n"
-    '  TYPESAFE_API_KEY="..."                        TypeSafe\'s Jev\n'
-    '  GUT_BACKEND="ollama", GUT_MODEL="qwen3:0.6b"  a local Ollama server\n'
-    '  GUT_BACKEND="openai", GUT_MODEL="..."         OpenAI, or any server via GUT_BASE_URL\n'
-    '  GUT_BACKEND="zeroshot"                        a local NLI model, with gutfeel[mcp,local]\n'
-    "See https://kungie.github.io/gut/docs/mcp.html"
-)
 
 Subject = Annotated[str, Field(description="The text to judge: an email, a comment, a diff.")]
 Question = Annotated[
@@ -98,61 +88,6 @@ StakesArg = Annotated[
 LeanArg = Annotated[Lean | None, Field(description="Which way to err when unsure is not allowed.")]
 
 
-class _Configured:
-    """The backend the environment asks for, built once, on first use."""
-
-    def __init__(self) -> None:
-        self._lock = threading.Lock()
-        self._built = False
-        self._backend: Backend | None = None
-
-    def get(self) -> Backend | None:
-        with self._lock:
-            if not self._built:
-                self._backend = backend_from_env(os.environ)
-                self._built = True
-            return self._backend
-
-
-def backend_from_env(env: Mapping[str, str]) -> Backend | None:
-    """The backend named by `GUT_BACKEND`, or `None` to let gut choose (Jev, given a key).
-
-    Raises:
-        ConfigurationError: An unknown backend, or one that needs a model and got none.
-    """
-    name = env.get("GUT_BACKEND", "").strip().lower()
-    model = env.get("GUT_MODEL", "").strip() or None
-    base_url = env.get("GUT_BASE_URL", "").strip() or None
-    if not name:
-        return None
-    if name not in BACKENDS:
-        raise ConfigurationError(
-            f"GUT_BACKEND={name!r} is not a backend gut knows. Use one of: {', '.join(BACKENDS)}."
-        )
-    if name == "fake":
-        return FakeBackend(rule=deterministic_rule)
-    if name == "jev":
-        from gut._backends.jev import JevBackend
-
-        return JevBackend(model=model, base_url=base_url)
-    if name in ("openai", "ollama"):
-        if model is None:
-            raise ConfigurationError(f"GUT_BACKEND={name} needs GUT_MODEL, the model to ask.")
-        from gut._backends.openai import OpenAICompatibleBackend
-
-        if name == "ollama":
-            base_url = base_url or OLLAMA_URL
-        return OpenAICompatibleBackend(model, base_url=base_url)
-    from gut._backends.local import (  # pragma: no cover - loads a model
-        TransformersBackend,
-        ZeroShotBackend,
-    )
-
-    if name == "zeroshot":  # pragma: no cover
-        return ZeroShotBackend(model) if model else ZeroShotBackend()
-    return TransformersBackend(model) if model else TransformersBackend()  # pragma: no cover
-
-
 def report(decision: BaseDecision) -> dict[str, Any]:
     """A decision as an agent needs it.
 
@@ -163,37 +98,6 @@ def report(decision: BaseDecision) -> dict[str, Any]:
     record.pop("id", None)
     record.pop("source", None)
     return record
-
-
-def options_enum(options: Mapping[str, str] | Sequence[str]) -> type[Enum]:
-    """The categories an agent sent, as the `Enum` that `classify` takes."""
-    if isinstance(options, Mapping):
-        pairs = [(str(k).strip(), str(v).strip() or str(k).strip()) for k, v in options.items()]
-    else:
-        pairs = [(str(o).strip(), str(o).strip()) for o in options]
-    labels = [label for label, _ in pairs]
-    if len(pairs) < 2:
-        raise ConfigurationError("classify needs at least two options.")
-    if any(not label or label.startswith("_") for label in labels):
-        raise ConfigurationError("Option labels must be non-empty and must not start with '_'.")
-    if len(set(labels)) < len(labels):
-        raise ConfigurationError("Option labels must be different from each other.")
-    if len({description for _, description in pairs}) < len(pairs):
-        # An Enum folds members with equal values into one, which would silently drop an option.
-        raise ConfigurationError("Two options have the same description; give each its own.")
-    enum_class: type[Enum] = Enum("Options", pairs)  # type: ignore[misc]
-    # The answer carries a note instead of the warning a program would get.
-    _warned_enums.add(enum_class)
-    return enum_class
-
-
-def _note(enum_class: type[Enum]) -> dict[str, str]:
-    if has_catch_all(enum_class):
-        return {}
-    return {
-        "note": "There was no catch-all option such as 'other', so the text was put in one of "
-        "the options even if none fits."
-    }
 
 
 def _check_stakes(stakes: Stakes | None, ask_human: bool) -> None:
@@ -209,7 +113,7 @@ class Tools:
     """What the server exposes, over one lazily built backend."""
 
     def __init__(self, backend: Backend | None = None) -> None:
-        self._configured = _Configured()
+        self._configured = FromEnvironment()
         self._fixed = backend
 
     async def backend(self) -> Backend | None:
@@ -344,7 +248,12 @@ def _as_tool_errors(method: Handler, tool_error: type[Exception]) -> Handler:
     @functools.wraps(method)
     async def call(*args: Any, **kwargs: Any) -> dict[str, Any]:
         try:
-            return await method(*args, **kwargs)
+            with usage() as spent:
+                result = await method(*args, **kwargs)
+            if spent.calls:
+                # What this answer cost, when the backend says: an agent can keep its own tally.
+                result["usage"] = {"calls": spent.calls, "cost": spent.to_dict()["cost"]}
+            return result
         except GutError as error:
             text = NO_MODEL if "No backend is configured" in str(error) else str(error)
             raise tool_error(text) from error

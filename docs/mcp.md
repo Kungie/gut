@@ -41,7 +41,7 @@ The server reads its model from the environment. With none of these set it uses 
 | variable | what it does |
 |---|---|
 | `TYPESAFE_API_KEY` | TypeSafe's Jev: the default whenever it is set |
-| `GUT_BACKEND` | `jev`, `openai`, `ollama`, `zeroshot`, `transformers`, or `fake` for trying the tools without a model |
+| `GUT_BACKEND` | `jev`, `openrouter` (Jev through OpenRouter, with `OPENROUTER_API_KEY`), `openai`, `ollama`, `zeroshot`, `transformers`, or `fake` for trying the tools without a model |
 | `GUT_MODEL` | the model to ask; required for `openai` and `ollama` |
 | `GUT_BASE_URL` | an OpenAI-compatible server's URL; `ollama` defaults to `http://localhost:11434/v1` |
 
@@ -95,6 +95,9 @@ A `likely` answer, as the agent receives it:
   "latency_ms": 41.0
 }
 ```
+
+Each answer that needed the model also says what it cost, as `"usage": {"calls": 1, "cost": 0.00001}`,
+when the backend reports a price -- Jev through OpenRouter does, and a local model costs `0`.
 
 `unsure` is only possible when the agent passes `ask_human: true`, and means the model could not
 tell: the agent should read the text itself, or ask you.

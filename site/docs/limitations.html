@@ -54,13 +54,14 @@
       <li><a href="async.html">Async</a></li>
       <li><a href="exact-costs.html">Exact costs</a></li>
       <li><a href="caching-and-observability.html">Caching and observability</a></li>
+      <li><a href="cli.html">Command line</a></li>
       <li><a href="mcp.html">MCP server</a></li>
       <li><a href="limitations.html" aria-current="page">Honest limitations</a></li>
     </ol>
   </nav>
 
   <article class="doc-body">
-    <div class="crumbs">docs / 9 / limitations</div>
+    <div class="crumbs">docs / 10 / limitations</div>
     <h1>Honest limitations</h1>
     <p><strong>Small models are small.</strong> That is the point, and it has a price. On one laptop run of the <a href="https://github.com/Kungie/gut/tree/main/examples/">examples ↗</a>, the 70M-parameter NLI model routed support tickets to the right team and missed a customer saying they would move to another vendor; Qwen3-0.6B caught that and was unsure about much else. Neither is wrong to exist — they are cheap enough to ask about everything — but check your own questions on your own data before trusting a model with anything that matters, and let <code class="inline-code">ask_human=True</code> and <a href="backends.html#cascade"><code class="inline-code">Cascade</code></a> catch what the cheap model cannot settle.</p>
     <p><strong>Each backend has its own blind spots.</strong></p>
@@ -75,7 +76,7 @@
     <p><strong><code class="inline-code">@semantic</code> is speculative.</strong> It asks questions behind branches that never run.</p>
     <p><strong>Reading a <code class="inline-code">judge()</code> handle is synchronous.</strong> In async code, <code class="inline-code">await j.aresolve()</code> before reading, or the first read asks the model on the spot and blocks the event loop while it does.</p>
     <nav class="doc-pager" aria-label="Pager">
-      <a href="mcp.html"><small>← previous · 8</small><span>MCP server</span></a>
+      <a href="mcp.html"><small>← previous · 9</small><span>MCP server</span></a>
       <a href="index.html" style="text-align:right"><small>the end</small><span>All chapters →</span></a>
     </nav>
   </article>

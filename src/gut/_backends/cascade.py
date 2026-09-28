@@ -34,7 +34,7 @@ from collections import Counter
 from collections.abc import Mapping, Sequence
 
 from gut._backends._many import Item, aask_all, ask_all
-from gut._backends.base import Answer, Backend, BackendResponse, NoulAnswer
+from gut._backends.base import Answer, Backend, BackendResponse, NoulAnswer, add_cost
 from gut._errors import BackendError, GutError, PolicyError
 from gut._questions import QuestionSpec, State
 
@@ -145,6 +145,7 @@ class _Run:
         self.answers: list[dict[str, Answer]] = [{} for _ in items]
         self.models: list[dict[str, str]] = [{} for _ in items]
         self.tokens: list[int | None] = [None for _ in items]
+        self.costs: list[float | None] = [0.0 for _ in items]
         self.last = len(cascade.backends) - 1
 
     def open_items(self) -> list[int]:
@@ -162,6 +163,7 @@ class _Run:
         for index, response in zip(open_items, responses, strict=True):
             if response.input_tokens is not None:
                 self.tokens[index] = (self.tokens[index] or 0) + response.input_tokens
+            self.costs[index] = add_cost(self.costs[index], response.cost)
             for name in list(self.pending[index]):
                 answer = response.answers.get(name)
                 if answer is None or not (stage == self.last or self.cascade.settled(answer)):
@@ -184,6 +186,7 @@ class _Run:
                 answers={name: self.answers[index][name] for name in questions},
                 model=self.models[index][next(iter(questions))],
                 input_tokens=self.tokens[index],
+                cost=self.costs[index],
                 models=self.models[index],
             )
             for index, (_, questions) in enumerate(self.items)

@@ -54,6 +54,7 @@
       <li><a href="async.html">Async</a></li>
       <li><a href="exact-costs.html">Exact costs</a></li>
       <li><a href="caching-and-observability.html">Caching and observability</a></li>
+      <li><a href="cli.html">Command line</a></li>
       <li><a href="mcp.html">MCP server</a></li>
       <li><a href="limitations.html">Honest limitations</a></li>
     </ol>
@@ -91,10 +92,20 @@
 <span class="l">gut.<span class="f">JevBackend</span>(model=<span class="s">&quot;jev-1.13.0&quot;</span>)        <span class="c"># pin a version; aliases move</span></span></code></pre>
 </figure>
     <p><code class="inline-code">pip install &quot;gutfeel[jev]&quot;</code> and set <code class="inline-code">TYPESAFE_API_KEY</code>. It is the one backend <code class="inline-code">gut</code> will build without being told to, because that variable exists for nothing else. Retries and rate limits are the SDK's own: it backs off on a 429 and honours <code class="inline-code">retry-after</code>, and <code class="inline-code">each()</code> keeps its requests well under the API's limit.</p>
+    <h3 id="through-openrouter">Through OpenRouter</h3>
+    <p>The same Jev is also served by OpenRouter, billed to your OpenRouter credit. If you have an OpenRouter account rather than a TypeSafe key:</p>
+    <figure class="listing">
+  <figcaption class="listing-head" style="margin:0;font:12px/1.3 var(--mono)"><span>python</span><span>listing 2.3</span></figcaption>
+  <pre><code><span class="l"><span class="k">import</span> gut</span>
+<span class="l"> </span>
+<span class="l">gut.<span class="f">configure</span>(backend=gut.JevBackend.openrouter())    <span class="c"># reads OPENROUTER_API_KEY</span></span>
+<span class="l">gut.JevBackend.openrouter(model=<span class="s">&quot;typesafe/jev-1.13&quot;</span>)  <span class="c"># pin a version</span></span></code></pre>
+</figure>
+    <p>The answers are the same; what OpenRouter adds is the price of every call, which <code class="inline-code">gut</code> passes on, so <code class="inline-code">gut.usage()</code> can count dollars and keep a budget — see <a href="caching-and-observability.html#what-it-costs">Caching and observability</a>. <code class="inline-code">gut</code> never picks OpenRouter on its own: an OpenRouter key on a machine says nothing about wanting to spend it here.</p>
     <h2 id="zeroshotbackend"><span class="sc">2.2</span><code class="inline-code">ZeroShotBackend</code></h2>
     <p>A natural-language-inference model: it reads the subject and a <em>hypothesis</em> and scores how strongly one entails the other. It never generates text, so there is no prompt to tune and nothing to parse.</p>
     <figure class="listing">
-  <figcaption class="listing-head" style="margin:0;font:12px/1.3 var(--mono)"><span>python</span><span>listing 2.3</span></figcaption>
+  <figcaption class="listing-head" style="margin:0;font:12px/1.3 var(--mono)"><span>python</span><span>listing 2.4</span></figcaption>
   <pre><code><span class="l"><span class="k">import</span> gut</span>
 <span class="l"> </span>
 <span class="l">gut.<span class="f">ZeroShotBackend</span>()                                             <span class="c"># 70M params, ~150 MB, CPU</span></span>
@@ -106,7 +117,7 @@
     <h2 id="transformersbackend"><span class="sc">2.3</span><code class="inline-code">TransformersBackend</code></h2>
     <p>A small instruction-tuned language model, in your process.</p>
     <figure class="listing">
-  <figcaption class="listing-head" style="margin:0;font:12px/1.3 var(--mono)"><span>python</span><span>listing 2.4</span></figcaption>
+  <figcaption class="listing-head" style="margin:0;font:12px/1.3 var(--mono)"><span>python</span><span>listing 2.5</span></figcaption>
   <pre><code><span class="l"><span class="k">import</span> gut</span>
 <span class="l"> </span>
 <span class="l">gut.<span class="f">TransformersBackend</span>()                                         <span class="c"># Qwen/Qwen3-0.6B</span></span>
@@ -120,7 +131,7 @@
     <h2 id="openaicompatiblebackend"><span class="sc">2.4</span><code class="inline-code">OpenAICompatibleBackend</code></h2>
     <p>Anything that speaks the OpenAI chat completions protocol <strong>and returns log-probabilities</strong>.</p>
     <figure class="listing">
-  <figcaption class="listing-head" style="margin:0;font:12px/1.3 var(--mono)"><span>python</span><span>listing 2.5</span></figcaption>
+  <figcaption class="listing-head" style="margin:0;font:12px/1.3 var(--mono)"><span>python</span><span>listing 2.6</span></figcaption>
   <pre><code><span class="l"><span class="k">import</span> gut</span>
 <span class="l"> </span>
 <span class="l">gut.<span class="f">OpenAICompatibleBackend</span>(<span class="s">&quot;gpt-4.1-nano&quot;</span>)                                  <span class="c"># OpenAI</span></span>
@@ -136,7 +147,7 @@
     <h2 id="cascade"><span class="sc">2.5</span><code class="inline-code">Cascade</code></h2>
     <p>Ask the cheapest model first, and pass on only what it is unsure of:</p>
     <figure class="listing">
-  <figcaption class="listing-head" style="margin:0;font:12px/1.3 var(--mono)"><span>python</span><span>listing 2.6</span></figcaption>
+  <figcaption class="listing-head" style="margin:0;font:12px/1.3 var(--mono)"><span>python</span><span>listing 2.7</span></figcaption>
   <pre><code><span class="l"><span class="k">import</span> gut</span>
 <span class="l"> </span>
 <span class="l">gut.<span class="f">configure</span>(backend=gut.<span class="f">Cascade</span>(</span>
@@ -152,7 +163,7 @@
     <h2 id="fakebackend"><span class="sc">2.6</span><code class="inline-code">FakeBackend</code></h2>
     <p>Answers from fixtures, counts its calls, and never touches a model. It is strict: a question with no fixture raises rather than inventing a probability.</p>
     <figure class="listing">
-  <figcaption class="listing-head" style="margin:0;font:12px/1.3 var(--mono)"><span>python</span><span>listing 2.7</span></figcaption>
+  <figcaption class="listing-head" style="margin:0;font:12px/1.3 var(--mono)"><span>python</span><span>listing 2.8</span></figcaption>
   <pre><code><span class="l"><span class="k">import</span> gut</span>
 <span class="l"> </span>
 <span class="l">backend = gut.<span class="f">FakeBackend</span>(answers={</span>
@@ -167,7 +178,7 @@
     <h2 id="writing-your-own"><span class="sc">2.7</span>Writing your own</h2>
     <p>A backend is two members: a <code class="inline-code">model_id</code>, and an <code class="inline-code">ask()</code> that takes one subject and a batch of named questions and returns one answer per name. Here is the keyword rule you already had, as the free first stage of a cascade:</p>
     <figure class="listing">
-  <figcaption class="listing-head" style="margin:0;font:12px/1.3 var(--mono)"><span>python</span><span>listing 2.8</span></figcaption>
+  <figcaption class="listing-head" style="margin:0;font:12px/1.3 var(--mono)"><span>python</span><span>listing 2.9</span></figcaption>
   <pre><code><span class="l"><span class="k">import</span> re</span>
 <span class="l"> </span>
 <span class="l"><span class="k">import</span> gut</span>

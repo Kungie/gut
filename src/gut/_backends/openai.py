@@ -27,14 +27,15 @@ import httpx
 
 from gut._backends._labels import Prompt, answer_from, build_prompts, mass_from_top_logprobs
 from gut._backends._many import Item
-from gut._backends.base import Answer, BackendResponse
+from gut._backends.base import Answer, BackendResponse, add_cost, reported_cost
 from gut._errors import BackendError
 from gut._questions import QuestionSpec, State
 
 OPENAI_BASE_URL: Final = "https://api.openai.com/v1"
 
-_Reply: TypeAlias = "tuple[dict[str, float], str, int]"
-"""One request's worth: probability per label, the model that answered, prompt tokens."""
+_Reply: TypeAlias = "tuple[dict[str, float], str, int, float | None]"
+"""One request's worth: probability per label, the model that answered, prompt tokens, and the
+cost in dollars if the server reported one (OpenRouter does, as `usage.cost`)."""
 
 NO_LOGPROBS: Final = (
     "returned no log-probabilities, which this backend reads its answers from. OpenAI's reasoning "
@@ -185,13 +186,15 @@ class OpenAICompatibleBackend:
             answers: dict[str, Answer] = {}
             models: dict[str, str] = {}
             tokens = 0
+            cost: float | None = 0.0
             for name, prompts in per_item.items():
                 readings = []
                 for prompt in prompts:
-                    mass, model, used = next(replies)
+                    mass, model, used, spent = next(replies)
                     readings.append((prompt, mass))
                     models.setdefault(name, model)
                     tokens += used
+                    cost = add_cost(cost, spent)
                 answers[name] = answer_from(questions[name], readings)
             first = next(iter(questions))
             responses.append(
@@ -199,6 +202,7 @@ class OpenAICompatibleBackend:
                     answers=answers,
                     model=models[first],
                     input_tokens=tokens or None,
+                    cost=cost,
                     models=models if len(set(models.values())) > 1 else None,
                 )
             )
@@ -259,6 +263,7 @@ class OpenAICompatibleBackend:
             mass_from_top_logprobs(prompt, top),
             str(data.get("model") or self._model),
             prompt_tokens if isinstance(prompt_tokens, int) else 0,
+            reported_cost(usage),
         )
 
     def _async_client(self) -> httpx.AsyncClient:

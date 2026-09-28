@@ -16,7 +16,9 @@ from mcp.types import CallToolResult
 
 import gut
 from gut import ConfigurationError, FakeBackend
-from gut._mcp import BACKENDS, OLLAMA_URL, backend_from_env, build, options_enum
+from gut._env import BACKENDS, OLLAMA_URL, backend_from_env
+from gut._mcp import build
+from gut._options import options_enum
 
 pytestmark = pytest.mark.anyio
 
@@ -244,6 +246,13 @@ def test_openai_takes_a_base_url() -> None:
     chosen = backend_from_env(env)
     assert isinstance(chosen, gut.OpenAICompatibleBackend)
     assert chosen.base_url == "http://gpu.local:8000/v1"
+
+
+def test_openrouter_is_jev_with_an_openrouter_key() -> None:
+    pytest.importorskip("typesafe_sdk")
+    chosen = backend_from_env({"GUT_BACKEND": "openrouter", "OPENROUTER_API_KEY": "sk-or-test"})
+    assert isinstance(chosen, gut.JevBackend)
+    assert chosen.model_id == "~typesafe/jev-latest"
 
 
 def test_jev_is_built_from_the_environment(monkeypatch: pytest.MonkeyPatch) -> None:

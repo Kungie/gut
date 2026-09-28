@@ -166,12 +166,15 @@ class FakeBackend:
             single scalar cannot serve all three question types, so for mixed batches pass
             `rule=deterministic_rule` instead.
         model: The model id reported back, so recorded decisions are distinguishable from real ones.
+        cost: What each call reports it cost, in dollars, for testing a budget. `None` by default,
+            like a service that does not say.
     """
 
     answers: Mapping[str, FakeValue] = field(default_factory=dict)
     rule: Rule | None = None
     default: FakeValue | None = None
     model: str = "fake-1.0"
+    cost: float | None = None
     calls: list[RecordedCall] = field(default_factory=list, init=False)
 
     @property
@@ -217,4 +220,4 @@ class FakeBackend:
             name: _coerce(self._lookup(state, name, spec), name, spec)
             for name, spec in questions.items()
         }
-        return BackendResponse(answers=answers, model=self.model)
+        return BackendResponse(answers=answers, model=self.model, cost=self.cost)
