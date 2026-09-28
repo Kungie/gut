@@ -10,6 +10,7 @@ from __future__ import annotations
 import time
 import unicodedata
 import warnings
+import weakref
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from enum import Enum
@@ -55,7 +56,8 @@ CATCH_ALL_NAMES = frozenset(
 Compared after `_normalise_name`, so `DİĞER`, `Diğer` and `DIGER` all count.
 """
 
-_warned_enums: set[type[Enum]] = set()
+# Weak, so enums made on the fly -- one per request, in the MCP server -- are not kept forever.
+_warned_enums: weakref.WeakSet[type[Enum]] = weakref.WeakSet()
 
 
 @dataclass(frozen=True, slots=True)

@@ -7,7 +7,8 @@
 > OpenAI-compatible server answer the same line.
 
 Python 3.10+, Apache-2.0. `pip install gutfeel` (the PyPI name; the import is `import gut`), plus
-`gutfeel[local]` for in-process models or `gutfeel[jev]` for Jev.
+`gutfeel[local]` for in-process models, `gutfeel[jev]` for Jev or `gutfeel[mcp]` for the MCP server.
+The documentation is also published at https://kungie.github.io/gut/docs/.
 
 ## Start here
 
@@ -20,6 +21,8 @@ Python 3.10+, Apache-2.0. `pip install gutfeel` (the PyPI name; the import is `i
 
 - [docs/backends.md](docs/backends.md): every backend, how each one reads a model's probabilities,
   `Cascade`, and writing your own.
+- [docs/mcp.md](docs/mcp.md): `gutfeel-mcp`, the same judgments as MCP tools (`likely`, `classify`,
+  `rate`, `each`) for Claude Code, Claude Desktop, Cursor and other MCP clients.
 - [examples/](examples/): the same handlers on any backend, chosen with `--backend`.
 - [CONTRIBUTING.md](CONTRIBUTING.md): how to run the suite.
 

@@ -40,6 +40,11 @@ dependencies = [
 local = ["transformers>=4.56", "torch>=2.2"]
 # TypeSafe AI's Jev.
 jev = ["typesafe-sdk>=0.7"]
+# The MCP server, `gutfeel-mcp`. Jev comes with it: it is the model the server asks by default.
+mcp = ["mcp>=2.2,<3", "typesafe-sdk>=0.7"]
+
+[project.scripts]
+gutfeel-mcp = "gut._mcp:main"
 
 [project.urls]
 Homepage = "https://kungie.github.io/gut/"
@@ -58,6 +63,7 @@ dev = [
     "pyyaml>=6.0",
     "types-pyyaml>=6.0",
     "anyio>=4.0",
+    "mcp>=2.2,<3",
 ]
 
 [build-system]

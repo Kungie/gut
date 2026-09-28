@@ -185,8 +185,16 @@ Every decision can be observed as it is made; `d.to_dict()` is a ready-made log 
 gut.configure(on_decision=lambda d: logger.info("gut", extra=d.to_dict()))
 ```
 
-Full documentation: [`docs/`](../../docs/README.md). Backends in depth:
-[`docs/backends.md`](../../docs/backends.md).
+Full documentation: [`docs/`](../../docs/README.md), also at <https://kungie.github.io/gut/docs/>.
+Backends in depth: [`docs/backends.md`](../../docs/backends.md).
+
+## Without writing code: the MCP server
+
+When the judgment is yours to make during a task rather than your program's -- sorting an inbox,
+filtering search results -- `gutfeel-mcp` offers the same calls as MCP tools: `likely`,
+`classify` (options as a list or `{label: description}`), `rate` and `each`, for up to 1000 texts
+at once. Set up with `uvx --from "gutfeel[mcp]" gutfeel-mcp` and a `TYPESAFE_API_KEY`, or
+`GUT_BACKEND=ollama` / `zeroshot` to stay local. See [`docs/mcp.md`](../../docs/mcp.md).
 
 ## Rules of thumb
 
