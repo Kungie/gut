@@ -25,8 +25,9 @@ from gut._errors import UnsureDecision
 from gut._outcomes import Outcome
 from gut._rule import DEFAULT_POLICY, Policy
 
-DecisionSource: TypeAlias = Literal["backend", "cache", "prefetch"]
-"""Where an answer came from: its own request, the cache, or a batch fetched ahead of it."""
+DecisionSource: TypeAlias = Literal["backend", "cache", "prefetch", "batch"]
+"""Where an answer came from: its own request, the cache, a batch fetched ahead of it by
+`@semantic` or `judge()`, or one of many subjects asked together by `each()`."""
 
 E = TypeVar("E", bound=Enum)
 
@@ -46,8 +47,9 @@ class BaseDecision:
     source: DecisionSource = "backend"
     """How the answer was obtained.
 
-    `"prefetch"` means it rode along in a batch fetched by `@semantic` or `judge()` -- distinct from
-    `"cache"`, because it still cost a request, just a shared one.
+    `"prefetch"` means it rode along in a batch fetched by `@semantic` or `judge()`, and `"batch"`
+    that it was one of many subjects asked together by `each()` -- both distinct from `"cache"`,
+    because they still cost a model call, just a shared one.
     """
     latency_ms: float | None = None
     """How long this decision's own backend call took, or `None` when it did not make one."""
@@ -83,7 +85,7 @@ class BaseDecision:
         Comparing equal to an outcome is what makes `match d: case gut.YES:` work, since a value
         pattern is an `==` test. It does mean equality is not transitive across decisions -- two
         different decisions can both equal `gut.YES` without equalling each other. That is the
-        documented trade for `match` reading the way it should. See D10 in DECISIONS.md.
+        documented trade for `match` reading the way it should.
         """
         if isinstance(other, Outcome):
             return self.outcome is other

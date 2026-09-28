@@ -91,3 +91,13 @@ def test_a_cascade_of_two_local_models(nli: gut.Backend, causal: gut.Backend) ->
     gut.configure(backend=cascade, cache=gut.NullCache())
     assert gut.likely(SPAM, "is spam") == gut.YES
     assert sum(cascade.answered_by.values()) == 1
+
+
+def test_each_answers_what_single_calls_do(backend: gut.Backend) -> None:
+    """Many subjects in one batched pass must change nothing but the speed."""
+    texts = [SPAM, MEETING, REFUND]
+    together = gut.each(texts).likely("is spam")
+    alone = [gut.likely(text, "is spam") for text in texts]
+    for batched, single in zip(together, alone, strict=True):
+        assert batched.p == pytest.approx(single.p, abs=1e-3)
+    assert [d.value for d in gut.each([REFUND, REFUND]).classify(Team)] == [Team.BILLING] * 2

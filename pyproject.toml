@@ -113,7 +113,7 @@ enable_error_code = ["redundant-expr", "possibly-undefined", "truthy-bool"]
 testpaths = ["tests"]
 addopts = "-q --strict-markers --strict-config"
 markers = [
-    "live: hits the real Jev API; skipped unless TYPESAFE_API_KEY is set",
+    "live: talks to a real hosted model or server; skipped unless one is configured",
     "local: downloads and runs real local models; skipped unless the [local] extra is installed",
 ]
 

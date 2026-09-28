@@ -343,3 +343,30 @@ def test_closing_closes_only_a_client_it_created() -> None:
     OpenAICompatibleBackend("m", client=supplied).close()
     assert not supplied.is_closed
     supplied.close()
+
+
+def test_many_subjects_share_one_pool_of_requests() -> None:
+    barrier = threading.Barrier(4, timeout=5)
+
+    def answer(prompt: str) -> dict[str, Any]:
+        barrier.wait()  # two subjects, both readings each: all four in flight together
+        return FakeServer.default(prompt)
+
+    backend = FakeServer(answer).backend(max_concurrency=4)
+    responses = backend.ask_many(
+        [("first", {"q": NoulSpec("is spam")}), ("second", {"q": NoulSpec("is spam")})]
+    )
+    assert [p_of(r.answers["q"]) for r in responses] == [pytest.approx(0.8)] * 2
+
+
+def test_each_on_a_server_asks_every_subject(monkeypatch: pytest.MonkeyPatch) -> None:
+    server = FakeServer()
+    gut.configure(backend=server.backend(balanced=False), cache=gut.NullCache())
+    decisions = gut.each(["a", "b", "c"]).likely("is spam")
+    assert [d.outcome for d in decisions] == [gut.YES] * 3
+    assert sorted(body["messages"][-1]["content"][7] for body in server.bodies) == ["a", "b", "c"]
+
+
+def test_a_batch_with_an_empty_question_set_is_refused() -> None:
+    with pytest.raises(BackendError, match="at least one question"):
+        FakeServer().backend().ask_many([("a", {})])

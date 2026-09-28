@@ -5,7 +5,7 @@ One protocol covers a lot of small, cheap models: OpenAI's own non-reasoning mod
 Gemma, Phi, SmolLM and the rest.
 
 Each question becomes a request for **a single token with its log-probabilities** -- two for a
-yes/no question or a choice, which are read in both label orders and averaged (see D40). Nothing is
+yes/no question or a choice, which are read in both label orders and averaged. Nothing is
 generated past that token and nothing is parsed: the answer is read from the probabilities the
 server reports (see `_labels`). A batch goes out concurrently, and because the subject comes first
 in every prompt, a server with prefix caching reads it once.
@@ -17,13 +17,14 @@ later; a server that leaves them out gets a `BackendError` that says so, never a
 from __future__ import annotations
 
 import os
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Final
 
 import httpx
 
 from gut._backends._labels import Prompt, answer_from, build_prompts, mass_from_top_logprobs
+from gut._backends._many import Item
 from gut._backends.base import Answer, BackendResponse
 from gut._errors import BackendError
 from gut._questions import QuestionSpec, State
@@ -111,40 +112,55 @@ class OpenAICompatibleBackend:
             BackendError: A request failed, or the server's answer could not be read.
             QuestionError: A choice has more options than this backend can label.
         """
-        if not questions:
-            raise BackendError("A backend call needs at least one question.")
-        renderings = {
-            name: build_prompts(state, spec, balanced=self._balanced)
-            for name, spec in questions.items()
-        }
-        flat = [prompt for prompts in renderings.values() for prompt in prompts]
+        return self.ask_many([(state, questions)])[0]
+
+    def ask_many(self, items: Sequence[Item]) -> list[BackendResponse]:
+        """The same for many subjects, every request from all of them sharing one pool."""
+        renderings: list[dict[str, tuple[Prompt, ...]]] = []
+        for state, questions in items:
+            if not questions:
+                raise BackendError("A backend call needs at least one question.")
+            renderings.append(
+                {
+                    name: build_prompts(state, spec, balanced=self._balanced)
+                    for name, spec in questions.items()
+                }
+            )
+        flat = [
+            prompt for per_item in renderings for prompts in per_item.values() for prompt in prompts
+        ]
 
         workers = min(self._max_concurrency, len(flat))
-        if workers == 1:
+        if workers <= 1:
             results = [self._ask_one(prompt) for prompt in flat]
         else:
             with ThreadPoolExecutor(max_workers=workers) as pool:
                 results = list(pool.map(self._ask_one, flat))
 
-        answers: dict[str, Answer] = {}
-        models: dict[str, str] = {}
-        tokens = 0
         replies = iter(results)
-        for name, prompts in renderings.items():
-            readings = []
-            for prompt in prompts:
-                mass, model, used = next(replies)
-                readings.append((prompt, mass))
-                models.setdefault(name, model)
-                tokens += used
-            answers[name] = answer_from(questions[name], readings)
-        first = next(iter(questions))
-        return BackendResponse(
-            answers=answers,
-            model=models[first],
-            input_tokens=tokens or None,
-            models=models if len(set(models.values())) > 1 else None,
-        )
+        responses: list[BackendResponse] = []
+        for (_, questions), per_item in zip(items, renderings, strict=True):
+            answers: dict[str, Answer] = {}
+            models: dict[str, str] = {}
+            tokens = 0
+            for name, prompts in per_item.items():
+                readings = []
+                for prompt in prompts:
+                    mass, model, used = next(replies)
+                    readings.append((prompt, mass))
+                    models.setdefault(name, model)
+                    tokens += used
+                answers[name] = answer_from(questions[name], readings)
+            first = next(iter(questions))
+            responses.append(
+                BackendResponse(
+                    answers=answers,
+                    model=models[first],
+                    input_tokens=tokens or None,
+                    models=models if len(set(models.values())) > 1 else None,
+                )
+            )
+        return responses
 
     def _ask_one(self, prompt: Prompt) -> tuple[dict[str, float], str, int]:
         """One request: the label probabilities, the model that answered, and prompt tokens."""

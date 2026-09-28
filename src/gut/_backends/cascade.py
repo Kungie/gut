@@ -27,8 +27,9 @@ from __future__ import annotations
 import logging
 import threading
 from collections import Counter
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 
+from gut._backends._many import Item, ask_all
 from gut._backends.base import Answer, Backend, BackendResponse, NoulAnswer
 from gut._errors import BackendError, GutError, PolicyError
 from gut._questions import QuestionSpec, State
@@ -86,42 +87,59 @@ class Cascade:
 
     def ask(self, state: State, questions: Mapping[str, QuestionSpec]) -> BackendResponse:
         """Ask each stage what the previous ones left unsettled."""
-        if not questions:
+        return self.ask_many([(state, questions)])[0]
+
+    def ask_many(self, items: Sequence[Item]) -> list[BackendResponse]:
+        """The same, for many subjects: each stage sees every subject it still has questions for.
+
+        So over a thousand comments the cheap model reads all thousand, and the next one reads only
+        the ones it could not settle -- in one batch, by its own fastest route. A stage that fails
+        hands the whole batch on.
+        """
+        if any(not questions for _, questions in items):
             raise BackendError("A backend call needs at least one question.")
-        pending = dict(questions)
-        answers: dict[str, Answer] = {}
-        models: dict[str, str] = {}
-        tokens: int | None = None
+        pending = [dict(questions) for _, questions in items]
+        answers: list[dict[str, Answer]] = [{} for _ in items]
+        models: list[dict[str, str]] = [{} for _ in items]
+        tokens: list[int | None] = [None for _ in items]
         last = len(self.backends) - 1
 
         for stage, backend in enumerate(self.backends):
-            if not pending:
+            open_items = [index for index, left in enumerate(pending) if left]
+            if not open_items:
                 break
             try:
-                response = backend.ask(state, pending)
+                responses = ask_all(backend, [(items[i][0], pending[i]) for i in open_items])
             except GutError as error:
                 if stage == last:
                     raise
                 logger.info("gut: %s failed, escalating: %s", backend.model_id, error)
                 continue
-            if response.input_tokens is not None:
-                tokens = (tokens or 0) + response.input_tokens
-            for name in list(pending):
-                answer = response.answers.get(name)
-                if answer is None or not (stage == last or self.settled(answer)):
-                    continue
-                answers[name] = answer
-                models[name] = response.model_for(name)
-                del pending[name]
+            for index, response in zip(open_items, responses, strict=True):
+                if response.input_tokens is not None:
+                    tokens[index] = (tokens[index] or 0) + response.input_tokens
+                for name in list(pending[index]):
+                    answer = response.answers.get(name)
+                    if answer is None or not (stage == last or self.settled(answer)):
+                        continue
+                    answers[index][name] = answer
+                    models[index][name] = response.model_for(name)
+                    del pending[index][name]
 
-        if pending:
-            raise BackendError(f"No stage of the cascade answered {', '.join(map(repr, pending))}.")
+        unanswered = sorted({name for left in pending for name in left})
+        if unanswered:
+            raise BackendError(
+                f"No stage of the cascade answered {', '.join(map(repr, unanswered))}."
+            )
         with self._lock:
-            self.answered_by.update(models.values())
-        ordered = {name: answers[name] for name in questions}
-        return BackendResponse(
-            answers=ordered,
-            model=models[next(iter(questions))],
-            input_tokens=tokens,
-            models=models,
-        )
+            for per_item in models:
+                self.answered_by.update(per_item.values())
+        return [
+            BackendResponse(
+                answers={name: answers[index][name] for name in questions},
+                model=models[index][next(iter(questions))],
+                input_tokens=tokens[index],
+                models=models[index],
+            )
+            for index, (_, questions) in enumerate(items)
+        ]

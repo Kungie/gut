@@ -36,6 +36,7 @@ from gut._backends._labels import (
     render_subject,
     shared_prefix_length,
 )
+from gut._backends._many import Item
 from gut._backends.base import Answer, BackendResponse, ChoiceAnswer, NoulAnswer, ScoreAnswer
 from gut._errors import BackendError
 from gut._questions import ChoiceSpec, NoulSpec, QuestionSpec, ScoreSpec, State
@@ -102,7 +103,7 @@ class TransformersBackend:
         revision: A branch, tag or commit to pin, so the model cannot change under you.
         chat_template_kwargs: Passed to the chat template, over `enable_thinking=False`.
         balanced: Read yes/no questions and choices in both label orders and average, cancelling
-            a small model's lean towards whichever label comes first. See D40.
+            a small model's lean towards whichever label comes first.
 
     Raises:
         BackendError: The `local` extra is not installed.
@@ -146,27 +147,43 @@ class TransformersBackend:
         self, state: State, questions: Mapping[str, QuestionSpec]
     ) -> BackendResponse:  # pragma: no cover - runs a model
         """Answer every question from one shared pass over the subject."""
-        if not questions:
-            raise BackendError("A backend call needs at least one question.")
-        renderings = {
-            name: build_prompts(state, spec, balanced=self._balanced)
-            for name, spec in questions.items()
-        }
-        flat = [prompt for prompts in renderings.values() for prompt in prompts]
+        return self.ask_many([(state, questions)])[0]
+
+    def ask_many(self, items: Sequence[Item]) -> list[BackendResponse]:  # pragma: no cover
+        """Every question about every subject, in batched forward passes.
+
+        One subject with many questions shares that subject's computation; many subjects share the
+        system prompt, and run together `MAX_ROWS` at a time. The prefix is found on token ids, so
+        both cases are the same code.
+        """
+        renderings: list[dict[str, tuple[Prompt, ...]]] = []
+        for state, questions in items:
+            if not questions:
+                raise BackendError("A backend call needs at least one question.")
+            renderings.append(
+                {
+                    name: build_prompts(state, spec, balanced=self._balanced)
+                    for name, spec in questions.items()
+                }
+            )
+        flat = [p for per_item in renderings for prompts in per_item.values() for p in prompts]
         distributions = iter(self._next_token_distributions([self._encode(p) for p in flat]))
 
-        answers: dict[str, Answer] = {}
-        for name, prompts in renderings.items():
-            readings = []
-            for prompt in prompts:
-                distribution = next(distributions)
-                mass = {
-                    label: float(distribution[sorted(ids)].sum())
-                    for label, ids in self._ids_for(prompt).items()
-                }
-                readings.append((prompt, mass))
-            answers[name] = answer_from(questions[name], readings)
-        return BackendResponse(answers=answers, model=self._resolved)
+        responses: list[BackendResponse] = []
+        for (_, questions), per_item in zip(items, renderings, strict=True):
+            answers: dict[str, Answer] = {}
+            for name, prompts in per_item.items():
+                readings = []
+                for prompt in prompts:
+                    distribution = next(distributions)
+                    mass = {
+                        label: float(distribution[sorted(ids)].sum())
+                        for label, ids in self._ids_for(prompt).items()
+                    }
+                    readings.append((prompt, mass))
+                answers[name] = answer_from(questions[name], readings)
+            responses.append(BackendResponse(answers=answers, model=self._resolved))
+        return responses
 
     def _encode(self, prompt: Prompt) -> list[int]:  # pragma: no cover - needs a tokenizer
         messages = [dict(message) for message in prompt.messages]
@@ -377,34 +394,45 @@ class ZeroShotBackend:
         self, state: State, questions: Mapping[str, QuestionSpec]
     ) -> BackendResponse:  # pragma: no cover - runs a model
         """Score every hypothesis of every question against the subject, in batches."""
-        if not questions:
-            raise BackendError("A backend call needs at least one question.")
-        premise = render_subject(state)
-        per_question = {
-            name: hypotheses_for(spec, self._template) for name, spec in questions.items()
-        }
-        flat = [hypothesis for hypotheses in per_question.values() for hypothesis in hypotheses]
-        scores = self._log_odds(premise, flat)
+        return self.ask_many([(state, questions)])[0]
 
-        answers: dict[str, Answer] = {}
+    def ask_many(self, items: Sequence[Item]) -> list[BackendResponse]:  # pragma: no cover
+        """Every subject-hypothesis pair from every item, `batch_size` pairs per forward pass."""
+        pairs: list[tuple[str, str]] = []
+        layout: list[dict[str, int]] = []
+        for state, questions in items:
+            if not questions:
+                raise BackendError("A backend call needs at least one question.")
+            premise = render_subject(state)
+            counts: dict[str, int] = {}
+            for name, spec in questions.items():
+                hypotheses = hypotheses_for(spec, self._template)
+                pairs.extend((premise, hypothesis) for hypothesis in hypotheses)
+                counts[name] = len(hypotheses)
+            layout.append(counts)
+        scores = self._log_odds(pairs)
+
+        responses: list[BackendResponse] = []
         start = 0
-        for name, hypotheses in per_question.items():
-            end = start + len(hypotheses)
-            answers[name] = answer_from_entailment(questions[name], scores[start:end])
-            start = end
-        return BackendResponse(answers=answers, model=self._resolved)
+        for (_, questions), counts in zip(items, layout, strict=True):
+            answers: dict[str, Answer] = {}
+            for name, count in counts.items():
+                answers[name] = answer_from_entailment(
+                    questions[name], scores[start : start + count]
+                )
+                start += count
+            responses.append(BackendResponse(answers=answers, model=self._resolved))
+        return responses
 
-    def _log_odds(
-        self, premise: str, hypotheses: Sequence[str]
-    ) -> list[float]:  # pragma: no cover - runs a model
+    def _log_odds(self, pairs: Sequence[tuple[str, str]]) -> list[float]:  # pragma: no cover
         torch = self._torch
         scores: list[float] = []
         with torch.inference_mode():
-            for start in range(0, len(hypotheses), self._batch_size):
-                chunk = list(hypotheses[start : start + self._batch_size])
+            for start in range(0, len(pairs), self._batch_size):
+                chunk = list(pairs[start : start + self._batch_size])
                 inputs = self._tokenizer(
-                    [premise] * len(chunk),
-                    chunk,
+                    [premise for premise, _ in chunk],
+                    [hypothesis for _, hypothesis in chunk],
                     truncation="only_first",
                     max_length=self._max_length,
                     padding=True,

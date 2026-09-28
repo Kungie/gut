@@ -2,9 +2,10 @@
 
 Code keeps running into questions that are not logic: *is this comment spam?*, *which team owns this
 ticket?*, *how urgent is it?* A regex is too brittle for them and a frontier LLM is too slow and too
-expensive to put inside an `if`. Small models -- an NLI encoder, a 0.5B language model, Jev -- are
-fast and cheap enough, but each speaks its own API. `gut` is the primitive that makes any of them a
-single line, and lets that line answer that it does not know:
+expensive to put inside an `if`. Small models made for these questions are fast and cheap enough --
+above all TypeSafe AI's Jev, which `gut` is built around, but also a local NLI encoder or a 0.6B
+language model. `gut` is the primitive that makes any of them a single line, and lets that line
+answer that it does not know:
 
 ```python
 if gut.likely(comment, "is spam or self-promotion"):
@@ -42,6 +43,7 @@ from gut._backends import (
 from gut._cache import Cache, CacheEntry, MemoryCache, NullCache, SQLiteCache
 from gut._config import configure, on_unsure
 from gut._decision import BaseDecision, ChoiceDecision, Decision, ScoreDecision
+from gut._each import Each, each
 from gut._errors import (
     BackendError,
     ConfigurationError,
@@ -84,6 +86,7 @@ __all__ = [
     "ChoiceSpec",
     "ConfigurationError",
     "Decision",
+    "Each",
     "FakeBackend",
     "GutError",
     "JevBackend",
@@ -117,6 +120,7 @@ __all__ = [
     "classify",
     "configure",
     "deterministic_rule",
+    "each",
     "judge",
     "likely",
     "on_unsure",
