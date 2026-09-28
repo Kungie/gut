@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Getting started · gut</title>
+<meta name="description" content="gut turns judgment calls into one line of Python, answered YES, NO or UNSURE by small, fast, cheap models: TypeSafe's Jev first, and any small model after it.">
+<meta property="og:title" content="Getting started · gut">
+<meta property="og:description" content="gut turns judgment calls into one line of Python, answered YES, NO or UNSURE by small, fast, cheap models: TypeSafe's Jev first, and any small model after it.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#F3EFE6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#171614" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+<link rel="preload" href="../assets/fonts/9d1b3b9a.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/style.css">
+<script>try{var t=localStorage.getItem("gut-theme");if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+</head>
+<body>
+<div style="width: 100%; background-color: var(--paper); color: var(--ink); font-family: var(--sans)">
+
+
+<header class="nav">
+  <div class="wrap nav-in">
+    <a class="mark" href="../index.html" aria-label="gut, home"><b>gut</b><small>docs · 0.4.0</small></a>
+    <ul class="nav-links">
+      <li><a href="../index.html#playground">Playground</a></li>
+      <li><a href="../index.html#backends">Backends</a></li>
+      <li><a href="../index.html#docs">Docs</a></li>
+      <li><a href="../index.html#agents">Agents</a></li>
+      <li><a href="../index.html#mcp">MCP</a></li>
+      <li><a class="ext" href="https://github.com/Kungie/gut">GitHub</a></li>
+      <li><a class="ext" href="https://pypi.org/project/gutfeel/">PyPI</a></li>
+    </ul>
+    <details class="nav-menu">
+      <summary>Contents</summary>
+      <ul>
+        <li><a href="../index.html">Home</a></li>
+        <li><a href="../index.html#playground">Playground</a></li>
+        <li><a href="../index.html#docs">All docs</a></li>
+        <li><a href="https://github.com/Kungie/gut">GitHub ↗</a></li>
+      </ul>
+    </details>
+    <button class="theme-btn" type="button" data-theme-toggle="" aria-label="Switch between light and dark">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><circle cx="8" cy="8" r="6.2"></circle><path d="M8 1.8v12.4A6.2 6.2 0 0 0 8 1.8z" fill="currentColor"></path></svg>
+    </button>
+  </div>
+</header>
+
+<div class="wrap doc">
+  <nav class="doc-nav" aria-label="Documentation">
+    <span class="sc">Contents</span>
+    <ol>
+      <li><a href="getting-started.html" aria-current="page">Getting started</a></li>
+      <li><a href="https://github.com/Kungie/gut/blob/main/docs/backends.md">Backends</a></li>
+      <li><a href="https://github.com/Kungie/gut/blob/main/docs/knowing-when-it-doesnt-know.md">Knowing when it doesn't know</a></li>
+      <li><a href="https://github.com/Kungie/gut/blob/main/docs/batching.md">Asking everything at once</a></li>
+      <li><a href="https://github.com/Kungie/gut/blob/main/docs/async.md">Async</a></li>
+      <li><a href="https://github.com/Kungie/gut/blob/main/docs/exact-costs.md">Exact costs</a></li>
+      <li><a href="https://github.com/Kungie/gut/blob/main/docs/caching-and-observability.md">Caching and observability</a></li>
+      <li><a href="https://github.com/Kungie/gut/blob/main/docs/limitations.md">Honest limitations</a></li>
+    </ol>
+    <span class="sc">On this page</span>
+    <ol class="onpage">
+      <li><a href="#install">Install</a></li>
+      <li><a href="#backend">Pick a backend</a></li>
+      <li><a href="#first">Your first question</a></li>
+      <li><a href="#three">Three answers</a></li>
+      <li><a href="#next">Where next</a></li>
+    </ol>
+  </nav>
+
+  <article class="doc-body">
+    <div class="crumbs">docs / 1 / getting-started</div>
+    <h1>Getting started</h1>
+    <p>gut turns a judgment call into one line of Python. This page installs it, points it at a model, and asks one question. It takes about five minutes, most of which is the download.</p>
+
+    <h2 id="install"><span class="sc">1.1</span>Install</h2>
+    <p>The package on PyPI is <code class="inline-code">gutfeel</code>, because <code class="inline-code">gut</code> was taken. You still write <code class="inline-code">import gut</code>. Pick the extra for the model you want:</p>
+    <figure class="listing">
+      <figcaption class="listing-head" style="margin:0;font:12px/1.3 var(--mono)"><span>terminal</span><span>listing 1.1</span></figcaption>
+      <pre><code><span class="l">pip install <span class="s">"gutfeel[jev]"</span>     <span class="c"># TypeSafe's Jev</span></span>
+<span class="l">pip install <span class="s">"gutfeel[local]"</span>   <span class="c"># small models on your machine</span></span>
+<span class="l">pip install gutfeel            <span class="c"># OpenAI-compatible servers, tests</span></span></code></pre>
+    </figure>
+
+    <h2 id="backend"><span class="sc">1.2</span>Pick a backend</h2>
+    <p>Jev is the default. Set your key and gut finds it; or say so explicitly:</p>
+    <figure class="listing">
+      <figcaption class="listing-head" style="margin:0;font:12px/1.3 var(--mono)"><span>setup.py</span><span>listing 1.2</span></figcaption>
+      <pre><code><span class="l"><span class="k">import</span> gut</span>
+<span class="l">gut.configure(backend=gut.JevBackend())  <span class="c"># or just set TYPESAFE_API_KEY</span></span></code></pre>
+    </figure>
+    <p>No key, or no network? <code class="inline-code">gut.ZeroShotBackend()</code> runs a 70M-parameter model on your CPU. The rest of this page does not change.</p>
+
+    <h2 id="first"><span class="sc">1.3</span>Your first question</h2>
+    <p>Ask whether a claim is true of a subject. Write the claim the way you would say it aloud:</p>
+    <figure class="listing">
+      <figcaption class="listing-head" style="margin:0;font:12px/1.3 var(--mono)"><span>moderation.py</span><span>listing 1.3</span></figcaption>
+      <pre><code><span class="l"><span class="k">if</span> gut.<span class="f">likely</span>(comment, <span class="s">"is spam"</span>):</span>
+<span class="l">    hide(comment)</span></code></pre>
+    </figure>
+
+    <h2 id="three"><span class="sc">1.4</span>Three answers</h2>
+    <p>Every yes/no judgment comes back as one of three values. When you want the third, ask for it:</p>
+    <figure class="listing">
+      <figcaption class="listing-head" style="margin:0;font:12px/1.3 var(--mono)"><span>inbox.py</span><span>listing 1.4</span></figcaption>
+      <pre><code><span class="l"><span class="k">match</span> gut.<span class="f">likely</span>(email, <span class="s">"the customer threatens to cancel"</span>, ask_human=True):</span>
+<span class="l">    <span class="k">case</span> gut.YES:    escalate(email)</span>
+<span class="l">    <span class="k">case</span> gut.NO:     auto_reply(email)</span>
+<span class="l">    <span class="k">case</span> gut.UNSURE: send_to_a_person(email)</span></code></pre>
+    </figure>
+    <div class="answer-row"><span class="glyph yes">YES</span><p>The model is confident the claim holds.</p></div>
+    <div class="answer-row"><span class="glyph">NO</span><p>The model is confident it does not.</p></div>
+    <div class="answer-row"><span class="glyph unsure"><span>UNSURE</span></span><p>Somewhere in between. This is where a person, or a bigger model, takes over.</p></div>
+
+    <h2 id="next"><span class="sc">1.5</span>Where next</h2>
+    <p>To choose how careful gut should be, read <a href="https://github.com/Kungie/gut/blob/main/docs/knowing-when-it-doesnt-know.md">Knowing when it doesn't know</a>. To ask about a thousand things at once, read <a href="https://github.com/Kungie/gut/blob/main/docs/batching.md">Asking everything at once</a>.</p>
+
+    <nav class="doc-pager" aria-label="Pager">
+      <a href="../index.html#docs"><small>← contents</small><span>All chapters</span></a>
+      <a href="https://github.com/Kungie/gut/blob/main/docs/backends.md" style="text-align:right"><small>next · 2</small><span>Backends →</span></a>
+    </nav>
+  </article>
+
+  <aside class="side doc-side">
+    <div class="note"><b><span class="n">a</span>Why “gutfeel”</b>The name <code>gut</code> was taken on PyPI. The import was not.</div>
+    <div class="note"><b><span class="n">b</span>0.1 s</b>The local NLI model answering one question on a laptop CPU.</div>
+    <div class="note"><b><span class="n">c</span>No thresholds</b>You never write 0.7. You say <code>lean</code>, <code>stakes</code> or <code>ask_human</code>, and gut places the boundaries.</div>
+    <div class="note"><b><span class="n">d</span>Tested</b>Every code sample in gut's docs is run by the test suite.</div>
+  </aside>
+</div>
+
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot-in">
+      <div class="big"><span>import</span> gut</div>
+      <ul>
+        <li>Apache-2.0</li>
+        <li><a href="https://github.com/Kungie/gut">GitHub</a></li>
+        <li><a href="https://pypi.org/project/gutfeel/">PyPI (gutfeel)</a></li>
+      </ul>
+    </div>
+  </div>
+</footer>
+
+
+
+</div>
+<script src="../assets/site.js" defer></script>
+</body>
+</html>

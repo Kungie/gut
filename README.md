@@ -4,6 +4,8 @@
 
 **Judgment calls as one line of Python — built for Jev, and running on any small model.**
 
+[Try it in your browser →](https://kungie.github.io/gut/) The site runs gut's local model in the page: no key, no server.
+
 Your code keeps running into questions that aren't logic: *Is this comment spam? Which team owns
 this ticket? How urgent is it? Is the agent's task done?* Until now there were three answers:
 

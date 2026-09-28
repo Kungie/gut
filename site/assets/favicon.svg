@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <defs><pattern id="h" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="4" stroke="#171614" stroke-width="1"/></pattern></defs>
+  <rect width="32" height="32" fill="#F3EFE6"/>
+  <rect x="10" y="9" width="12" height="13" fill="url(#h)" stroke="#171614" stroke-width="1"/>
+  <path d="M3 22H29M3 22v-4M16 22v-4M29 22v-4" stroke="#171614" stroke-width="1.5" fill="none"/>
+  <path d="M24 5v19" stroke="#E0452B" stroke-width="2"/>
+  <circle cx="24" cy="24" r="2" fill="#E0452B"/>
+</svg>
