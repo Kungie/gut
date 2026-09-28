@@ -66,3 +66,13 @@ def test_each_keeps_the_order() -> None:
     decisions = gut.each([SPAM, MEETING, SPAM]).likely("is spam")
     assert [d.outcome for d in decisions] == [gut.YES, gut.NO, gut.YES]
     assert all(d.model for d in decisions)
+
+
+@pytest.mark.anyio
+async def test_awaited_answers_match_blocking_ones() -> None:
+    awaited = await gut.alikely(SPAM, "is spam")
+    blocking = gut.likely(SPAM, "is spam")
+    assert awaited.outcome == blocking.outcome == gut.YES
+    assert awaited.p == pytest.approx(blocking.p, abs=0.05)
+    decisions = await gut.each([SPAM, MEETING]).alikely("is spam")
+    assert [d.outcome for d in decisions] == [gut.YES, gut.NO]

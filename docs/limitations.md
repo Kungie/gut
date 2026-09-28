@@ -46,6 +46,7 @@ same ticket in 2.6 s and 0.9 s; the NLI model took about 0.1 s per question on t
 **Decision ids survive edits, not moves.** An id is the question plus the module and function it is
 asked in, so inserting lines above a call doesn't change it -- moving it to another function does.
 
-**`@semantic` is speculative.** It asks questions behind branches that never run. It handles `async`
-functions by running the batch in a worker thread -- correct and non-blocking, but a backend that
-spoke `async` natively would not need the thread. `judge()` is still synchronous.
+**`@semantic` is speculative.** It asks questions behind branches that never run.
+
+**Reading a `judge()` handle is synchronous.** In async code, `await j.aresolve()` before reading, or
+the first read asks the model on the spot and blocks the event loop while it does.

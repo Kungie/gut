@@ -103,6 +103,7 @@ No model at hand? `gut.FakeBackend(answers={"is spam": 0.97})` answers from fixt
 | [Backends](https://github.com/Kungie/gut/blob/main/docs/backends.md) | Jev, every other model `gut` runs on, `Cascade`, and writing your own. |
 | [Knowing when it doesn't know](https://github.com/Kungie/gut/blob/main/docs/knowing-when-it-doesnt-know.md) | `lean`, `ask_human`, `stakes`, and what `if` and `match` do with `UNSURE`. |
 | [Asking everything at once](https://github.com/Kungie/gut/blob/main/docs/batching.md) | `each()`, `@semantic` and `judge()`: many subjects, or many questions, together. |
+| [Async](https://github.com/Kungie/gut/blob/main/docs/async.md) | `await gut.alikely(...)` and friends: nothing blocks the event loop. |
 | [Exact costs](https://github.com/Kungie/gut/blob/main/docs/exact-costs.md) | The cost model under the posture words. |
 | [Caching and observability](https://github.com/Kungie/gut/blob/main/docs/caching-and-observability.md) | The cache, and seeing every decision as it is made. |
 | [Honest limitations](https://github.com/Kungie/gut/blob/main/docs/limitations.md) | What small models get wrong, and what `gut` does not do. |

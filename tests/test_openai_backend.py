@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import enum
 import json
 import math
@@ -370,3 +371,108 @@ def test_each_on_a_server_asks_every_subject(monkeypatch: pytest.MonkeyPatch) ->
 def test_a_batch_with_an_empty_question_set_is_refused() -> None:
     with pytest.raises(BackendError, match="at least one question"):
         FakeServer().backend().ask_many([("a", {})])
+
+
+# --------------------------------------------------------------------------- awaitable
+
+
+def async_backend(server: FakeServer, **options: Any) -> OpenAICompatibleBackend:
+    options.setdefault("model", "gpt-4.1-nano")
+    client = httpx.AsyncClient(transport=httpx.MockTransport(server))
+    return OpenAICompatibleBackend(async_client=client, **options)
+
+
+@pytest.mark.anyio
+async def test_awaiting_reads_exactly_what_blocking_does() -> None:
+    server = FakeServer()
+    backend = async_backend(server)
+    awaited = await backend.aask(
+        "the ticket",
+        {
+            "bug": NoulSpec("is a bug report"),
+            "team": ChoiceSpec(instructions=None, criteria={m.name: m.value for m in Team}),
+        },
+    )
+    assert p_of(awaited.answers["bug"]) == pytest.approx(0.8)
+    team = awaited.answers["team"]
+    assert isinstance(team, gut.ChoiceAnswer)
+    assert team.choice == "PLATFORM"
+    assert len(server.requests) == 4  # both questions, both ways round
+    assert awaited.input_tokens == 4 * 42
+
+
+@pytest.mark.anyio
+async def test_awaited_requests_share_one_bounded_pool() -> None:
+    in_flight = 0
+    most = 0
+
+    async def answer(request: httpx.Request) -> httpx.Response:
+        nonlocal in_flight, most
+        in_flight += 1
+        most = max(most, in_flight)
+        await asyncio.sleep(0.01)
+        in_flight -= 1
+        return httpx.Response(200, json=FakeServer.default("Yes or No"))
+
+    client = httpx.AsyncClient(transport=httpx.MockTransport(answer))
+    backend = OpenAICompatibleBackend("m", async_client=client, max_concurrency=3)
+    items: list[tuple[gut.State, dict[str, gut.QuestionSpec]]] = [
+        (f"subject {i}", {"q": NoulSpec("is spam")}) for i in range(5)
+    ]
+    responses = await backend.aask_many(items)
+    assert len(responses) == 5
+    assert most == 3
+
+
+@pytest.mark.anyio
+async def test_awaited_failures_say_what_went_wrong() -> None:
+    def refuse(request: httpx.Request) -> httpx.Response:
+        raise httpx.ConnectError("connection refused", request=request)
+
+    down = OpenAICompatibleBackend(
+        "m", async_client=httpx.AsyncClient(transport=httpx.MockTransport(refuse))
+    )
+    with pytest.raises(BackendError, match="could not be reached"):
+        await down.aask("t", {"q": NoulSpec("q")})
+
+    def reject(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(400, json={"error": {"message": "logprobs is not supported"}})
+
+    rejecting = OpenAICompatibleBackend(
+        "m", async_client=httpx.AsyncClient(transport=httpx.MockTransport(reject))
+    )
+    with pytest.raises(BackendError, match="answered 400"):
+        await rejecting.aask("t", {"q": NoulSpec("q")})
+
+
+def test_each_event_loop_gets_its_own_client() -> None:
+    backend = OpenAICompatibleBackend("m", base_url="http://127.0.0.1:1/v1")
+
+    async def current() -> httpx.AsyncClient:
+        return backend._async_client()
+
+    async def twice() -> tuple[httpx.AsyncClient, httpx.AsyncClient]:
+        return backend._async_client(), backend._async_client()
+
+    first, again = asyncio.run(twice())
+    assert first is again
+    second = asyncio.run(current())
+    assert second is not first
+
+    async def close() -> None:
+        async with backend:
+            pass
+
+    asyncio.run(close())
+    assert backend._async is None
+    assert second.is_closed
+
+
+@pytest.mark.anyio
+async def test_a_supplied_async_client_is_left_open() -> None:
+    supplied = httpx.AsyncClient()
+    backend = OpenAICompatibleBackend("m", async_client=supplied)
+    assert backend._async_client() is supplied
+    await backend.aclose()
+    assert not supplied.is_closed
+    await supplied.aclose()

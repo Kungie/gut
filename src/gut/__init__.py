@@ -27,7 +27,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from gut._api import classify, likely, rate
+from gut._api import aclassify, alikely, arate, classify, likely, rate
 from gut._backends import (
     LAZY,
     Answer,
@@ -117,6 +117,9 @@ __all__ = [
     "UnsureDecision",
     "ZeroShotBackend",
     "__version__",
+    "aclassify",
+    "alikely",
+    "arate",
     "classify",
     "configure",
     "deterministic_rule",

@@ -15,7 +15,15 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import TypeVar
 
-from gut._backends.base import Answer, Backend, ChoiceAnswer, NoulAnswer, ScoreAnswer
+from gut._backends._many import aask_one
+from gut._backends.base import (
+    Answer,
+    Backend,
+    BackendResponse,
+    ChoiceAnswer,
+    NoulAnswer,
+    ScoreAnswer,
+)
 from gut._cache import CacheEntry, cache_key
 from gut._config import current_backend, current_cache, notify
 from gut._decision import ChoiceDecision, Decision, DecisionSource, ScoreDecision
@@ -60,10 +68,8 @@ class _Resolved:
     latency_ms: float | None
 
 
-def _ask(state: State, spec: QuestionSpec, backend: Backend | None) -> _Resolved:
-    """Answer one question, from cache when possible."""
-    chosen = current_backend() if backend is None else backend
-
+def _stored(state: State, spec: QuestionSpec, chosen: Backend) -> _Resolved | None:
+    """An answer that costs nothing: one fetched ahead of this call, or one in the cache."""
     # A batch fetched by @semantic or judge() is checked first: it is already paid for, and it is
     # correct even when caching is switched off.
     prefetch = current_prefetch()
@@ -77,24 +83,50 @@ def _ask(state: State, spec: QuestionSpec, backend: Backend | None) -> _Resolved
                 latency_ms=None,
             )
 
-    cache = current_cache()
-    key = cache_key(state, spec, chosen.model_id)
-
-    hit = cache.get(key)
+    hit = current_cache().get(cache_key(state, spec, chosen.model_id))
     if hit is not None:
         # The stored model is the version that actually answered, which is more specific than
         # the alias in the key. Reporting the alias would make a recorded decision unfalsifiable.
         return _Resolved(answer=hit.answer, model=hit.model, source="cache", latency_ms=None)
+    return None
 
-    started = time.perf_counter()
-    response = chosen.ask(state, {"q": spec})
+
+def _answered(
+    state: State,
+    spec: QuestionSpec,
+    chosen: Backend,
+    response: BackendResponse,
+    started: float,
+) -> _Resolved:
+    """Cache a fresh answer and describe how it was obtained."""
     latency_ms = (time.perf_counter() - started) * 1000.0
     if "q" not in response.answers:
         raise BackendError(f"{type(chosen).__name__} returned no answer for the question asked.")
     answer = response.answers["q"]
     model = response.model_for("q")
-    cache.set(key, CacheEntry(answer=answer, model=model))
+    current_cache().set(cache_key(state, spec, chosen.model_id), CacheEntry(answer, model))
     return _Resolved(answer=answer, model=model, source="backend", latency_ms=latency_ms)
+
+
+def _ask(state: State, spec: QuestionSpec, backend: Backend | None) -> _Resolved:
+    """Answer one question, from cache when possible."""
+    chosen = current_backend() if backend is None else backend
+    stored = _stored(state, spec, chosen)
+    if stored is not None:
+        return stored
+    started = time.perf_counter()
+    return _answered(state, spec, chosen, chosen.ask(state, {"q": spec}), started)
+
+
+async def _aask(state: State, spec: QuestionSpec, backend: Backend | None) -> _Resolved:
+    """`_ask` without blocking the event loop."""
+    chosen = current_backend() if backend is None else backend
+    stored = _stored(state, spec, chosen)
+    if stored is not None:
+        return stored
+    started = time.perf_counter()
+    response = await aask_one(chosen, state, {"q": spec})
+    return _answered(state, spec, chosen, response, started)
 
 
 def _expect(answer: Answer, kind: type[A], spec: QuestionSpec) -> A:
@@ -456,4 +488,90 @@ def rate(
     )
 
 
-__all__ = ["classify", "likely", "rate"]
+async def alikely(
+    subject: State,
+    question: str,
+    *,
+    stakes: Stakes | None = None,
+    lean: Lean | None = None,
+    ask_human: bool = False,
+    cost_false_yes: float | None = None,
+    cost_false_no: float | None = None,
+    cost_human: float | None = None,
+    threshold: float | None = None,
+    unsure_band: tuple[float, float] | None = None,
+    yes_means: str | None = None,
+    no_means: str | None = None,
+    backend: Backend | None = None,
+) -> Decision:
+    """`likely`, awaitable: the event loop keeps turning while the model answers.
+
+    Jev and the OpenAI-compatible backend are asked natively; any other backend runs in a worker
+    thread. Arguments and result are exactly those of `gut.likely`.
+
+    Example:
+        ```python
+        if await gut.alikely(email, "the customer threatens to cancel"):
+            await escalate(email)
+        ```
+    """
+    rule = _resolve_policy(
+        stakes=stakes,
+        lean=lean,
+        ask_human=ask_human,
+        cost_false_yes=cost_false_yes,
+        cost_false_no=cost_false_no,
+        cost_human=cost_human,
+        threshold=threshold,
+        unsure_band=unsure_band,
+    )
+    spec = NoulSpec(instructions=question, yes_means=yes_means, no_means=no_means)
+    site = caller_site()
+    return build_decision(spec, await _aask(subject, spec, backend), site, rule=rule)
+
+
+async def aclassify(
+    subject: State,
+    enum_class: type[E],
+    *,
+    question: str | None = None,
+    stakes: Stakes | None = None,
+    ask_human: bool = False,
+    min_confidence: float | None = None,
+    backend: Backend | None = None,
+) -> ChoiceDecision[E]:
+    """`classify`, awaitable. Arguments and result are exactly those of `gut.classify`."""
+    min_confidence = _resolve_min_confidence(
+        stakes=stakes, ask_human=ask_human, min_confidence=min_confidence, kind="classify"
+    )
+    criteria = _criteria_from_enum(enum_class)
+    _warn_without_catch_all(enum_class)
+    spec = ChoiceSpec(instructions=question, criteria=criteria)
+    site = caller_site()
+    return build_choice_decision(
+        spec, enum_class, await _aask(subject, spec, backend), site, min_confidence=min_confidence
+    )
+
+
+async def arate(
+    subject: State,
+    levels: Sequence[str],
+    *,
+    question: str | None = None,
+    stakes: Stakes | None = None,
+    ask_human: bool = False,
+    min_confidence: float | None = None,
+    backend: Backend | None = None,
+) -> ScoreDecision:
+    """`rate`, awaitable. Arguments and result are exactly those of `gut.rate`."""
+    min_confidence = _resolve_min_confidence(
+        stakes=stakes, ask_human=ask_human, min_confidence=min_confidence, kind="rate"
+    )
+    spec = ScoreSpec(instructions=question, criteria=levels)
+    site = caller_site()
+    return build_score_decision(
+        spec, await _aask(subject, spec, backend), site, min_confidence=min_confidence
+    )
+
+
+__all__ = ["aclassify", "alikely", "arate", "classify", "likely", "rate"]

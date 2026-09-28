@@ -127,6 +127,7 @@ def test_the_pages_that_should_have_examples_do() -> None:
         "docs/batching.md",
         "docs/exact-costs.md",
         "docs/caching-and-observability.md",
+        "docs/async.md",
     ):
         assert blocks(page, "python"), f"{page} lost all of its examples"
 

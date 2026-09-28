@@ -13,9 +13,11 @@ which means paying for the state again in each part -- still far better than one
 
 from __future__ import annotations
 
+import asyncio
 from collections.abc import Mapping, Sequence
 
-from gut._backends.base import Backend
+from gut._backends._many import aask_one
+from gut._backends.base import Backend, BackendResponse
 from gut._cache import CacheEntry, cache_key
 from gut._config import current_cache
 from gut._errors import BackendError
@@ -83,17 +85,10 @@ def plan_batches(
     return batches
 
 
-def fetch(
-    state: State,
-    specs: Sequence[QuestionSpec],
-    backend: Backend,
-) -> dict[QuestionSpec, CacheEntry]:
-    """Answer every spec about `state`, using the cache and as few calls as possible.
-
-    Returns what it managed to answer. A spec missing from the result was not answered and the
-    caller should fall back to asking it on its own, rather than a missing answer becoming a
-    missing decision.
-    """
+def _split(
+    state: State, specs: Sequence[QuestionSpec], backend: Backend
+) -> tuple[dict[QuestionSpec, CacheEntry], dict[str, QuestionSpec]]:
+    """What the cache already answers, and the named questions still to ask."""
     cache = current_cache()
     resolved: dict[QuestionSpec, CacheEntry] = {}
     outstanding: dict[str, QuestionSpec] = {}
@@ -110,14 +105,52 @@ def fetch(
         else:
             outstanding[f"q{index}"] = spec
             queued.add(spec)
+    return resolved, outstanding
 
+
+def _store(
+    state: State,
+    batch: Mapping[str, QuestionSpec],
+    response: BackendResponse,
+    backend: Backend,
+    resolved: dict[QuestionSpec, CacheEntry],
+) -> None:
+    """Record one batch's answers, in the result and in the cache."""
+    cache = current_cache()
+    for name, spec in batch.items():
+        if name not in response.answers:
+            raise BackendError(f"Backend answered without {name!r} for a batched question.")
+        entry = CacheEntry(answer=response.answers[name], model=response.model_for(name))
+        resolved[spec] = entry
+        cache.set(cache_key(state, spec, backend.model_id), entry)
+
+
+def fetch(
+    state: State,
+    specs: Sequence[QuestionSpec],
+    backend: Backend,
+) -> dict[QuestionSpec, CacheEntry]:
+    """Answer every spec about `state`, using the cache and as few calls as possible.
+
+    Returns what it managed to answer. A spec missing from the result was not answered and the
+    caller should fall back to asking it on its own, rather than a missing answer becoming a
+    missing decision.
+    """
+    resolved, outstanding = _split(state, specs, backend)
     for batch in plan_batches(state, outstanding, backend):
-        response = backend.ask(state, batch)
-        for name, spec in batch.items():
-            if name not in response.answers:
-                raise BackendError(f"Backend answered without {name!r} for a batched question.")
-            entry = CacheEntry(answer=response.answers[name], model=response.model_for(name))
-            resolved[spec] = entry
-            cache.set(cache_key(state, spec, backend.model_id), entry)
+        _store(state, batch, backend.ask(state, batch), backend, resolved)
+    return resolved
 
+
+async def afetch(
+    state: State,
+    specs: Sequence[QuestionSpec],
+    backend: Backend,
+) -> dict[QuestionSpec, CacheEntry]:
+    """`fetch` without blocking the event loop; the parts of a split batch go out concurrently."""
+    resolved, outstanding = _split(state, specs, backend)
+    batches = plan_batches(state, outstanding, backend)
+    responses = await asyncio.gather(*(aask_one(backend, state, batch) for batch in batches))
+    for batch, response in zip(batches, responses, strict=True):
+        _store(state, batch, response, backend, resolved)
     return resolved

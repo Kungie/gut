@@ -61,10 +61,10 @@ costs a wasted request, never a wrong answer.
 **It is speculative.** Questions behind branches that never run are still asked. Usually the right
 trade; if a question is expensive for reasons other than the subject, keep it out.
 
-**Coroutines work too.** The prefetch is the only call that touches the model, so it runs in a
-worker thread and is awaited; the body is then answered from memory and never blocks the loop.
-Three judgments about one ticket become one batch, and concurrent handlers overlap instead of
-queueing.
+**Coroutines work too.** The prefetch is awaited -- natively for Jev and the OpenAI-compatible
+backend, from a worker thread otherwise -- and the body is then answered from memory, so it never
+blocks the loop. `await gut.alikely(...)` in the body is collected just like `likely(...)`. See
+[Async](async.md).
 
 If you'd rather place the batch by hand:
 

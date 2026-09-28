@@ -15,11 +15,16 @@ that appears twice is asked once.
 The decisions come back as a list in the same order as the subjects, each exactly what
 `gut.likely(subject, ...)` would have returned for it -- same outcome rules, same posture words,
 same `on_decision` hook -- with `source="batch"`.
+
+Every method has an awaitable twin -- `alikely`, `aclassify`, `arate` -- for code running on an
+event loop: Jev and the OpenAI-compatible backend are then asked natively, the rest from a worker
+thread.
 """
 
 from __future__ import annotations
 
 from collections.abc import Iterable, Sequence
+from dataclasses import dataclass
 from enum import Enum
 from typing import TypeVar
 
@@ -33,8 +38,8 @@ from gut._api import (
     build_decision,
     build_score_decision,
 )
-from gut._backends._many import DEFAULT_CONCURRENCY, ask_all
-from gut._backends.base import Backend
+from gut._backends._many import DEFAULT_CONCURRENCY, aask_all, ask_all
+from gut._backends.base import Backend, BackendResponse
 from gut._cache import CacheEntry, cache_key
 from gut._config import current_backend, current_cache
 from gut._decision import ChoiceDecision, Decision, ScoreDecision
@@ -62,6 +67,8 @@ class Each:
 
     def __len__(self) -> int:
         return len(self.subjects)
+
+    # ------------------------------------------------------------------ blocking
 
     def likely(
         self,
@@ -135,18 +142,120 @@ class Each:
             for resolved in self._answers(spec)
         ]
 
+    # ------------------------------------------------------------------ awaitable
+
+    async def alikely(
+        self,
+        question: str,
+        *,
+        stakes: Stakes | None = None,
+        lean: Lean | None = None,
+        ask_human: bool = False,
+        cost_false_yes: float | None = None,
+        cost_false_no: float | None = None,
+        cost_human: float | None = None,
+        threshold: float | None = None,
+        unsure_band: tuple[float, float] | None = None,
+        yes_means: str | None = None,
+        no_means: str | None = None,
+    ) -> list[Decision]:
+        """`likely`, awaitable. Jev and servers get concurrent requests on the event loop."""
+        rule = _resolve_policy(
+            stakes=stakes,
+            lean=lean,
+            ask_human=ask_human,
+            cost_false_yes=cost_false_yes,
+            cost_false_no=cost_false_no,
+            cost_human=cost_human,
+            threshold=threshold,
+            unsure_band=unsure_band,
+        )
+        spec = NoulSpec(instructions=question, yes_means=yes_means, no_means=no_means)
+        site = caller_site()
+        answers = await self._aanswers(spec)
+        return [build_decision(spec, resolved, site, rule=rule) for resolved in answers]
+
+    async def aclassify(
+        self,
+        enum_class: type[E],
+        *,
+        question: str | None = None,
+        stakes: Stakes | None = None,
+        ask_human: bool = False,
+        min_confidence: float | None = None,
+    ) -> list[ChoiceDecision[E]]:
+        """`classify`, awaitable."""
+        min_confidence = _resolve_min_confidence(
+            stakes=stakes, ask_human=ask_human, min_confidence=min_confidence, kind="classify"
+        )
+        criteria = _criteria_from_enum(enum_class)
+        _warn_without_catch_all(enum_class)
+        spec = ChoiceSpec(instructions=question, criteria=criteria)
+        site = caller_site()
+        return [
+            build_choice_decision(spec, enum_class, resolved, site, min_confidence=min_confidence)
+            for resolved in await self._aanswers(spec)
+        ]
+
+    async def arate(
+        self,
+        levels: Sequence[str],
+        *,
+        question: str | None = None,
+        stakes: Stakes | None = None,
+        ask_human: bool = False,
+        min_confidence: float | None = None,
+    ) -> list[ScoreDecision]:
+        """`rate`, awaitable."""
+        min_confidence = _resolve_min_confidence(
+            stakes=stakes, ask_human=ask_human, min_confidence=min_confidence, kind="rate"
+        )
+        spec = ScoreSpec(instructions=question, criteria=levels)
+        site = caller_site()
+        return [
+            build_score_decision(spec, resolved, site, min_confidence=min_confidence)
+            for resolved in await self._aanswers(spec)
+        ]
+
+    # ------------------------------------------------------------------ shared
+
     def _answers(self, spec: QuestionSpec) -> list[_Resolved]:
         """One answer per subject, in order: from the cache where possible, the rest in one go."""
-        if not self.subjects:
-            return []
-        backend = current_backend() if self._backend is None else self._backend
+        batch = _Batch.plan(self.subjects, spec, self._backend)
+        responses = ask_all(batch.backend, batch.items(), concurrency=self._concurrency)
+        return batch.finish(responses)
+
+    async def _aanswers(self, spec: QuestionSpec) -> list[_Resolved]:
+        """`_answers` without blocking the event loop."""
+        batch = _Batch.plan(self.subjects, spec, self._backend)
+        responses = await aask_all(batch.backend, batch.items(), concurrency=self._concurrency)
+        return batch.finish(responses)
+
+
+@dataclass
+class _Batch:
+    """One question about many subjects: what the cache already knows, and what is left to ask."""
+
+    spec: QuestionSpec
+    backend: Backend
+    unique: list[State]
+    """Each distinct subject once."""
+    order: list[int]
+    """For every subject asked about, its position in `unique`."""
+    resolved: list[_Resolved | None]
+    misses: list[int]
+    """Positions in `unique` that the cache could not answer."""
+
+    @classmethod
+    def plan(cls, subjects: Sequence[State], spec: QuestionSpec, chosen: Backend | None) -> _Batch:
+        backend = chosen if chosen is not None else current_backend()
         cache = current_cache()
 
         # A subject that appears twice is one question, asked once.
         unique: list[State] = []
         position: dict[str, int] = {}
         order: list[int] = []
-        for subject in self.subjects:
+        for subject in subjects:
             key = canonical_json(subject)
             if key not in position:
                 position[key] = len(unique)
@@ -163,18 +272,27 @@ class Each:
                 resolved[index] = _Resolved(
                     answer=hit.answer, model=hit.model, source="cache", latency_ms=None
                 )
+        return cls(spec, backend, unique, order, resolved, misses)
 
-        responses = ask_all(
-            backend, [(unique[i], {"q": spec}) for i in misses], concurrency=self._concurrency
-        )
-        for index, response in zip(misses, responses, strict=True):
+    def items(self) -> list[tuple[State, dict[str, QuestionSpec]]]:
+        """What still has to be asked, one item per subject the cache did not know."""
+        return [(self.unique[index], {"q": self.spec}) for index in self.misses]
+
+    def finish(self, responses: Sequence[BackendResponse]) -> list[_Resolved]:
+        """Cache the fresh answers and return one answer per subject, in the original order."""
+        cache = current_cache()
+        for index, response in zip(self.misses, responses, strict=True):
             if "q" not in response.answers:
-                raise BackendError(f"{type(backend).__name__} returned no answer for a subject.")
+                raise BackendError(
+                    f"{type(self.backend).__name__} returned no answer for a subject."
+                )
             answer, model = response.answers["q"], response.model_for("q")
-            cache.set(cache_key(unique[index], spec, backend.model_id), CacheEntry(answer, model))
-            resolved[index] = _Resolved(answer=answer, model=model, source="batch", latency_ms=None)
-
-        return [resolved[index] for index in order]  # type: ignore[misc]
+            key = cache_key(self.unique[index], self.spec, self.backend.model_id)
+            cache.set(key, CacheEntry(answer, model))
+            self.resolved[index] = _Resolved(
+                answer=answer, model=model, source="batch", latency_ms=None
+            )
+        return [self.resolved[index] for index in self.order]  # type: ignore[misc]
 
 
 def each(

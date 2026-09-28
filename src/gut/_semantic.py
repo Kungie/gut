@@ -18,9 +18,10 @@ the decorator exists to make: reading the subject is the expensive part, every b
 once per batch, and so five questions in one call cost barely more than one. If a question is
 expensive for reasons other than the subject, keep it out of a decorated function.
 
-Coroutine functions work the same way. The prefetch is the only call that touches the network, so
-it is run in a worker thread and awaited; everything after it is answered from memory and never
-blocks the loop.
+Coroutine functions work the same way, and their prefetch is awaited: Jev and the
+OpenAI-compatible backend are asked natively, anything else from a worker thread, and the subjects
+of different parameters concurrently. Everything after it is answered from memory and never blocks
+the loop. Inside one, `await alikely(...)` is collected just like `likely(...)`.
 """
 
 from __future__ import annotations
@@ -36,9 +37,9 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, ParamSpec, TypeVar, cast
 
-from gut._api import _criteria_from_enum, classify, likely, rate
+from gut._api import _criteria_from_enum, aclassify, alikely, arate, classify, likely, rate
 from gut._backends.base import Backend
-from gut._batching import fetch
+from gut._batching import afetch, fetch
 from gut._config import current_backend
 from gut._errors import GutError
 from gut._questions import ChoiceSpec, NoulSpec, QuestionSpec, ScoreSpec
@@ -50,6 +51,9 @@ P = ParamSpec("P")
 R = TypeVar("R")
 
 _NESTED_SCOPES = (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda, ast.ClassDef)
+
+_JUDGMENTS = (likely, classify, rate, alikely, aclassify, arate)
+"""Calls `@semantic` knows how to collect, in either form."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -236,7 +240,7 @@ def _spec_for(call: ast.Call, target: Any, namespace: Mapping[str, Any]) -> Ques
         return None
 
     question = _as_text(arguments.keyword.get("question"), namespace)
-    if target is likely:
+    if target in (likely, alikely):
         instructions = _as_text(arguments.at(1, "question"), namespace)
         if instructions is None:
             return None
@@ -251,7 +255,7 @@ def _spec_for(call: ast.Call, target: Any, namespace: Mapping[str, Any]) -> Ques
     if ("question" in arguments.keyword) != (question is not None):
         return None
 
-    if target is classify:
+    if target in (classify, aclassify):
         enum_class = _as_enum(arguments.at(1, "enum_class"), namespace)
         if enum_class is None:
             return None
@@ -260,7 +264,7 @@ def _spec_for(call: ast.Call, target: Any, namespace: Mapping[str, Any]) -> Ques
         except GutError:
             return None
 
-    if target is rate:
+    if target in (rate, arate):
         levels = _as_levels(arguments.at(1, "levels"), namespace)
         if levels is None:
             return None
@@ -298,7 +302,7 @@ def build_plan(func: Callable[..., Any]) -> Plan:
     seen: set[tuple[str, str]] = set()
     for call in _body_calls(node):
         target = _resolve(call.func, namespace)
-        if target not in (likely, classify, rate):
+        if target not in _JUDGMENTS:
             continue
         arguments = _arguments(call)
         parameter = _subject_parameter(arguments, parameters, rebound)
@@ -321,24 +325,54 @@ def build_plan(func: Callable[..., Any]) -> Plan:
 # --------------------------------------------------------------------------- the decorator
 
 
-def _prefetch_for(plan: Plan, arguments: Mapping[str, Any], backend: Backend) -> Prefetch:
-    """Answer everything the plan expects, in as few calls as it can manage."""
-    prefetch = Prefetch()
+def _subjects(
+    plan: Plan, arguments: Mapping[str, Any]
+) -> list[tuple[str, Any, list[QuestionSpec]]]:
+    """Each parameter the plan asks about, the value it was called with, and its questions."""
+    found = []
     for parameter, specs in plan.by_parameter().items():
         if parameter not in arguments:  # pragma: no cover - apply_defaults() fills every parameter
             continue
         subject = arguments[parameter]
-        if not isinstance(subject, str | Mapping | Sequence):
-            continue
+        if isinstance(subject, str | Mapping | Sequence):
+            found.append((parameter, subject, specs))
+    return found
+
+
+def _failed(parameter: str, error: Exception) -> None:
+    # A failed prefetch must never break the call; the body asks normally.
+    logger.debug("gut: prefetch for %r failed, falling back to single calls: %s", parameter, error)
+
+
+def _prefetch_for(plan: Plan, arguments: Mapping[str, Any], backend: Backend) -> Prefetch:
+    """Answer everything the plan expects, in as few calls as it can manage."""
+    prefetch = Prefetch()
+    for parameter, subject, specs in _subjects(plan, arguments):
         try:
             resolved = fetch(subject, specs, backend)
         except Exception as error:
-            # A failed prefetch must never break the call; the body asks normally.
-            logger.debug(
-                "gut: prefetch for %r failed, falling back to single calls: %s", parameter, error
-            )
+            _failed(parameter, error)
             continue
         for spec, entry in resolved.items():
+            prefetch.add(subject, spec, entry)
+    return prefetch
+
+
+async def _aprefetch_for(plan: Plan, arguments: Mapping[str, Any], backend: Backend) -> Prefetch:
+    """`_prefetch_for` on the event loop, every parameter's subject at once."""
+    prefetch = Prefetch()
+    subjects = _subjects(plan, arguments)
+    results = await asyncio.gather(
+        *(afetch(subject, specs, backend) for _, subject, specs in subjects),
+        return_exceptions=True,
+    )
+    for (parameter, subject, _), result in zip(subjects, results, strict=True):
+        if isinstance(result, Exception):
+            _failed(parameter, result)
+            continue
+        if isinstance(result, BaseException):  # cancellation and the like are not ours to eat
+            raise result
+        for spec, entry in result.items():
             prefetch.add(subject, spec, entry)
     return prefetch
 
@@ -346,16 +380,11 @@ def _prefetch_for(plan: Plan, arguments: Mapping[str, Any], backend: Backend) ->
 def _async_wrapper(
     func: Callable[P, Coroutine[Any, Any, R]], plan: Plan, signature: inspect.Signature
 ) -> Callable[P, Coroutine[Any, Any, R]]:
-    """The same batching for a coroutine function, with the one blocking call moved off the loop.
+    """The same batching for a coroutine function, with the prefetch awaited.
 
-    The only I/O `@semantic` does is the prefetch itself; once it has run, every `likely` in the
-    body is answered from the scope without touching the network. So running that single call in a
-    worker thread is enough to make a decorated coroutine batch properly without blocking the event
-    loop -- and it is a strict improvement on today's behaviour, where the body issues one blocking
-    request per judgment.
-
-    A backend that speaks `async` natively would avoid the thread entirely. That is a larger change
-    and is noted as a next step rather than done here.
+    The only I/O `@semantic` does is the prefetch itself; once it has run, every judgment in the
+    body is answered from the scope without touching the model. The prefetch is awaited: natively
+    for a backend that speaks `async`, from a worker thread for one that does not.
     """
 
     @functools.wraps(func)
@@ -371,7 +400,7 @@ def _async_wrapper(
 
         backend = current_backend()
         arguments = dict(bound.arguments)
-        prefetch = await asyncio.to_thread(_prefetch_for, plan, arguments, backend)
+        prefetch = await _aprefetch_for(plan, arguments, backend)
         # The scope is entered in the coroutine's own context, so it follows this task and no
         # other: a sibling task awaiting concurrently has its own, and sees none of this.
         with prefetch_scope(prefetch):
@@ -395,12 +424,12 @@ def semantic(func: Callable[P, R]) -> Callable[P, R]:
                 ...
         ```
 
-    What gets collected: calls to `likely`, `classify` and `rate` in the function's own body, whose
-    subject is one of its parameters and whose question is knowable at decoration time. Everything
-    else runs exactly as it would undecorated.
+    What gets collected: calls to `likely`, `classify` and `rate` (or their awaitable forms) in the
+    function's own body, whose subject is one of its parameters and whose question is knowable at
+    decoration time. Everything else runs exactly as it would undecorated.
 
-    Coroutine functions are supported: the prefetch runs in a worker thread so the event loop keeps
-    turning, and the body's judgments are then answered from memory.
+    Coroutine functions are supported: the prefetch is awaited, so the event loop keeps turning, and
+    the body's judgments -- `likely(...)` or `await alikely(...)` -- are then answered from memory.
 
     The plan is available as `handle.gut_plan` for inspection.
     """

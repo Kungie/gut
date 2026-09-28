@@ -31,6 +31,7 @@ Python 3.10+, Apache-2.0. `pip install gutfeel` (the PyPI name; the import is `i
 - `cost_false_yes` / `cost_false_no` / `cost_human` — the same thing in numbers, when you know them.
 - `each(subjects).likely(...)` — the same question about many subjects, in as few calls as possible.
 - `@semantic` and `judge()` — every judgment about one subject, handed to the model together.
+- `alikely` / `aclassify` / `arate`, `each(...).alikely(...)`, `judge.aresolve()` — the same, awaitable.
 - `JevBackend` — TypeSafe's Jev, the default. `ZeroShotBackend`, `TransformersBackend` — models in
   your process. `OpenAICompatibleBackend` — Ollama, vLLM, llama.cpp, OpenAI.
 - `Cascade(small, bigger)` — the cheap model first; only unsure answers go on.

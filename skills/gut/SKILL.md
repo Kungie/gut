@@ -143,6 +143,19 @@ with gut.judge(ticket) as j:
         route(team)
 ```
 
+## Async
+
+```python
+async def handle(email, ticket, comments):
+    decision = await gut.alikely(email, "the customer threatens to cancel")
+    team = await gut.aclassify(ticket, Team)
+    spam = await gut.each(comments).alikely("is spam")
+```
+
+Every function has an `a`-prefixed twin with the same arguments. **In async code, use them** — a
+plain `gut.likely` blocks the event loop while the model answers. `@semantic` works on `async def`
+and collects `await gut.alikely(...)`. With `judge()`, `await j.aresolve()` before reading handles.
+
 ## Exact costs — only when you know the numbers
 
 ```python

@@ -11,6 +11,7 @@ own `RetryPolicy` rather than replacing it.
 
 from __future__ import annotations
 
+import asyncio
 import json
 from collections.abc import Mapping
 from typing import TYPE_CHECKING, Any, Final
@@ -103,6 +104,10 @@ class JevBackend:
         retry: A full SDK `RetryPolicy`, for anything `max_retries` does not cover.
         client: An already-configured `TypeSafeClient`, used as-is. Mutually exclusive with every
             other connection argument.
+        async_client: An already-configured `AsyncTypeSafeClient` for the awaitable methods. Left
+            unset, one is built from the same arguments for each event loop that uses this backend
+            -- unless `client` was supplied, in which case awaiting runs that client in a worker
+            thread rather than guessing at its configuration.
 
     Raises:
         BackendError: The SDK is not installed, or the arguments conflict.
@@ -118,6 +123,7 @@ class JevBackend:
         max_retries: int | None = None,
         retry: typesafe_sdk.RetryPolicy | None = None,
         client: typesafe_sdk.TypeSafeClient | None = None,
+        async_client: typesafe_sdk.AsyncTypeSafeClient | None = None,
     ) -> None:
         sdk = _sdk()
         self._sdk = sdk
@@ -126,7 +132,8 @@ class JevBackend:
             raise BackendError(
                 "Pass max_retries or retry, not both: max_retries is shorthand for a RetryPolicy."
             )
-        if client is not None and any(
+        supplied = client is not None or async_client is not None
+        if supplied and any(
             argument is not None for argument in (api_key, base_url, timeout, max_retries, retry)
         ):
             raise BackendError(
@@ -135,19 +142,26 @@ class JevBackend:
             )
 
         self._model = model or sdk.constants.DEFAULT_MODEL
-        if client is not None:
-            self._client = client
-        else:
-            policy = retry
-            if max_retries is not None:
-                policy = sdk.RetryPolicy(max_retries=max_retries)
-            self._client = sdk.TypeSafeClient(
-                api_key=api_key,
-                base_url=base_url,
-                model=self._model,
-                timeout=timeout,
-                retry=policy,
-            )
+        policy = retry
+        if max_retries is not None:
+            policy = sdk.RetryPolicy(max_retries=max_retries)
+        connection: dict[str, Any] = {
+            "api_key": api_key,
+            "base_url": base_url,
+            "model": self._model,
+            "timeout": timeout,
+            "retry": policy,
+        }
+        # With a client supplied, its configuration is unknown, so no async twin is guessed at.
+        self._connection: dict[str, Any] | None = None if client is not None else connection
+        # With only an async client supplied, the blocking one is built if and when it is needed.
+        self._client: typesafe_sdk.TypeSafeClient | None = client
+        if client is None and async_client is None:
+            self._client = sdk.TypeSafeClient(**connection)
+        self._supplied_async = async_client
+        self._async: tuple[asyncio.AbstractEventLoop, typesafe_sdk.AsyncTypeSafeClient] | None = (
+            None
+        )
 
     @property
     def model_id(self) -> str:
@@ -156,7 +170,10 @@ class JevBackend:
 
     @property
     def client(self) -> typesafe_sdk.TypeSafeClient:
-        """The underlying SDK client."""
+        """The underlying blocking SDK client."""
+        if self._client is None:
+            assert self._connection is not None  # only unset when an async client was supplied
+            self._client = self._sdk.TypeSafeClient(**self._connection)
         return self._client
 
     def ask(self, state: State, questions: Mapping[str, QuestionSpec]) -> BackendResponse:
@@ -166,15 +183,31 @@ class JevBackend:
             BackendError: The request failed, or the response did not contain the answers asked
                 for. The originating SDK exception is kept as the cause.
         """
-        if not questions:
-            raise BackendError("A backend call needs at least one question.")
-
-        payload = {name: _to_sdk_question(spec, self._sdk) for name, spec in questions.items()}
+        payload = self._payload(questions)
         try:
-            response = self._client.system_one(state=state, questions=payload, model=self._model)
+            response = self.client.system_one(state=state, questions=payload, model=self._model)
         except self._sdk.TypeSafeError as error:
             raise BackendError(f"Jev request failed: {error}") from error
+        return self._response(questions, response)
 
+    async def aask(self, state: State, questions: Mapping[str, QuestionSpec]) -> BackendResponse:
+        """`ask`, awaitable, through the SDK's own async client: no thread involved."""
+        client = self._async_client()
+        if client is None:
+            return await asyncio.to_thread(self.ask, state, questions)
+        payload = self._payload(questions)
+        try:
+            response = await client.system_one(state=state, questions=payload, model=self._model)
+        except self._sdk.TypeSafeError as error:
+            raise BackendError(f"Jev request failed: {error}") from error
+        return self._response(questions, response)
+
+    def _payload(self, questions: Mapping[str, QuestionSpec]) -> dict[str, Any]:
+        if not questions:
+            raise BackendError("A backend call needs at least one question.")
+        return {name: _to_sdk_question(spec, self._sdk) for name, spec in questions.items()}
+
+    def _response(self, questions: Mapping[str, QuestionSpec], response: Any) -> BackendResponse:
         missing = set(questions) - set(response.answers)
         if missing:
             names = ", ".join(sorted(repr(name) for name in missing))
@@ -190,12 +223,37 @@ class JevBackend:
             input_tokens=response.usage.input_tokens,
         )
 
+    def _async_client(self) -> typesafe_sdk.AsyncTypeSafeClient | None:
+        """The SDK's async client for the running loop, or `None` to fall back to a thread."""
+        if self._supplied_async is not None:
+            return self._supplied_async
+        if self._connection is None:
+            return None
+        loop = asyncio.get_running_loop()
+        if self._async is None or self._async[0] is not loop:
+            self._async = (loop, self._sdk.AsyncTypeSafeClient(**self._connection))
+        return self._async[1]
+
     def close(self) -> None:
-        """Close the underlying client."""
-        self._client.close()
+        """Close the blocking client, if one was made."""
+        if self._client is not None:
+            self._client.close()
+
+    async def aclose(self) -> None:
+        """Close both clients, from inside the event loop."""
+        self.close()
+        if self._async is not None:
+            await self._async[1].aclose()
+            self._async = None
 
     def __enter__(self) -> JevBackend:
         return self
 
     def __exit__(self, *exc: object) -> None:
         self.close()
+
+    async def __aenter__(self) -> JevBackend:
+        return self
+
+    async def __aexit__(self, *exc: object) -> None:
+        await self.aclose()

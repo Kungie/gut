@@ -24,11 +24,14 @@ Two consequences worth knowing:
   whether it is pending instead.
 - Leaving the `with` block resolves nothing. A question nobody reads is never asked and never
   billed. The block only stops further registration; handles still resolve afterwards.
+
+In async code, reading a handle cannot await, so `await j.aresolve()` first: it asks everything
+registered so far without blocking the event loop, and every read after it is answered from memory.
 """
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from enum import Enum
 from types import TracebackType
@@ -45,7 +48,8 @@ from gut._api import (
     build_score_decision,
 )
 from gut._backends.base import Backend
-from gut._batching import fetch
+from gut._batching import afetch, fetch
+from gut._cache import CacheEntry
 from gut._config import current_backend
 from gut._decision import BaseDecision, ChoiceDecision, Decision, ScoreDecision
 from gut._errors import JudgeClosedError
@@ -232,22 +236,53 @@ class Judge:
         if self._pending:
             self._flush()
 
+    async def aresolve(self) -> None:
+        """Ask everything registered so far without blocking the event loop.
+
+        Reading a handle is synchronous -- `if bug:` cannot await -- so in async code, register,
+        `await j.aresolve()`, then read: every handle is already answered and nothing blocks.
+
+        ```python
+        with gut.judge(ticket) as j:
+            bug = j.likely("is a bug report")
+            team = j.classify(Team)
+        await j.aresolve()
+        if bug:
+            route(team)
+        ```
+        """
+        if not self._pending:
+            return
+        indices, registrations, backend = self._take_pending()
+        answers = await afetch(self.subject, [r.spec for r in registrations], backend)
+        self._settle(indices, registrations, answers)
+
     def _decision_for(self, index: int) -> BaseDecision:
         if index not in self._decisions:
             self._flush()
         return self._decisions[index]
 
     def _flush(self) -> None:
-        indices = self._pending
-        self._pending = []
+        indices, registrations, backend = self._take_pending()
         if not indices:  # pragma: no cover - _decision_for only flushes for an unresolved index
             return
-
-        backend = current_backend() if self._backend is None else self._backend
-        registrations = [self._registrations[index] for index in indices]
         answers = fetch(self.subject, [r.spec for r in registrations], backend)
-        self.requests += 1
+        self._settle(indices, registrations, answers)
 
+    def _take_pending(self) -> tuple[list[int], list[_Registration], Backend]:
+        """Claim everything registered since the last request, so it is asked exactly once."""
+        indices = self._pending
+        self._pending = []
+        backend = current_backend() if self._backend is None else self._backend
+        return indices, [self._registrations[index] for index in indices], backend
+
+    def _settle(
+        self,
+        indices: list[int],
+        registrations: list[_Registration],
+        answers: Mapping[QuestionSpec, CacheEntry],
+    ) -> None:
+        self.requests += 1
         for index, registration in zip(indices, registrations, strict=True):
             entry = answers[registration.spec]
             resolved = _Resolved(

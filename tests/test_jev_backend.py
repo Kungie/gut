@@ -7,6 +7,7 @@ transport is stubbed.
 
 from __future__ import annotations
 
+import asyncio
 import os
 from collections.abc import Mapping
 from typing import TYPE_CHECKING, Any
@@ -353,3 +354,89 @@ def test_live_jev_answers_a_batch() -> None:
     # The response names the version that answered, never the alias we asked for.
     assert result.model != "jev-latest"
     assert result.model.startswith("jev-")
+
+
+# --------------------------------------------------------------------------- awaitable
+
+
+class AsyncStubClient:
+    """Stands in for `AsyncTypeSafeClient`."""
+
+    def __init__(self, reply: object = None, error: Exception | None = None) -> None:
+        self.reply = reply
+        self.error = error
+        self.calls: list[dict[str, Any]] = []
+
+    async def system_one(self, *, state: Any, questions: Any, model: str) -> Any:
+        self.calls.append({"state": state, "questions": questions, "model": model})
+        if self.error is not None:
+            raise self.error
+        return self.reply
+
+
+@pytest.mark.anyio
+async def test_awaiting_uses_the_sdks_async_client() -> None:
+    stub = AsyncStubClient(reply=response({"q": ts.NoulAnswer(noul=0.8)}))
+    backend = JevBackend(async_client=stub)  # type: ignore[arg-type]
+    answered = await backend.aask("a ticket", {"q": BUG})
+    assert answered.answers["q"] == NoulAnswer(p=0.8)
+    assert answered.model == "jev-1.13.0"
+    assert stub.calls[0]["model"] == backend.model_id
+
+
+@pytest.mark.anyio
+async def test_awaited_sdk_errors_become_backend_errors() -> None:
+    stub = AsyncStubClient(error=ts.TypeSafeError("quota exhausted"))
+    backend = JevBackend(async_client=stub)  # type: ignore[arg-type]
+    with pytest.raises(BackendError, match="Jev request failed: quota exhausted"):
+        await backend.aask("a ticket", {"q": BUG})
+    with pytest.raises(BackendError, match="at least one question"):
+        await backend.aask("a ticket", {})
+
+
+@pytest.mark.anyio
+async def test_a_supplied_blocking_client_is_awaited_from_a_thread() -> None:
+    backend, client = backend_with(reply=response({"q": ts.NoulAnswer(noul=0.3)}))
+    answered = await backend.aask("a ticket", {"q": BUG})
+    assert answered.answers["q"] == NoulAnswer(p=0.3)
+    assert len(client.calls) == 1
+
+
+def test_an_async_client_is_built_per_event_loop_from_the_same_arguments() -> None:
+    backend = JevBackend(api_key="k", base_url="http://127.0.0.1:1", model="jev-1.13.0")
+
+    async def current() -> Any:
+        return backend._async_client()
+
+    async def twice() -> tuple[Any, Any]:
+        return backend._async_client(), backend._async_client()
+
+    asyncio.run(backend.aclose())  # nothing built yet: closing is a no-op
+    first, again = asyncio.run(twice())
+    second = asyncio.run(current())
+    assert isinstance(first, ts.AsyncTypeSafeClient)
+    assert again is first
+    assert second is not first
+
+    async def close() -> None:
+        async with backend:
+            pass
+
+    asyncio.run(close())
+    assert backend._async is None
+
+
+def test_a_supplied_async_client_also_excludes_connection_arguments() -> None:
+    with pytest.raises(BackendError, match="used as configured"):
+        JevBackend(async_client=AsyncStubClient(), api_key="k")  # type: ignore[arg-type]
+
+
+def test_with_only_an_async_client_the_blocking_one_is_built_on_demand(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("TYPESAFE_API_KEY", "k")
+    backend = JevBackend(async_client=AsyncStubClient())  # type: ignore[arg-type]
+    backend.close()  # nothing built yet, nothing to close
+    assert isinstance(backend.client, ts.TypeSafeClient)
+    assert backend.client is backend.client
+    backend.close()

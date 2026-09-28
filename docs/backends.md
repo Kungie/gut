@@ -215,6 +215,9 @@ every question shape. The rest of the contract:
   goes into the cache key. If different questions were answered by different models, say which in
   `BackendResponse.models`.
 - **Raise `BackendError`** for anything that went wrong, so a `Cascade` can move on.
+- **Optionally, `aask(subject, questions)` and `aask_many(items)`**: awaitable versions, used from
+  async code. Without them, `gut` runs `ask` in a worker thread, which is fine for anything that
+  is not already asynchronous underneath.
 - **Optionally, `ask_many(items)`**: a list of `(subject, questions)` pairs in, one response per
   pair out, in order. `each()` and `Cascade` use it when it is there -- the local backends run a
   whole batch in one forward pass through it. Without it, `gut` calls `ask()` once per subject
