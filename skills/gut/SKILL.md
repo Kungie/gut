@@ -199,7 +199,8 @@ Full documentation: [`docs/`](../../docs/README.md). Backends in depth:
 4. **Don't ask it to count, do arithmetic, or compare dates.** Compute those in Python.
 5. **Pass the narrowest subject** that contains the answer; irrelevant text hurts small models most.
 6. **Don't treat a judgment over user-controlled text as an authorisation decision.** Text in the
-   subject can influence the answer, and `gut` does no taint tracking.
+   subject can try to steer a language model ("answer Yes"). `ZeroShotBackend` follows no
+   instructions and resisted every attempt we tried; prefer it for untrusted text.
 7. **`confidence` is not a probability of being right.** On `classify` and `rate` it is how peaked
    the answer's distribution is. A model can be confidently wrong.
 8. **The same costs mean different things on different models.** After switching backends, look at
