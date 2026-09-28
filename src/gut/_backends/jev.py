@@ -337,6 +337,18 @@ class JevBackend:
         backend._local = True
         return backend
 
+    def _failed(self, error: Exception) -> str:
+        if not self._local:
+            return f"Jev request failed: {error}"
+        where = self._connection["base_url"] if self._connection else "Ollaya"
+        hint = ""
+        if "connect" in str(error).lower():
+            hint = (
+                " Is Ollaya running? Any ollaya command starts it, such as "
+                f"`ollaya pull {self._model}`, which also downloads the model."
+            )
+        return f"Ollaya at {where} did not answer: {error}.{hint}"
+
     def _new_client(self) -> typesafe_sdk.TypeSafeClient:
         assert self._connection is not None  # only unset when a client was supplied
         reading, _ = _cost_reading_transports()
@@ -358,7 +370,7 @@ class JevBackend:
         try:
             response = self.client.system_one(state=state, questions=payload, model=self._model)
         except self._sdk.TypeSafeError as error:
-            raise BackendError(f"Jev request failed: {error}") from error
+            raise BackendError(self._failed(error)) from error
         finally:
             _cost_slot.reset(token)
         return self._response(questions, response, slot[0])
@@ -374,7 +386,7 @@ class JevBackend:
         try:
             response = await client.system_one(state=state, questions=payload, model=self._model)
         except self._sdk.TypeSafeError as error:
-            raise BackendError(f"Jev request failed: {error}") from error
+            raise BackendError(self._failed(error)) from error
         finally:
             _cost_slot.reset(token)
         return self._response(questions, response, slot[0])

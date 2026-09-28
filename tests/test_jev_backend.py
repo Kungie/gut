@@ -594,3 +594,28 @@ def test_ollaya_follows_ollaya_host(
 def test_ollaya_needs_a_model_named() -> None:
     with pytest.raises(BackendError, match="Name the Ollaya model"):
         JevBackend.ollaya(" ")
+
+
+def test_ollaya_not_running_says_how_to_start_it(monkeypatch: pytest.MonkeyPatch) -> None:
+    import httpx2
+
+    from gut._backends import jev
+
+    def refuse(request: Any) -> Any:
+        raise httpx2.ConnectError("All connection attempts failed", request=request)
+
+    monkeypatch.setattr(jev, "_inner_transport", lambda: httpx2.MockTransport(refuse))
+    monkeypatch.delenv("OLLAYA_HOST", raising=False)
+    backend = JevBackend.ollaya("laya", max_retries=0)
+    with pytest.raises(
+        BackendError, match=r"Ollaya at http://127.0.0.1:11435 did not answer.*ollaya pull laya"
+    ):
+        backend.ask("text", {"q": BUG})
+
+
+def test_ollaya_reports_its_own_errors_as_they_are(wire: Any) -> None:
+    handler, _ = openrouter_reply(status=404)
+    wire(handler)
+    with pytest.raises(BackendError, match="Ollaya at") as caught:
+        JevBackend.ollaya("nope", max_retries=0).ask("text", {"q": BUG})
+    assert "Is Ollaya running" not in str(caught.value)
