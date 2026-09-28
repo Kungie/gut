@@ -47,6 +47,8 @@ class Team(Enum):
 | need | backend | install |
 |---|---|---|
 | the default: TypeSafe's Jev, built for this | `gut.JevBackend()` | `gutfeel[jev]` |
+| Jev with an OpenRouter account instead | `gut.JevBackend.openrouter()` | `gutfeel[jev]` |
+| an open decision model on this machine, via Ollaya | `gut.JevBackend.ollaya("winnow:e4b")` | `gutfeel[jev]` |
 | free, local, fast yes/no and routing | `gut.ZeroShotBackend()` | `gutfeel[local]` |
 | a small LLM on this machine | `gut.TransformersBackend("Qwen/Qwen3-0.6B")` | `gutfeel[local]` |
 | a model already served (Ollama, vLLM, llama.cpp) | `gut.OpenAICompatibleBackend(name, base_url=...)` | core |

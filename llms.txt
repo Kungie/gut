@@ -7,7 +7,8 @@
 > OpenAI-compatible server answer the same line.
 
 Python 3.10+, Apache-2.0. `pip install gutfeel` (the PyPI name; the import is `import gut`), plus
-`gutfeel[local]` for in-process models, `gutfeel[jev]` for Jev or `gutfeel[mcp]` for the MCP server.
+`gutfeel[local]` for in-process models, `gutfeel[jev]` for Jev (TypeSafe, OpenRouter or Ollaya) or
+`gutfeel[mcp]` for the MCP server. `gut filter` / `gut map` run it from a shell.
 The documentation is also published at https://kungie.github.io/gut/docs/.
 
 ## Start here
@@ -37,7 +38,7 @@ The documentation is also published at https://kungie.github.io/gut/docs/.
 - `each(subjects).likely(...)` — the same question about many subjects, in as few calls as possible.
 - `@semantic` and `judge()` — every judgment about one subject, handed to the model together.
 - `alikely` / `aclassify` / `arate`, `each(...).alikely(...)`, `judge.aresolve()` — the same, awaitable.
-- `JevBackend` — TypeSafe's Jev, the default. `ZeroShotBackend`, `TransformersBackend` — models in
+- `JevBackend` — TypeSafe's Jev, the default; `.openrouter()` and `.ollaya(model)` reach it, or open models like it, elsewhere. `ZeroShotBackend`, `TransformersBackend` — models in
   your process. `OpenAICompatibleBackend` — Ollama, vLLM, llama.cpp, OpenAI.
 - `Cascade(small, bigger)` — the cheap model first; only unsure answers go on.
 - `FakeBackend` — develop and test with no model at all.

@@ -67,6 +67,8 @@ the same line runs unchanged on any of these.
 
 ```python
 gut.configure(backend=gut.JevBackend())                            # TypeSafe AI's Jev
+gut.configure(backend=gut.JevBackend.openrouter())                 # Jev, through OpenRouter
+gut.configure(backend=gut.JevBackend.ollaya("winnow:e4b"))         # open decision model, Ollaya
 gut.configure(backend=gut.ZeroShotBackend())                       # NLI model, on your CPU
 gut.configure(backend=gut.TransformersBackend("Qwen/Qwen3-0.6B"))  # small LLM, on your machine
 gut.configure(backend=gut.OpenAICompatibleBackend(                 # Ollama, vLLM, llama.cpp
@@ -83,20 +85,18 @@ gut.configure(backend=gut.Cascade(
 ))
 ```
 
-Every answer is a model's own probabilities, never parsed from text, and `decision.model` names the
-model that gave it. Your own model can be a backend too: [here is how](https://kungie.github.io/gut/docs/backends.html#writing-your-own).
+Every answer is a model's own probabilities, never parsed from text, and `decision.model` names the model that gave it. Your own model can be a backend too: [here is how](https://kungie.github.io/gut/docs/backends.html#writing-your-own).
 
 ## Install
 
 ```bash
-pip install "gutfeel[jev]"           # + JevBackend
+pip install "gutfeel[jev]"           # + JevBackend: TypeSafe, OpenRouter or Ollaya
 pip install "gutfeel[local]"         # + ZeroShotBackend and TransformersBackend (PyTorch)
 pip install gutfeel                  # core: any OpenAI-compatible server; FakeBackend for tests
 pip install "gutfeel[mcp]"           # + the MCP server, gutfeel-mcp
 ```
 
-The package on PyPI is `gutfeel` (`gut` was taken); the import is plain `import gut`.
-No model at hand? `gut.FakeBackend(answers={"is spam": 0.97})` answers from fixtures, for tests.
+The package on PyPI is `gutfeel` (`gut` was taken); the import is plain `import gut`. No model at hand? `gut.FakeBackend(answers={"is spam": 0.97})` answers from fixtures, for tests.
 
 ## From a shell, and for agents
 

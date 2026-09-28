@@ -7,7 +7,7 @@ Read in this order if you are new. Jump straight to the page you need if you are
 | | |
 |---|---|
 | [Getting started](getting-started.md) | Install, pick a model, and the three questions you can ask. |
-| [Backends](backends.md) | Every model `gut` can run on -- local NLI, local LLMs, Ollama, vLLM, OpenAI, Jev -- `Cascade`, and writing your own. |
+| [Backends](backends.md) | Every model `gut` can run on -- Jev (directly, through OpenRouter, or open models on Ollaya), local NLI, local LLMs, Ollama, vLLM, OpenAI -- `Cascade`, and writing your own. |
 | [Knowing when it doesn't know](knowing-when-it-doesnt-know.md) | `lean`, `ask_human`, `stakes` -- how careful to be, in words. What `if` and `match` do with `UNSURE`. |
 | [Asking everything at once](batching.md) | `@semantic` and `judge()`: every judgment about one subject, together. |
 | [Async](async.md) | `alikely`, `aclassify`, `arate`, and the async side of `each()`, `@semantic` and `judge()`. |

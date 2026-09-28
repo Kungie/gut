@@ -34,8 +34,9 @@ gut.configure(backend=gut.ZeroShotBackend())
 ```
 
 It downloads once (about 150 MB), answers in about a tenth of a second per question, costs nothing
-per call, and never sends your data anywhere. [Backends](backends.md) covers the rest: a small
-language model on your machine, Ollama, vLLM, OpenAI, and a `Cascade` that combines them.
+per call, and never sends your data anywhere. [Backends](backends.md) covers the rest: Jev through
+OpenRouter, open decision models on your machine through Ollaya, a small language model, Ollama,
+vLLM, OpenAI, and a `Cascade` that combines them.
 
 Nothing is chosen for you. With no backend configured, `gut` raises and lists the options -- except
 that setting `TYPESAFE_API_KEY` selects Jev, since that variable has no other use.

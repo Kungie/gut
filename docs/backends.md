@@ -14,7 +14,7 @@ gut.configure(backend=gut.JevBackend())
 
 | backend | runs | install | reach for it when |
 |---|---|---|---|
-| [`JevBackend`](#jevbackend) | TypeSafe AI's API | `gutfeel[jev]` | the default: a hosted model built for exactly these questions |
+| [`JevBackend`](#jevbackend) | TypeSafe AI's API, [OpenRouter](#through-openrouter), or [Ollaya](#on-your-own-machine-through-ollaya) on your machine | `gutfeel[jev]` | the default: a model built for exactly these questions |
 | [`ZeroShotBackend`](#zeroshotbackend) | in your process, CPU is fine | `gutfeel[local]` | yes/no and routing on short text, for free, offline |
 | [`TransformersBackend`](#transformersbackend) | in your process, GPU helps | `gutfeel[local]` | you want a small language model and no server |
 | [`OpenAICompatibleBackend`](#openaicompatiblebackend) | Ollama, vLLM, llama.cpp, OpenAI | core | a model is already served somewhere |
