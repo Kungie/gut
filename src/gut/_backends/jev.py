@@ -48,6 +48,9 @@ OPENROUTER_BASE_URL: Final = "https://openrouter.ai/api"
 """OpenRouter serves Jev at `/v1/systemone` under this, speaking the same protocol as TypeSafe."""
 
 OPENROUTER_MODEL: Final = "~typesafe/jev-latest"
+
+OLLAYA_HOST: Final = "127.0.0.1:11435"
+"""Where Ollaya listens unless `OLLAYA_HOST` says otherwise. It serves TypeSafe's API there."""
 """OpenRouter's name for the latest Jev. Pin a version, such as `typesafe/jev-1.13`, to keep it."""
 
 # The SDK parses `usage` into token counts and drops everything else, including the `cost` that
@@ -231,6 +234,8 @@ class JevBackend:
         if client is None and async_client is None:
             self._client = self._new_client()
         self._supplied_async = async_client
+        # A model on your own machine: its calls cost nothing, whatever the server says.
+        self._local = False
         self._async: tuple[asyncio.AbstractEventLoop, typesafe_sdk.AsyncTypeSafeClient] | None = (
             None
         )
@@ -284,6 +289,53 @@ class JevBackend:
             timeout=timeout,
             max_retries=max_retries,
         )
+
+    @classmethod
+    def ollaya(
+        cls,
+        model: str,
+        *,
+        host: str | None = None,
+        api_key: str | None = None,
+        timeout: float | None = None,
+        max_retries: int | None = None,
+    ) -> JevBackend:
+        """An open decision model on your own machine, served by Ollaya.
+
+        Ollaya (https://ollaya.dev) runs open, Jev-style decision models locally -- `winnow:e4b`,
+        `laya`, `kev` and others -- and speaks TypeSafe's API, so this is the Jev backend pointed at
+        it. Calls are counted as free.
+
+        Args:
+            model: The model to ask, as pulled with `ollaya pull`, such as `"winnow:e4b"` or
+                `"laya"`. Required: Ollaya has no model called Jev's default.
+            host: Where Ollaya listens. Defaults to `OLLAYA_HOST`, then `127.0.0.1:11435`.
+            api_key: Only needed when the server sets `OLLAYA_API_KEY`; read from there by default.
+            timeout: Seconds per HTTP operation. The first request to a model waits while it loads.
+            max_retries: How often the SDK retries a failed request.
+
+        Raises:
+            BackendError: No model was named.
+        """
+        if not model or not model.strip():
+            raise BackendError(
+                'Name the Ollaya model to ask, such as JevBackend.ollaya("winnow:e4b") or "laya".'
+            )
+        address = (host or os.environ.get("OLLAYA_HOST", "").strip() or OLLAYA_HOST).rstrip("/")
+        if "://" not in address:
+            address = f"http://{address}"
+        # Ollaya binds 0.0.0.0 to listen everywhere; a client reaches it on this machine.
+        address = address.replace("//0.0.0.0", "//127.0.0.1")
+        key = api_key or os.environ.get("OLLAYA_API_KEY", "").strip() or "local"
+        backend = cls(
+            model=model.strip(),
+            api_key=key,
+            base_url=address,
+            timeout=timeout,
+            max_retries=max_retries,
+        )
+        backend._local = True
+        return backend
 
     def _new_client(self) -> typesafe_sdk.TypeSafeClient:
         assert self._connection is not None  # only unset when a client was supplied
@@ -348,7 +400,7 @@ class JevBackend:
             # The resolved version, never the alias that was asked for.
             model=response.model,
             input_tokens=response.usage.input_tokens,
-            cost=cost,
+            cost=0.0 if self._local else cost,
         )
 
     def _async_client(self) -> typesafe_sdk.AsyncTypeSafeClient | None:

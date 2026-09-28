@@ -62,6 +62,36 @@ so `gut.usage()` can count dollars and keep a budget -- see
 [Caching and observability](caching-and-observability.md#what-it-costs). `gut` never picks
 OpenRouter on its own: an OpenRouter key on a machine says nothing about wanting to spend it here.
 
+### On your own machine, through Ollaya
+
+[Ollaya](https://ollaya.dev) runs open decision models built in Jev's image -- `winnow:e4b`,
+`laya`, `kev` and others -- on your own hardware, and speaks TypeSafe's API. So the Jev backend
+works against it unchanged:
+
+```python
+import gut
+
+gut.configure(backend=gut.JevBackend.ollaya("winnow:e4b"))   # after: ollaya pull winnow:e4b
+```
+
+It finds the server where Ollaya's own `OLLAYA_HOST` says (`127.0.0.1:11435` by default), and uses
+`OLLAYA_API_KEY` if the server set one. Its calls count as free in `gut.usage()`. Name the model you
+pulled: Ollaya has none called Jev's default. The open models are smaller than Jev, with shorter
+contexts -- `laya:en` reads 512 tokens, and a longer text is refused rather than cut -- so they pair
+well with a `Cascade`: the local model settles what it is sure of, and Jev sees the rest.
+
+```python
+import gut
+
+gut.configure(backend=gut.Cascade(
+    gut.JevBackend.ollaya("laya"),   # local, about 10 ms
+    gut.JevBackend(),                # only what the first was unsure of
+))
+```
+
+On a Mac with a system HTTP proxy, set `NO_PROXY=localhost,127.0.0.1`, or requests to Ollaya go
+through the proxy.
+
 ## `ZeroShotBackend`
 
 A natural-language-inference model: it reads the subject and a *hypothesis* and scores how strongly

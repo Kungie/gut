@@ -255,6 +255,15 @@ def test_openrouter_is_jev_with_an_openrouter_key() -> None:
     assert chosen.model_id == "~typesafe/jev-latest"
 
 
+def test_ollaya_is_jev_on_this_machine_and_needs_a_model() -> None:
+    pytest.importorskip("typesafe_sdk")
+    chosen = backend_from_env({"GUT_BACKEND": "ollaya", "GUT_MODEL": "laya"})
+    assert isinstance(chosen, gut.JevBackend)
+    assert chosen.model_id == "laya"
+    with pytest.raises(ConfigurationError, match="winnow:e4b"):
+        backend_from_env({"GUT_BACKEND": "ollaya"})
+
+
 def test_jev_is_built_from_the_environment(monkeypatch: pytest.MonkeyPatch) -> None:
     pytest.importorskip("typesafe_sdk")
     monkeypatch.setenv("TYPESAFE_API_KEY", "test-key-not-real")

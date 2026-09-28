@@ -82,6 +82,10 @@ class StandIn(gut.FakeBackend):
     def openrouter(cls, **options: object) -> StandIn:
         return cls(**options)  # type: ignore[arg-type]
 
+    @classmethod
+    def ollaya(cls, model: str, **options: object) -> StandIn:
+        return cls(model=model)
+
 
 @pytest.fixture
 def sandbox(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:

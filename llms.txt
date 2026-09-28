@@ -44,6 +44,7 @@ The documentation is also published at https://kungie.github.io/gut/docs/.
 - `configure(on_decision=...)` and `decision.to_dict()` — see every decision as it is made.
 - `usage(max_cost=...)` — count calls and dollars; past the budget the next call raises `BudgetExceeded`.
 - `JevBackend.openrouter()` — Jev through OpenRouter, which reports the price of every call.
+- `JevBackend.ollaya(model)` — an open decision model on your machine, served by Ollaya (TypeSafe's API).
 
 ## Traps worth knowing before you write any code
 

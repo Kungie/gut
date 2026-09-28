@@ -9,7 +9,7 @@ probability and which model gave it. The model comes from the environment, Jev f
 | variable | meaning |
 |---|---|
 | `TYPESAFE_API_KEY` | use TypeSafe's Jev -- the default whenever it is set |
-| `GUT_BACKEND` | `jev`, `openrouter`, `openai`, `ollama`, `zeroshot`, `transformers` or `fake` |
+| `GUT_BACKEND` | one of `gut._env.BACKENDS`: `jev`, `openrouter`, `ollaya`, `ollama`, ... |
 | `GUT_MODEL` | the model to ask, for backends that take one |
 | `GUT_BASE_URL` | an OpenAI-compatible server's URL, for `openai` and `ollama` |
 

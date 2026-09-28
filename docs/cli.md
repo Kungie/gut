@@ -34,6 +34,7 @@ or `GUT_BACKEND` for another model, with `GUT_MODEL` where it takes one.
 export TYPESAFE_API_KEY=...                                # Jev
 export GUT_BACKEND=openrouter OPENROUTER_API_KEY=...       # Jev, through OpenRouter
 export GUT_BACKEND=zeroshot                                # on your machine, free
+export GUT_BACKEND=ollaya GUT_MODEL=winnow:e4b              # an open decision model, on Ollaya
 export GUT_BACKEND=ollama GUT_MODEL=qwen3:0.6b             # a local Ollama server
 ```
 

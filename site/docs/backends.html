@@ -102,10 +102,29 @@
 <span class="l">gut.JevBackend.openrouter(model=<span class="s">&quot;typesafe/jev-1.13&quot;</span>)  <span class="c"># pin a version</span></span></code></pre>
 </figure>
     <p>The answers are the same; what OpenRouter adds is the price of every call, which <code class="inline-code">gut</code> passes on, so <code class="inline-code">gut.usage()</code> can count dollars and keep a budget — see <a href="caching-and-observability.html#what-it-costs">Caching and observability</a>. <code class="inline-code">gut</code> never picks OpenRouter on its own: an OpenRouter key on a machine says nothing about wanting to spend it here.</p>
+    <h3 id="on-your-own-machine-through-ollaya">On your own machine, through Ollaya</h3>
+    <p><a href="https://ollaya.dev">Ollaya</a> runs open decision models built in Jev's image — <code class="inline-code">winnow:e4b</code>, <code class="inline-code">laya</code>, <code class="inline-code">kev</code> and others — on your own hardware, and speaks TypeSafe's API. So the Jev backend works against it unchanged:</p>
+    <figure class="listing">
+  <figcaption class="listing-head" style="margin:0;font:12px/1.3 var(--mono)"><span>python</span><span>listing 2.4</span></figcaption>
+  <pre><code><span class="l"><span class="k">import</span> gut</span>
+<span class="l"> </span>
+<span class="l">gut.<span class="f">configure</span>(backend=gut.JevBackend.ollaya(<span class="s">&quot;winnow:e4b&quot;</span>))   <span class="c"># after: ollaya pull winnow:e4b</span></span></code></pre>
+</figure>
+    <p>It finds the server where Ollaya's own <code class="inline-code">OLLAYA_HOST</code> says (<code class="inline-code">127.0.0.1:11435</code> by default), and uses <code class="inline-code">OLLAYA_API_KEY</code> if the server set one. Its calls count as free in <code class="inline-code">gut.usage()</code>. Name the model you pulled: Ollaya has none called Jev's default. The open models are smaller than Jev, with shorter contexts — <code class="inline-code">laya:en</code> reads 512 tokens, and a longer text is refused rather than cut — so they pair well with a <code class="inline-code">Cascade</code>: the local model settles what it is sure of, and Jev sees the rest.</p>
+    <figure class="listing">
+  <figcaption class="listing-head" style="margin:0;font:12px/1.3 var(--mono)"><span>python</span><span>listing 2.5</span></figcaption>
+  <pre><code><span class="l"><span class="k">import</span> gut</span>
+<span class="l"> </span>
+<span class="l">gut.<span class="f">configure</span>(backend=gut.<span class="f">Cascade</span>(</span>
+<span class="l">    gut.JevBackend.ollaya(<span class="s">&quot;laya&quot;</span>),   <span class="c"># local, about 10 ms</span></span>
+<span class="l">    gut.<span class="f">JevBackend</span>(),                <span class="c"># only what the first was unsure of</span></span>
+<span class="l">))</span></code></pre>
+</figure>
+    <p>On a Mac with a system HTTP proxy, set <code class="inline-code">NO_PROXY=localhost,127.0.0.1</code>, or requests to Ollaya go through the proxy.</p>
     <h2 id="zeroshotbackend"><span class="sc">2.2</span><code class="inline-code">ZeroShotBackend</code></h2>
     <p>A natural-language-inference model: it reads the subject and a <em>hypothesis</em> and scores how strongly one entails the other. It never generates text, so there is no prompt to tune and nothing to parse.</p>
     <figure class="listing">
-  <figcaption class="listing-head" style="margin:0;font:12px/1.3 var(--mono)"><span>python</span><span>listing 2.4</span></figcaption>
+  <figcaption class="listing-head" style="margin:0;font:12px/1.3 var(--mono)"><span>python</span><span>listing 2.6</span></figcaption>
   <pre><code><span class="l"><span class="k">import</span> gut</span>
 <span class="l"> </span>
 <span class="l">gut.<span class="f">ZeroShotBackend</span>()                                             <span class="c"># 70M params, ~150 MB, CPU</span></span>
@@ -117,7 +136,7 @@
     <h2 id="transformersbackend"><span class="sc">2.3</span><code class="inline-code">TransformersBackend</code></h2>
     <p>A small instruction-tuned language model, in your process.</p>
     <figure class="listing">
-  <figcaption class="listing-head" style="margin:0;font:12px/1.3 var(--mono)"><span>python</span><span>listing 2.5</span></figcaption>
+  <figcaption class="listing-head" style="margin:0;font:12px/1.3 var(--mono)"><span>python</span><span>listing 2.7</span></figcaption>
   <pre><code><span class="l"><span class="k">import</span> gut</span>
 <span class="l"> </span>
 <span class="l">gut.<span class="f">TransformersBackend</span>()                                         <span class="c"># Qwen/Qwen3-0.6B</span></span>
@@ -131,7 +150,7 @@
     <h2 id="openaicompatiblebackend"><span class="sc">2.4</span><code class="inline-code">OpenAICompatibleBackend</code></h2>
     <p>Anything that speaks the OpenAI chat completions protocol <strong>and returns log-probabilities</strong>.</p>
     <figure class="listing">
-  <figcaption class="listing-head" style="margin:0;font:12px/1.3 var(--mono)"><span>python</span><span>listing 2.6</span></figcaption>
+  <figcaption class="listing-head" style="margin:0;font:12px/1.3 var(--mono)"><span>python</span><span>listing 2.8</span></figcaption>
   <pre><code><span class="l"><span class="k">import</span> gut</span>
 <span class="l"> </span>
 <span class="l">gut.<span class="f">OpenAICompatibleBackend</span>(<span class="s">&quot;gpt-4.1-nano&quot;</span>)                                  <span class="c"># OpenAI</span></span>
@@ -147,7 +166,7 @@
     <h2 id="cascade"><span class="sc">2.5</span><code class="inline-code">Cascade</code></h2>
     <p>Ask the cheapest model first, and pass on only what it is unsure of:</p>
     <figure class="listing">
-  <figcaption class="listing-head" style="margin:0;font:12px/1.3 var(--mono)"><span>python</span><span>listing 2.7</span></figcaption>
+  <figcaption class="listing-head" style="margin:0;font:12px/1.3 var(--mono)"><span>python</span><span>listing 2.9</span></figcaption>
   <pre><code><span class="l"><span class="k">import</span> gut</span>
 <span class="l"> </span>
 <span class="l">gut.<span class="f">configure</span>(backend=gut.<span class="f">Cascade</span>(</span>
@@ -163,7 +182,7 @@
     <h2 id="fakebackend"><span class="sc">2.6</span><code class="inline-code">FakeBackend</code></h2>
     <p>Answers from fixtures, counts its calls, and never touches a model. It is strict: a question with no fixture raises rather than inventing a probability.</p>
     <figure class="listing">
-  <figcaption class="listing-head" style="margin:0;font:12px/1.3 var(--mono)"><span>python</span><span>listing 2.8</span></figcaption>
+  <figcaption class="listing-head" style="margin:0;font:12px/1.3 var(--mono)"><span>python</span><span>listing 2.10</span></figcaption>
   <pre><code><span class="l"><span class="k">import</span> gut</span>
 <span class="l"> </span>
 <span class="l">backend = gut.<span class="f">FakeBackend</span>(answers={</span>
@@ -178,7 +197,7 @@
     <h2 id="writing-your-own"><span class="sc">2.7</span>Writing your own</h2>
     <p>A backend is two members: a <code class="inline-code">model_id</code>, and an <code class="inline-code">ask()</code> that takes one subject and a batch of named questions and returns one answer per name. Here is the keyword rule you already had, as the free first stage of a cascade:</p>
     <figure class="listing">
-  <figcaption class="listing-head" style="margin:0;font:12px/1.3 var(--mono)"><span>python</span><span>listing 2.9</span></figcaption>
+  <figcaption class="listing-head" style="margin:0;font:12px/1.3 var(--mono)"><span>python</span><span>listing 2.11</span></figcaption>
   <pre><code><span class="l"><span class="k">import</span> re</span>
 <span class="l"> </span>
 <span class="l"><span class="k">import</span> gut</span>

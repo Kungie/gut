@@ -41,8 +41,8 @@ The server reads its model from the environment. With none of these set it uses 
 | variable | what it does |
 |---|---|
 | `TYPESAFE_API_KEY` | TypeSafe's Jev: the default whenever it is set |
-| `GUT_BACKEND` | `jev`, `openrouter` (Jev through OpenRouter, with `OPENROUTER_API_KEY`), `openai`, `ollama`, `zeroshot`, `transformers`, or `fake` for trying the tools without a model |
-| `GUT_MODEL` | the model to ask; required for `openai` and `ollama` |
+| `GUT_BACKEND` | `jev`, `openrouter` (Jev through OpenRouter, with `OPENROUTER_API_KEY`), `ollaya` (an open decision model on [Ollaya](https://ollaya.dev)), `openai`, `ollama`, `zeroshot`, `transformers`, or `fake` for trying the tools without a model |
+| `GUT_MODEL` | the model to ask; required for `ollaya`, `openai` and `ollama` |
 | `GUT_BASE_URL` | an OpenAI-compatible server's URL; `ollama` defaults to `http://localhost:11434/v1` |
 
 A local Ollama model, with nothing leaving your machine:

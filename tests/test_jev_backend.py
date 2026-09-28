@@ -551,3 +551,46 @@ def test_a_body_that_is_not_json_leaves_the_cost_unknown() -> None:
     finally:
         jev._cost_slot.reset(token)
     assert slot == [None]
+
+
+# --------------------------------------------------------------------------- Ollaya
+
+
+def test_ollaya_asks_a_local_server_and_calls_it_free(
+    wire: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    handler, seen = openrouter_reply(cost=0.5)  # whatever a server claims, a local call is free
+    wire(handler)
+    monkeypatch.delenv("OLLAYA_HOST", raising=False)
+    monkeypatch.delenv("OLLAYA_API_KEY", raising=False)
+    backend = JevBackend.ollaya("winnow:e4b")
+    response = backend.ask("text", {"q": BUG})
+    assert backend.model_id == "winnow:e4b"
+    assert str(seen[0].url) == "http://127.0.0.1:11435/v1/systemone"
+    assert seen[0].headers["authorization"] == "Bearer local"
+    assert response.cost == 0.0
+
+
+@pytest.mark.parametrize(
+    ("host", "expected"),
+    [
+        ("0.0.0.0:11435", "http://127.0.0.1:11435/v1/systemone"),
+        ("gpu-box:9000", "http://gpu-box:9000/v1/systemone"),
+        ("https://decide.example.com/", "https://decide.example.com/v1/systemone"),
+    ],
+)
+def test_ollaya_follows_ollaya_host(
+    wire: Any, monkeypatch: pytest.MonkeyPatch, host: str, expected: str
+) -> None:
+    handler, seen = openrouter_reply()
+    wire(handler)
+    monkeypatch.setenv("OLLAYA_HOST", host)
+    monkeypatch.setenv("OLLAYA_API_KEY", "server-key")
+    JevBackend.ollaya("laya").ask("text", {"q": BUG})
+    assert str(seen[0].url) == expected
+    assert seen[0].headers["authorization"] == "Bearer server-key"
+
+
+def test_ollaya_needs_a_model_named() -> None:
+    with pytest.raises(BackendError, match="Name the Ollaya model"):
+        JevBackend.ollaya(" ")

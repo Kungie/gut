@@ -204,7 +204,7 @@ gut filter "threatens to cancel" emails.txt --ask-human --show unsure   # the on
 `filter` prints the lines (or, with `--read-files`, the paths) a claim is true of; `map` prints one
 JSON object per line. A summary with the cost goes to stderr, and `--max-cost 0.50` stops a run at
 a budget. Run it with `uvx gutfeel filter ...` if it is not installed. The model comes from
-`TYPESAFE_API_KEY` (Jev), or `GUT_BACKEND=openrouter` / `zeroshot` / `ollama`. Each item is judged
+`TYPESAFE_API_KEY` (Jev), or `GUT_BACKEND=openrouter` / `ollaya` / `zeroshot` / `ollama`. Each item is judged
 on its own, so ask what the item itself can answer. See [`docs/cli.md`](../../docs/cli.md).
 
 `gutfeel-mcp` offers the same as MCP tools -- `likely`, `classify`, `rate` and `each` -- for an MCP

@@ -97,6 +97,7 @@
   <pre><code><span class="l">export TYPESAFE_API_KEY=...                                <span class="c"># Jev</span></span>
 <span class="l">export GUT_BACKEND=openrouter OPENROUTER_API_KEY=...       <span class="c"># Jev, through OpenRouter</span></span>
 <span class="l">export GUT_BACKEND=zeroshot                                <span class="c"># on your machine, free</span></span>
+<span class="l">export GUT_BACKEND=ollaya GUT_MODEL=winnow:e4b              <span class="c"># an open decision model, on Ollaya</span></span>
 <span class="l">export GUT_BACKEND=ollama GUT_MODEL=qwen3:0.6b             <span class="c"># a local Ollama server</span></span></code></pre>
 </figure>
     <p><code class="inline-code">--backend</code> and <code class="inline-code">--model</code> override them for one run. A local model needs the <code class="inline-code">local</code> extra: <code class="inline-code">uvx --from &quot;gutfeel[local]&quot; gut ...</code>.</p>

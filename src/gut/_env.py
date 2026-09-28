@@ -4,9 +4,9 @@ and the MCP server. A library user configures a backend in code instead.
 | variable | meaning |
 |---|---|
 | `TYPESAFE_API_KEY` | use TypeSafe's Jev -- the default whenever it is set |
-| `GUT_BACKEND` | `jev`, `openrouter`, `openai`, `ollama`, `zeroshot`, `transformers` or `fake` |
+| `GUT_BACKEND` | one of `gut._env.BACKENDS`: `jev`, `openrouter`, `ollaya`, `ollama`, ... |
 | `GUT_MODEL` | the model to ask, for backends that take one |
-| `GUT_BASE_URL` | an OpenAI-compatible server's URL, for `openai` and `ollama` |
+| `GUT_BASE_URL` | a server's URL, for `ollaya`, `openai` and `ollama` |
 """
 
 from __future__ import annotations
@@ -19,13 +19,23 @@ from typing import Final
 from gut._backends import Backend, FakeBackend, deterministic_rule
 from gut._errors import ConfigurationError
 
-BACKENDS: Final = ("jev", "openrouter", "openai", "ollama", "zeroshot", "transformers", "fake")
+BACKENDS: Final = (
+    "jev",
+    "openrouter",
+    "ollaya",
+    "openai",
+    "ollama",
+    "zeroshot",
+    "transformers",
+    "fake",
+)
 OLLAMA_URL: Final = "http://localhost:11434/v1"
 
 NO_MODEL: Final = (
     "No model is configured. Set one of these in the environment:\n"
     '  TYPESAFE_API_KEY="..."                        TypeSafe\'s Jev\n'
     '  GUT_BACKEND="openrouter"                      Jev through OpenRouter (OPENROUTER_API_KEY)\n'
+    '  GUT_BACKEND="ollaya", GUT_MODEL="winnow:e4b"  an open decision model, on Ollaya\n'
     '  GUT_BACKEND="ollama", GUT_MODEL="qwen3:0.6b"  a local Ollama server\n'
     '  GUT_BACKEND="openai", GUT_MODEL="..."         OpenAI, or any server via GUT_BASE_URL\n'
     '  GUT_BACKEND="zeroshot"                        a local NLI model, with gutfeel[local]\n'
@@ -51,9 +61,15 @@ def backend_from_env(env: Mapping[str, str]) -> Backend | None:
         )
     if name == "fake":
         return FakeBackend(rule=deterministic_rule)
-    if name in ("jev", "openrouter"):
+    if name in ("jev", "openrouter", "ollaya"):
         from gut._backends.jev import JevBackend
 
+        if name == "ollaya":
+            if model is None:
+                raise ConfigurationError(
+                    "GUT_BACKEND=ollaya needs GUT_MODEL, the model to ask, such as winnow:e4b."
+                )
+            return JevBackend.ollaya(model, host=base_url or env.get("OLLAYA_HOST"))
         if name == "openrouter":
             return JevBackend.openrouter(model=model, api_key=env.get("OPENROUTER_API_KEY"))
         return JevBackend(model=model, base_url=base_url)
