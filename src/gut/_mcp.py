@@ -1,6 +1,6 @@
 """gut as an MCP server, so an agent can hand its judgment calls to a small model.
 
-    uvx --from "gutfeel[mcp]" gutfeel-mcp
+    uvx gutfeel-mcp
 
 Four tools, `likely`, `classify`, `rate` and `each`, over stdio. They take the same arguments as the
 Python functions and answer with `Decision.to_dict()`, so an agent sees the outcome, the model's
@@ -268,9 +268,7 @@ def build(backend: Backend | None = None) -> MCPServer:
         from mcp.server.mcpserver.exceptions import ToolError
         from mcp.types import ToolAnnotations
     except ImportError as error:  # pragma: no cover - the extra is part of the dev environment
-        raise ConfigurationError(
-            'The MCP server needs the mcp extra: pip install "gutfeel[mcp]"'
-        ) from error
+        raise ConfigurationError("The MCP server needs its SDK: pip install gutfeel-mcp") from error
 
     from gut import __version__
 

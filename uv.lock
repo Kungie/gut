@@ -11,6 +11,12 @@ resolution-markers = [
     "python_full_version < '3.11'",
 ]
 
+[manifest]
+members = [
+    "gutfeel",
+    "gutfeel-mcp",
+]
+
 [[package]]
 name = "annotated-doc"
 version = "0.0.5"
@@ -554,7 +560,7 @@ wheels = [
 
 [[package]]
 name = "gutfeel"
-version = "0.7.2"
+version = "0.7.3"
 source = { editable = "." }
 dependencies = [
     { name = "httpx" },
@@ -569,14 +575,14 @@ local = [
     { name = "transformers" },
 ]
 mcp = [
-    { name = "mcp" },
-    { name = "typesafe-sdk" },
+    { name = "gutfeel-mcp" },
 ]
 
 [package.dev-dependencies]
 dev = [
     { name = "anyio" },
     { name = "coverage", extra = ["toml"] },
+    { name = "gutfeel-mcp" },
     { name = "hypothesis" },
     { name = "mcp" },
     { name = "mypy" },
@@ -588,12 +594,11 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "gutfeel-mcp", marker = "extra == 'mcp'", editable = "packages/gutfeel-mcp" },
     { name = "httpx", specifier = ">=0.27" },
-    { name = "mcp", marker = "extra == 'mcp'", specifier = ">=2.2,<3" },
     { name = "torch", marker = "extra == 'local'", specifier = ">=2.2" },
     { name = "transformers", marker = "extra == 'local'", specifier = ">=4.56" },
     { name = "typesafe-sdk", marker = "extra == 'jev'", specifier = ">=0.7" },
-    { name = "typesafe-sdk", marker = "extra == 'mcp'", specifier = ">=0.7" },
 ]
 provides-extras = ["local", "jev", "mcp"]
 
@@ -601,6 +606,7 @@ provides-extras = ["local", "jev", "mcp"]
 dev = [
     { name = "anyio", specifier = ">=4.0" },
     { name = "coverage", extras = ["toml"], specifier = ">=7.6" },
+    { name = "gutfeel-mcp", editable = "packages/gutfeel-mcp" },
     { name = "hypothesis", specifier = ">=6.100" },
     { name = "mcp", specifier = ">=2.2,<3" },
     { name = "mypy", specifier = ">=1.11" },
@@ -608,6 +614,23 @@ dev = [
     { name = "pyyaml", specifier = ">=6.0" },
     { name = "ruff", specifier = ">=0.6" },
     { name = "types-pyyaml", specifier = ">=6.0" },
+]
+
+[[package]]
+name = "gutfeel-mcp"
+version = "0.7.3"
+source = { editable = "packages/gutfeel-mcp" }
+dependencies = [
+    { name = "gutfeel" },
+    { name = "mcp" },
+    { name = "typesafe-sdk" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "gutfeel", editable = "." },
+    { name = "mcp", specifier = ">=2.2,<3" },
+    { name = "typesafe-sdk", specifier = ">=0.7" },
 ]
 
 [[package]]

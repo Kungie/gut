@@ -1,6 +1,6 @@
 # gut
 
-[![PyPI](https://img.shields.io/pypi/v/gutfeel)](https://pypi.org/project/gutfeel/) [![CI](https://github.com/Kungie/gut/actions/workflows/ci.yml/badge.svg)](https://github.com/Kungie/gut/actions/workflows/ci.yml)
+[![PyPI](https://img.shields.io/pypi/v/gutfeel)](https://pypi.org/project/gutfeel/) [![CI](https://github.com/Kungie/gut/actions/workflows/ci.yml/badge.svg)](https://github.com/Kungie/gut/actions/workflows/ci.yml) [![Downloads](https://static.pepy.tech/badge/gutfeel)](https://pepy.tech/project/gutfeel)
 
 **Judgment calls as one line of Python — built for Jev, and running on any small model.**
 
@@ -93,7 +93,7 @@ Every answer is a model's own probabilities, never parsed from text, and `decisi
 pip install "gutfeel[jev]"           # + JevBackend: TypeSafe, OpenRouter or Ollaya
 pip install "gutfeel[local]"         # + ZeroShotBackend and TransformersBackend (PyTorch)
 pip install gutfeel                  # core: any OpenAI-compatible server; FakeBackend for tests
-pip install "gutfeel[mcp]"           # + the MCP server, gutfeel-mcp
+pip install gutfeel-mcp             # + the MCP server, gutfeel-mcp
 ```
 
 The package on PyPI is `gutfeel` (`gut` was taken); the import is plain `import gut`. No model at hand? `gut.FakeBackend(answers={"is spam": 0.97})` answers from fixtures, for tests.
@@ -105,7 +105,7 @@ commits or search results in one command instead of reading each one itself:
 
 ```bash
 git ls-files | gut filter "retries failed requests" --read-files --max-cost 0.50
-claude mcp add gut --env TYPESAFE_API_KEY=your-key -- uvx --from "gutfeel[mcp]" gutfeel-mcp
+claude mcp add gut --env TYPESAFE_API_KEY=your-key -- uvx gutfeel-mcp
 npx skills add Kungie/gut --skill gut     # teaches a coding agent when to reach for it
 ```
 

@@ -210,7 +210,7 @@ a budget. Run it with `uvx --from "gutfeel[jev]" gut filter ...` if it is not in
 on its own, so ask what the item itself can answer. See [`docs/cli.md`](../../docs/cli.md).
 
 `gutfeel-mcp` offers the same as MCP tools -- `likely`, `classify`, `rate` and `each` -- for an MCP
-client: `uvx --from "gutfeel[mcp]" gutfeel-mcp`. See [`docs/mcp.md`](../../docs/mcp.md).
+client: `uvx gutfeel-mcp`. See [`docs/mcp.md`](../../docs/mcp.md).
 
 To count what code spends, wrap it in `with gut.usage(max_cost=0.50) as spent:`; past the budget
 the next call raises `gut.BudgetExceeded`.

@@ -30,7 +30,8 @@ A test fails while the built pages are behind the markdown, so they cannot drift
 
 ## Releasing
 
-Bump the version in both `pyproject.toml` and `src/gut/__init__.py` (a test checks they agree),
+Bump the version in `pyproject.toml`, `packages/gutfeel-mcp/pyproject.toml` (its own version and
+its pin), `server.json` and `src/gut/__init__.py` (tests check they agree),
 rebuild the site so it shows the new version, commit, then tag and push:
 
 ```bash
@@ -38,7 +39,10 @@ git tag -a v0.2.0 -m "gutfeel 0.2.0" && git push origin main --tags
 ```
 
 `.github/workflows/release.yml` checks the tag matches the version, runs the suite, builds, publishes
-`gutfeel` to PyPI and creates a GitHub release. There is no token: PyPI trusts the workflow itself
+`gutfeel` and `gutfeel-mcp` to PyPI and creates a GitHub release. `gutfeel-mcp`
+(`packages/gutfeel-mcp`) is the MCP server's command as a package of its own, so `uvx gutfeel-mcp`
+works alone; its version and its pin on gutfeel move with gutfeel's, which a test checks. After a
+release, `mcp-publisher publish` updates the MCP Registry entry from `server.json`. There is no token: PyPI trusts the workflow itself
 (trusted publishing), configured once under the project's *Publishing* settings on pypi.org with
 owner `Kungie`, repository `gut`, workflow `release.yml` and environment `pypi`.
 

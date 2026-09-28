@@ -13,7 +13,7 @@ It runs over stdio, and `uvx` fetches it on first use, so there is nothing to in
 With Jev, the model gut is built around, the only setting is your TypeSafe key. In Claude Code:
 
 ```bash
-claude mcp add gut --env TYPESAFE_API_KEY=your-key -- uvx --from "gutfeel[mcp]" gutfeel-mcp
+claude mcp add gut --env TYPESAFE_API_KEY=your-key -- uvx gutfeel-mcp
 ```
 
 Every other client takes the same thing as JSON -- Claude Desktop in
@@ -24,7 +24,7 @@ Every other client takes the same thing as JSON -- Claude Desktop in
   "mcpServers": {
     "gut": {
       "command": "uvx",
-      "args": ["--from", "gutfeel[mcp]", "gutfeel-mcp"],
+      "args": ["gutfeel-mcp"],
       "env": { "TYPESAFE_API_KEY": "your-key" }
     }
   }
@@ -52,7 +52,7 @@ A local Ollama model, with nothing leaving your machine:
   "mcpServers": {
     "gut": {
       "command": "uvx",
-      "args": ["--from", "gutfeel[mcp]", "gutfeel-mcp"],
+      "args": ["gutfeel-mcp"],
       "env": { "GUT_BACKEND": "ollama", "GUT_MODEL": "qwen3:0.6b" }
     }
   }
@@ -62,7 +62,7 @@ A local Ollama model, with nothing leaving your machine:
 The local NLI encoder, which needs PyTorch and so the `local` extra too:
 
 ```bash
-claude mcp add gut --env GUT_BACKEND=zeroshot -- uvx --from "gutfeel[mcp,local]" gutfeel-mcp
+claude mcp add gut --env GUT_BACKEND=zeroshot -- uvx --with "gutfeel[local]" gutfeel-mcp
 ```
 
 The model is loaded on the first call rather than at startup, so the client's handshake is instant

@@ -1,6 +1,6 @@
 [project]
 name = "gutfeel"
-version = "0.7.2"
+version = "0.7.3"
 description = "Judgment calls as one line of Python, on small, fast, cheap models. likely / classify / rate, answering YES, NO or UNSURE, on any backend."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -40,13 +40,13 @@ dependencies = [
 local = ["transformers>=4.56", "torch>=2.2"]
 # TypeSafe AI's Jev.
 jev = ["typesafe-sdk>=0.7"]
-# The MCP server, `gutfeel-mcp`. Jev comes with it: it is the model the server asks by default.
-mcp = ["mcp>=2.2,<3", "typesafe-sdk>=0.7"]
+# The MCP server's command, `gutfeel-mcp`, which is also a package of its own so that
+# `uvx gutfeel-mcp` works alone. It brings the MCP SDK, and Jev's: the model the server asks first.
+mcp = ["gutfeel-mcp==0.7.3"]
 
 [project.scripts]
 gut = "gut._cli:entry"
 gutfeel = "gut._cli:entry"
-gutfeel-mcp = "gut._mcp:main"
 
 [project.urls]
 Homepage = "https://gutpy.dev/"
@@ -66,7 +66,14 @@ dev = [
     "types-pyyaml>=6.0",
     "anyio>=4.0",
     "mcp>=2.2,<3",
+    "gutfeel-mcp",
 ]
+
+[tool.uv.workspace]
+members = ["packages/gutfeel-mcp"]
+
+[tool.uv.sources]
+gutfeel-mcp = { workspace = true }
 
 [build-system]
 requires = ["uv_build>=0.8.22,<0.9.0"]
@@ -113,7 +120,7 @@ ignore_missing_imports = true
 [tool.mypy]
 python_version = "3.10"
 strict = true
-files = ["src", "tests", "examples", "scripts"]
+files = ["src", "tests", "examples", "scripts", "packages/gutfeel-mcp/src"]
 mypy_path = "examples"
 warn_unreachable = true
 disallow_any_unimported = true

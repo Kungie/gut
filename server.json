@@ -1,0 +1,53 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.Kungie/gut",
+  "title": "gut",
+  "description": "Judgment calls on small, cheap models: is this spam, which team, how urgent. YES, NO or UNSURE.",
+  "websiteUrl": "https://gutpy.dev/docs/mcp.html",
+  "repository": {
+    "url": "https://github.com/Kungie/gut",
+    "source": "github"
+  },
+  "version": "0.7.3",
+  "packages": [
+    {
+      "registryType": "pypi",
+      "registryBaseUrl": "https://pypi.org",
+      "identifier": "gutfeel-mcp",
+      "version": "0.7.3",
+      "runtimeHint": "uvx",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "TYPESAFE_API_KEY",
+          "description": "Key for TypeSafe's Jev, the model asked by default when it is set",
+          "isRequired": false,
+          "isSecret": true
+        },
+        {
+          "name": "GUT_BACKEND",
+          "description": "Another model: openrouter, ollaya, ollama, openai, zeroshot or transformers",
+          "isRequired": false
+        },
+        {
+          "name": "GUT_MODEL",
+          "description": "The model to ask; required for ollaya, ollama and openai",
+          "isRequired": false
+        },
+        {
+          "name": "GUT_BASE_URL",
+          "description": "The server's URL, for ollaya, ollama and openai",
+          "isRequired": false
+        },
+        {
+          "name": "OPENROUTER_API_KEY",
+          "description": "Key for Jev through OpenRouter, with GUT_BACKEND=openrouter",
+          "isRequired": false,
+          "isSecret": true
+        }
+      ]
+    }
+  ]
+}
