@@ -9,7 +9,7 @@
 Python 3.10+, Apache-2.0. `pip install gutfeel` (the PyPI name; the import is `import gut`), plus
 `gutfeel[local]` for in-process models, `gutfeel[jev]` for Jev (TypeSafe, OpenRouter or Ollaya) or
 `gutfeel[mcp]` for the MCP server. `gut filter` / `gut map` run it from a shell.
-The documentation is also published at https://kungie.github.io/gut/docs/.
+The documentation is also published at https://gutpy.dev/docs/.
 
 ## Start here
 

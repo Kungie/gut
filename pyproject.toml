@@ -1,6 +1,6 @@
 [project]
 name = "gutfeel"
-version = "0.7.1"
+version = "0.7.2"
 description = "Judgment calls as one line of Python, on small, fast, cheap models. likely / classify / rate, answering YES, NO or UNSURE, on any backend."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -49,8 +49,8 @@ gutfeel = "gut._cli:entry"
 gutfeel-mcp = "gut._mcp:main"
 
 [project.urls]
-Homepage = "https://kungie.github.io/gut/"
-Documentation = "https://kungie.github.io/gut/docs/"
+Homepage = "https://gutpy.dev/"
+Documentation = "https://gutpy.dev/docs/"
 Changelog = "https://github.com/Kungie/gut/releases"
 Repository = "https://github.com/Kungie/gut"
 Issues = "https://github.com/Kungie/gut/issues"

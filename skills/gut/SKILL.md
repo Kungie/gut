@@ -187,7 +187,7 @@ Every decision can be observed as it is made; `d.to_dict()` is a ready-made log 
 gut.configure(on_decision=lambda d: logger.info("gut", extra=d.to_dict()))
 ```
 
-Full documentation: [`docs/`](../../docs/README.md), also at <https://kungie.github.io/gut/docs/>.
+Full documentation: [`docs/`](../../docs/README.md), also at <https://gutpy.dev/docs/>.
 Backends in depth: [`docs/backends.md`](../../docs/backends.md).
 
 ## Without writing code: the command line and the MCP server

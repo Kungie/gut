@@ -17,7 +17,8 @@ uv run pytest -m local tests/test_local_models.py
 
 ## The website
 
-`site/` is published to <https://kungie.github.io/gut/> on every push to `main` that touches it.
+`site/` is the website at <https://gutpy.dev/>. The server behind it pulls `main` every five
+minutes, so a push is live within a few minutes; the old GitHub Pages address only redirects there.
 `site/index.html` is written by hand; the documentation pages under `site/docs/` are built from
 `docs/*.md`, which stay the only source. After changing a page in `docs/`, rebuild:
 

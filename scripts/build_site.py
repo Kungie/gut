@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import html
 import io
+import json
 import keyword
 import re
 import sys
@@ -554,6 +555,49 @@ def pages() -> dict[str, str]:
     return written
 
 
+HOME = "https://gutpy.dev/"
+"""Where the site lives. The old address on GitHub Pages only redirects here."""
+
+
+def redirect_page(path: str) -> str:
+    """A page at the old address that sends its reader to the same page at the new one."""
+    target = HOME + ("" if path == "index.html" else path.removesuffix("index.html"))
+    return f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>gut has moved to gutpy.dev</title>
+<link rel="canonical" href="{target}">
+<meta http-equiv="refresh" content="0; url={target}">
+<script>location.replace({json.dumps(target)} + location.hash)</script>
+</head>
+<body><p>gut has moved to <a href="{target}">{target}</a>.</p></body>
+</html>
+"""
+
+
+NOT_FOUND_REDIRECT = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>gut has moved to gutpy.dev</title>
+<script>location.replace({json.dumps(HOME)} + location.pathname.replace(/^\\/gut\\/?/, "") + location.search + location.hash)</script>
+</head>
+<body><p>gut has moved to <a href="{HOME}">{HOME}</a>.</p></body>
+</html>
+"""
+
+
+def redirects(site: Path = SITE) -> dict[str, str]:
+    """The old GitHub Pages site: every page of the new one, as a redirect to it."""
+    pages = {
+        str(page.relative_to(site)): redirect_page(str(page.relative_to(site)))
+        for page in sorted(site.rglob("*.html"))
+    }
+    pages["404.html"] = NOT_FOUND_REDIRECT
+    return pages
+
+
 def build(site: Path = SITE) -> list[Path]:
     paths = []
     for name, text in pages().items():
@@ -564,7 +608,21 @@ def build(site: Path = SITE) -> list[Path]:
     return paths
 
 
+def build_redirects(out: Path) -> list[Path]:
+    paths = []
+    for name, text in redirects().items():
+        path = out / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding="utf-8")
+        paths.append(path)
+    return paths
+
+
 if __name__ == "__main__":
-    target = Path(sys.argv[1]) if len(sys.argv) > 1 else SITE
-    for written in build(target):
-        print(written.relative_to(ROOT) if written.is_relative_to(ROOT) else written)
+    if sys.argv[1:2] == ["--redirects"]:
+        # For GitHub Pages, which now only points visitors at gutpy.dev.
+        written = build_redirects(Path(sys.argv[2]))
+    else:
+        written = build(Path(sys.argv[1]) if len(sys.argv) > 1 else SITE)
+    for path in written:
+        print(path.relative_to(ROOT) if path.is_relative_to(ROOT) else path)

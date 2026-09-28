@@ -4,7 +4,7 @@
 
 **Judgment calls as one line of Python — built for Jev, and running on any small model.**
 
-[Try it in your browser →](https://kungie.github.io/gut/) The site runs gut's local model in the page: no key, no server.
+[Try it in your browser →](https://gutpy.dev/) The site runs gut's local model in the page: no key, no server.
 
 Your code keeps running into questions that aren't logic: *Is this comment spam? Which team owns
 this ticket? How urgent is it? Is the agent's task done?* Until now there were three answers:
@@ -85,7 +85,7 @@ gut.configure(backend=gut.Cascade(
 ))
 ```
 
-Every answer is a model's own probabilities, never parsed from text, and `decision.model` names the model that gave it. Your own model can be a backend too: [here is how](https://kungie.github.io/gut/docs/backends.html#writing-your-own).
+Every answer is a model's own probabilities, never parsed from text, and `decision.model` names the model that gave it. Your own model can be a backend too: [here is how](https://gutpy.dev/docs/backends.html#writing-your-own).
 
 ## Install
 
@@ -111,7 +111,7 @@ npx skills add Kungie/gut --skill gut     # teaches a coding agent when to reach
 
 ## Docs
 
-**[The documentation](https://kungie.github.io/gut/docs/)**, one page per idea: [Getting started](https://kungie.github.io/gut/docs/getting-started.html) · [Backends](https://kungie.github.io/gut/docs/backends.html) · [Knowing when it doesn't know](https://kungie.github.io/gut/docs/knowing-when-it-doesnt-know.html) · [Asking everything at once](https://kungie.github.io/gut/docs/batching.html) · [Async](https://kungie.github.io/gut/docs/async.html) · [Exact costs](https://kungie.github.io/gut/docs/exact-costs.html) · [Caching and observability](https://kungie.github.io/gut/docs/caching-and-observability.html) · [Command line](https://kungie.github.io/gut/docs/cli.html) · [MCP server](https://kungie.github.io/gut/docs/mcp.html) · [Honest limitations](https://kungie.github.io/gut/docs/limitations.html). [`examples/`](https://github.com/Kungie/gut/tree/main/examples/) runs the same code on every backend.
+**[The documentation](https://gutpy.dev/docs/)**, one page per idea: [Getting started](https://gutpy.dev/docs/getting-started.html) · [Backends](https://gutpy.dev/docs/backends.html) · [Knowing when it doesn't know](https://gutpy.dev/docs/knowing-when-it-doesnt-know.html) · [Asking everything at once](https://gutpy.dev/docs/batching.html) · [Async](https://gutpy.dev/docs/async.html) · [Exact costs](https://gutpy.dev/docs/exact-costs.html) · [Caching and observability](https://gutpy.dev/docs/caching-and-observability.html) · [Command line](https://gutpy.dev/docs/cli.html) · [MCP server](https://gutpy.dev/docs/mcp.html) · [Honest limitations](https://gutpy.dev/docs/limitations.html). [`examples/`](https://github.com/Kungie/gut/tree/main/examples/) runs the same code on every backend.
 
 ## Status and license
 

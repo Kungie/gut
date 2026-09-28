@@ -39,7 +39,7 @@ NO_MODEL: Final = (
     '  GUT_BACKEND="ollama", GUT_MODEL="qwen3:0.6b"  a local Ollama server\n'
     '  GUT_BACKEND="openai", GUT_MODEL="..."         OpenAI, or any server via GUT_BASE_URL\n'
     '  GUT_BACKEND="zeroshot"                        a local NLI model, with gutfeel[local]\n'
-    "See https://kungie.github.io/gut/docs/backends.html"
+    "See https://gutpy.dev/docs/backends.html"
 )
 
 

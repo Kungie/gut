@@ -280,7 +280,7 @@ def build(backend: Backend | None = None) -> MCPServer:
         title="gut",
         description="Judgment calls on small, fast, cheap models.",
         instructions=INSTRUCTIONS,
-        website_url="https://kungie.github.io/gut/",
+        website_url="https://gutpy.dev/",
         version=__version__,
     )
     # Asking a model changes nothing, and the same question gets the same answer.

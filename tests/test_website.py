@@ -127,7 +127,7 @@ def test_every_page_starts_dark_and_can_be_switched() -> None:
 @pytest.mark.parametrize("document", ["README.md", "llms.txt", "skills/gut/SKILL.md"])
 def test_links_to_the_site_land_on_built_pages(document: str) -> None:
     text = (ROOT / document).read_text(encoding="utf-8")
-    for path, fragment in re.findall(r"https://kungie\.github\.io/gut/([^)\s#>]*)#?([\w-]*)", text):
+    for path, fragment in re.findall(r"https://gutpy\.dev/([^)\s#>]*)#?([\w-]*)", text):
         page = SITE / path
         if not path or path.endswith("/"):
             page = page / "index.html"
@@ -207,3 +207,24 @@ def test_a_page_renders_headings_tables_and_lists() -> None:
     assert '<td><code class="inline-code">x</code></td>' in body
     assert "<li>one continued</li><li>two</li>" in body
     assert "docs index" not in body
+
+
+# --------------------------------------------------------------------------- the old address
+
+
+def test_the_old_address_sends_every_page_to_the_same_page_on_the_new_one() -> None:
+    pages = builder.redirects()
+    assert set(pages) == {str(page.relative_to(SITE)) for page in SITE_PAGES} | {"404.html"}
+    assert 'url=https://gutpy.dev/"' in pages["index.html"]
+    assert 'href="https://gutpy.dev/docs/"' in pages["docs/index.html"]
+    assert (
+        'location.replace("https://gutpy.dev/docs/cli.html" + location.hash)'
+        in pages["docs/cli.html"]
+    )
+    assert "location.pathname.replace(/^\\/gut\\/?/" in pages["404.html"]
+
+
+def test_redirects_are_written_where_asked(tmp_path: Path) -> None:
+    written = builder.build_redirects(tmp_path)
+    assert (tmp_path / "docs" / "mcp.html").exists()
+    assert len(written) == len(builder.redirects())
