@@ -2,8 +2,9 @@
 
 > Judgment calls as one line of Python, on small, fast, cheap models. Write a decision that is
 > judgment rather than logic -- "is this spam?", "which team owns this?" -- as one readable line,
-> say how careful to be in words instead of thresholds, and get back YES, NO or UNSURE. The model is
-> configuration: a local NLI encoder, a local 0.6B LLM, any OpenAI-compatible server, or Jev.
+> say how careful to be in words instead of thresholds, and get back YES, NO or UNSURE. Built around
+> TypeSafe AI's Jev, and model-agnostic: a local NLI encoder, a local 0.6B LLM or any
+> OpenAI-compatible server answer the same line.
 
 Python 3.10+, Apache-2.0. `pip install gutfeel` (the PyPI name; the import is `import gut`), plus
 `gutfeel[local]` for in-process models or `gutfeel[jev]` for Jev.
@@ -19,7 +20,6 @@ Python 3.10+, Apache-2.0. `pip install gutfeel` (the PyPI name; the import is `i
 
 - [docs/backends.md](docs/backends.md): every backend, how each one reads a model's probabilities,
   `Cascade`, and writing your own.
-- [DECISIONS.md](DECISIONS.md): every design decision with its reasoning.
 - [examples/](examples/): the same handlers on any backend, chosen with `--backend`.
 - [CONTRIBUTING.md](CONTRIBUTING.md): how to run the suite.
 
@@ -29,9 +29,10 @@ Python 3.10+, Apache-2.0. `pip install gutfeel` (the PyPI name; the import is `i
   `rate(subject, levels)` — how much.
 - `stakes` / `lean` / `ask_human` — how careful to be, in words. Maps onto a cost model.
 - `cost_false_yes` / `cost_false_no` / `cost_human` — the same thing in numbers, when you know them.
+- `each(subjects).likely(...)` — the same question about many subjects, in as few calls as possible.
 - `@semantic` and `judge()` — every judgment about one subject, handed to the model together.
-- `ZeroShotBackend`, `TransformersBackend` — models in your process. `OpenAICompatibleBackend` —
-  Ollama, vLLM, llama.cpp, OpenAI. `JevBackend` — TypeSafe's Jev.
+- `JevBackend` — TypeSafe's Jev, the default. `ZeroShotBackend`, `TransformersBackend` — models in
+  your process. `OpenAICompatibleBackend` — Ollama, vLLM, llama.cpp, OpenAI.
 - `Cascade(small, bigger)` — the cheap model first; only unsure answers go on.
 - `FakeBackend` — develop and test with no model at all.
 - `configure(on_decision=...)` and `decision.to_dict()` — see every decision as it is made.

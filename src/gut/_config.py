@@ -2,7 +2,6 @@
 
 Four settings, and the one that matters most is what `bool(decision)` does when the decision is
 UNSURE. There is no safe default answer, so `gut` refuses to pick one silently and raises instead.
-See D9 in DECISIONS.md.
 """
 
 from __future__ import annotations
@@ -38,10 +37,10 @@ DEFAULT_ON_UNSURE: Final[UnsureLiteral] = "raise"
 NO_BACKEND: Final = (
     "No backend is configured. Pick the model that answers, and the rest of your code stays the "
     "same:\n"
+    "  gut.configure(backend=gut.JevBackend())                            # TypeSafe's Jev\n"
     "  gut.configure(backend=gut.ZeroShotBackend())                       # NLI model, local\n"
     '  gut.configure(backend=gut.TransformersBackend("Qwen/Qwen3-0.6B"))  # small LLM, local\n'
     '  gut.configure(backend=gut.OpenAICompatibleBackend("gpt-4.1-nano")) # or Ollama, vLLM\n'
-    "  gut.configure(backend=gut.JevBackend())                            # TypeSafe's Jev\n"
     "  gut.configure(backend=gut.FakeBackend(answers={...}))              # tests, no model\n"
     "Setting TYPESAFE_API_KEY also selects Jev. See docs/backends.md."
 )
@@ -106,7 +105,7 @@ def current_backend() -> Backend:
     Building a `JevBackend` implicitly is a real side effect -- it starts billable calls -- so it
     only happens when `TYPESAFE_API_KEY` is set, a variable nothing but Jev reads. `OPENAI_API_KEY`
     is deliberately not treated the same way: plenty of machines have one set for other reasons,
-    and finding it is not a statement that `gut` should spend it. See D13.
+    and finding it is not a statement that `gut` should spend it.
 
     Raises:
         ConfigurationError: No backend is configured and none can be inferred.

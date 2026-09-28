@@ -5,7 +5,7 @@ question, a choice between named options, a rating against an ordered rubric -- 
 itself how to put them to its model, which is what keeps the public API independent of whichever
 model answers. The limits every backend can honour (two to ten levels, two to 255 options) are
 enforced here, *before* anything is asked, so a malformed question is a readable local error
-rather than a round trip and an opaque 422. See D5 in DECISIONS.md.
+rather than a round trip and an opaque 422.
 """
 
 from __future__ import annotations

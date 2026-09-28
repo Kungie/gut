@@ -19,8 +19,8 @@ which way you err.
 **Every preset band is reachable by construction.** A cost policy sends a decision to a person
 exactly for `p` in `[cost_human/cost_false_no, 1 - cost_human/cost_false_yes]`, which is a real
 interval precisely when `lo < hi`. Presets are defined *as* bands and the costs derived from them,
-so the unreachable-human trap (D19) cannot happen at this layer — it is not guarded against, it is
-structurally impossible. See D20.
+so the unreachable-human trap cannot happen at this layer — it is not guarded against, it is
+structurally impossible.
 """
 
 from __future__ import annotations
@@ -113,7 +113,7 @@ STAKES_CONFIDENCE: Final[dict[Stakes, float]] = {"low": 0.50, "medium": 0.65, "h
 `classify` and `rate` have no probability of yes to run the cost rule against -- they answer *which*
 or *how much*, and the only thing to gate on is how peaked the distribution is. So the posture maps
 onto `min_confidence` instead, and `lean` has no meaning here at all: there is no direction to err
-in when there are four options. See D21.
+in when there are four options.
 """
 
 

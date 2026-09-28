@@ -6,8 +6,8 @@ for -- again every time. An in-memory LRU is on by default; `SQLiteCache` surviv
 restarts, and `NullCache` turns caching off.
 
 The key covers the state, the question *and the model asked for*, because an answer is only
-interchangeable with another answer from the same model. See D12 for what that means when the model
-is named by a moving alias.
+interchangeable with another answer from the same model. A model named by a moving alias keeps the
+same key when the alias moves, so pin a version where that matters.
 """
 
 from __future__ import annotations

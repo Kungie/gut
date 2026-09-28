@@ -54,6 +54,8 @@ def prelude() -> dict[str, Any]:
         "email": "If this happens again I'm cancelling my subscription.",
         "ticket": {"subject": "502s", "body": "Nothing loads since 09:00."},
         "comment": "Check out my crypto newsletter!",
+        "comments": ["Check out my crypto newsletter!", "Great write-up, thanks."],
+        "tickets": [{"subject": "502s"}, {"subject": "refund please"}],
         "message": "The dashboard is down and my team is blocked.",
         "review": "The charger got hot enough to scorch the desk.",
         "agent_state": {"step": 4, "notes": "all checks passed"},
@@ -195,7 +197,7 @@ def test_the_backends_page_covers_every_backend_gut_exports() -> None:
 
 
 def test_no_page_quotes_a_benchmark() -> None:
-    """Measuring models is their makers' job (D38). The docs describe `gut`, not a leaderboard."""
+    """Measuring models is their makers' job. The docs describe `gut`, not a leaderboard."""
     for page in ALL_PAGES:
         text = read(page).lower()
         for word in ("benchmark", "clinc", "sms spam", "brier", "calibrat"):

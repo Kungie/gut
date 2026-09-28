@@ -21,7 +21,6 @@ Also worth knowing about:
 - [`skills/gut/SKILL.md`](../skills/gut/SKILL.md) -- the compact version, written for a coding agent.
   Point your agent at this rather than at the docs.
 - [`llms.txt`](../llms.txt) -- the machine-readable index.
-- [`DECISIONS.md`](../DECISIONS.md) -- every design decision and why.
 
 Every code block on these pages is executed by the test suite, so none of it can drift from the
 library.

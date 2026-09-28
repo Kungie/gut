@@ -9,21 +9,41 @@ changes when the model does:
 ```python
 import gut
 
-gut.configure(backend=gut.ZeroShotBackend())
+gut.configure(backend=gut.JevBackend())
 ```
 
 | backend | runs | install | reach for it when |
 |---|---|---|---|
-| [`ZeroShotBackend`](#zeroshotbackend) | in your process, CPU is fine | `gutfeel[local]` | yes/no and routing on short text, for free |
+| [`JevBackend`](#jevbackend) | TypeSafe AI's API | `gutfeel[jev]` | the default: a hosted model built for exactly these questions |
+| [`ZeroShotBackend`](#zeroshotbackend) | in your process, CPU is fine | `gutfeel[local]` | yes/no and routing on short text, for free, offline |
 | [`TransformersBackend`](#transformersbackend) | in your process, GPU helps | `gutfeel[local]` | you want a small language model and no server |
 | [`OpenAICompatibleBackend`](#openaicompatiblebackend) | Ollama, vLLM, llama.cpp, OpenAI | core | a model is already served somewhere |
-| [`JevBackend`](#jevbackend) | TypeSafe AI's API | `gutfeel[jev]` | a hosted model built for exactly these questions |
 | [`Cascade`](#cascade) | wherever its stages run | core | cheap model first, bigger only when unsure |
 | [`FakeBackend`](#fakebackend) | nowhere | core | tests and offline work |
 | [your own](#writing-your-own) | anywhere | -- | you have a model, or a rule, `gut` does not know |
 
 Every real backend is imported on first use, so `import gut` never loads PyTorch, an HTTP client or
 a vendor SDK you did not ask for.
+
+## `JevBackend`
+
+The model `gut` is designed around. TypeSafe AI's Jev answers typed questions natively -- a
+probability for a yes/no question, a distribution over options, a score on a rubric -- so `gut` hands
+it the question as it is: no prompt, no labels, nothing to read out of generated text. It takes every
+question about one subject in a single request and bills on input only, which makes batching with
+`@semantic`, `judge()` and `each()` close to free.
+
+```python
+import gut
+
+gut.JevBackend()                          # the latest model
+gut.JevBackend(model="jev-1.13.0")        # pin a version; aliases move
+```
+
+`pip install "gutfeel[jev]"` and set `TYPESAFE_API_KEY`. It is the one backend `gut` will build
+without being told to, because that variable exists for nothing else. Retries and rate limits are the
+SDK's own: it backs off on a 429 and honours `retry-after`, and `each()` keeps its requests well under
+the API's limit.
 
 ## `ZeroShotBackend`
 
@@ -70,7 +90,8 @@ next-token distribution. Two details make those probabilities worth deciding on:
   from that shared state, all in one batched forward pass. Ten questions cost little more than one.
 - **Both orders.** Small models lean towards whichever label they are offered first, so a yes/no
   question is asked as "Yes or No" *and* "No or Yes", a choice with its options both ways round,
-  and the readings averaged. It costs a few dozen tokens. [D40](../DECISIONS.md) has the numbers.
+  and the readings averaged. It costs a few dozen tokens. On twenty obvious claims, it took Qwen3-0.6B
+  from 55% of answers on the right side of 0.5 to 95%.
 
 It picks CUDA, then Apple's GPU, then the CPU, and on a CPU uses float32, which there is about twice
 as fast as half precision. Thinking modes are switched off: the answer is the first token.
@@ -99,22 +120,13 @@ Log-probabilities are the one hard requirement. OpenAI's reasoning models (the o
 `BackendError` saying so, never a guessed answer. Choices are labelled A to Z on this backend, so
 they are capped at 26 options.
 
+Tried against Ollama 0.34: `qwen2.5:1.5b` got every obvious case right; `qwen2.5:0.5b` answered
+"no" to nearly everything, spam included. Below about a billion parameters, the NLI backend is the
+better cheap model. To check your own server, run the live tests against it:
+`GUT_LIVE_BASE_URL=http://localhost:11434/v1 GUT_LIVE_MODEL=qwen2.5:1.5b pytest -m live`.
+
 `OPENAI_API_KEY` is sent only to OpenAI, or to `OPENAI_BASE_URL` if you set one. Point the backend
 anywhere else and it sends no key unless you pass `api_key=`.
-
-## `JevBackend`
-
-TypeSafe AI's Jev answers typed questions natively -- no labels, no prompt -- and bills on input
-only, so batching is close to free.
-
-```python
-import gut
-
-gut.JevBackend(model="jev-1.13.0")        # pin a version; aliases move
-```
-
-`pip install "gutfeel[jev]"` and set `TYPESAFE_API_KEY`. It is the one backend `gut` will build without
-being told to, because that variable exists for nothing else.
 
 ## `Cascade`
 
@@ -203,3 +215,7 @@ every question shape. The rest of the contract:
   goes into the cache key. If different questions were answered by different models, say which in
   `BackendResponse.models`.
 - **Raise `BackendError`** for anything that went wrong, so a `Cascade` can move on.
+- **Optionally, `ask_many(items)`**: a list of `(subject, questions)` pairs in, one response per
+  pair out, in order. `each()` and `Cascade` use it when it is there -- the local backends run a
+  whole batch in one forward pass through it. Without it, `gut` calls `ask()` once per subject
+  from a small thread pool, which is already right for anything behind a network.

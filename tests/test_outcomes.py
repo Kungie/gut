@@ -24,7 +24,7 @@ def test_str_is_the_bare_word() -> None:
 
 
 def test_bare_case_names_do_not_compile() -> None:
-    """The spelling `case YES:` cannot work in Python, which is why `Outcome` is an enum (D7).
+    """The spelling `case YES:` cannot work in Python, which is why `Outcome` is an enum.
 
     A bare name in a `case` clause is a capture pattern, not a value pattern: it binds anything and
     makes every later clause unreachable. This test pins the reason down so nobody 'fixes' the

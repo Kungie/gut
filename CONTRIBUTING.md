@@ -38,5 +38,5 @@ owner `Kungie`, repository `gut`, workflow `release.yml` and environment `pypi`.
 - **Never silently change user code behavior.** When `gut` cannot prove something statically
   (batching, in particular), it falls back to the slow-but-correct path rather than guessing.
 - **A backend that cannot answer raises `BackendError`.** Never a made-up probability.
-- Ambiguous design calls get a short entry in [DECISIONS.md](DECISIONS.md).
+- Ambiguous design calls get their reasoning in the docstring of the code that makes them.
 - Small commits whose messages say why, not what.

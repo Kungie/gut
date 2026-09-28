@@ -6,7 +6,7 @@ the cost rule, decision types, cache, batching, the whole test suite -- may depe
 What this module deliberately does **not** do is implement retries. The SDK already retries with
 exponential backoff and honours both `retry-after` and `retry-after-ms`; wrapping it in a second
 loop would stack two backoffs and double the delay on a 429. So the knobs here configure the SDK's
-own `RetryPolicy` rather than replacing it. See D4 in DECISIONS.md.
+own `RetryPolicy` rather than replacing it.
 """
 
 from __future__ import annotations
@@ -95,7 +95,7 @@ class JevBackend:
     Args:
         model: Model name or alias. Defaults to the SDK's own default. Pin a version when
             thresholds have been calibrated against it -- aliases move, and the cache keys on
-            whatever you name here (D12).
+            whatever you name here.
         api_key: Overrides `TYPESAFE_API_KEY`.
         base_url: Overrides `TYPESAFE_BASE_URL`.
         timeout: Seconds per HTTP operation.

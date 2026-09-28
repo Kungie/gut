@@ -16,7 +16,7 @@ is someone else's empty project. Every import and every name in code is `gut`.
 ```python
 import gut
 
-gut.configure(backend=gut.ZeroShotBackend())    # once, at startup
+gut.configure(backend=gut.JevBackend())    # once, at startup; any backend works
 
 if gut.likely(email, "the customer threatens to cancel"):
     escalate()
@@ -46,11 +46,11 @@ class Team(Enum):
 
 | need | backend | install |
 |---|---|---|
+| the default: TypeSafe's Jev, built for this | `gut.JevBackend()` | `gutfeel[jev]` |
 | free, local, fast yes/no and routing | `gut.ZeroShotBackend()` | `gutfeel[local]` |
 | a small LLM on this machine | `gut.TransformersBackend("Qwen/Qwen3-0.6B")` | `gutfeel[local]` |
 | a model already served (Ollama, vLLM, llama.cpp) | `gut.OpenAICompatibleBackend(name, base_url=...)` | core |
 | OpenAI | `gut.OpenAICompatibleBackend("gpt-4.1-nano")` | core |
-| TypeSafe's Jev | `gut.JevBackend()` | `gutfeel[jev]` |
 | cheap first, bigger only when unsure | `gut.Cascade(small, bigger)` | core |
 | tests | `gut.FakeBackend(answers={...})` | core |
 
@@ -95,6 +95,18 @@ Python rejects it with `SyntaxError: name capture 'YES' makes remaining patterns
 
 `if decision:` works too. `UNSURE` then follows `gut.configure(on_unsure=...)`, which raises
 `UnsureDecision` by default rather than guessing.
+
+## Asking one thing about many subjects
+
+```python
+import gut
+
+spam = gut.each(comments).likely("is spam")      # list of decisions, same order as comments
+teams = gut.each(tickets).classify(Team)
+```
+
+**Never loop over `gut.likely` for a list.** `each()` sends the subjects together -- concurrent
+requests to Jev or a server, batched passes on a local model -- and skips anything cached.
 
 ## Asking several things about one subject
 

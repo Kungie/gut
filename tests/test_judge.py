@@ -179,7 +179,7 @@ def test_handles_hash_like_their_decision(backend: FakeBackend) -> None:
 
 
 def test_the_underlying_decision_is_reachable(backend: FakeBackend) -> None:
-    """`.decision` and `.pending` live on the handle, not on the type it is declared as (D15)."""
+    """`.decision` and `.pending` live on the handle, not on the type it is declared as."""
     with judge("a ticket") as j:
         handle = j.likely("is a bug report")
     assert isinstance(handle, Lazy)

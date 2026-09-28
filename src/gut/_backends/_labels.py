@@ -17,7 +17,7 @@ Three rules keep the numbers honest:
 - **The order the labels are offered in must not decide the answer.** Small models lean hard towards
   whichever label comes first: offered "Yes or No", Qwen2.5-0.5B called a meeting request spam at
   0.69; offered "No or Yes", at 0.04. So a yes/no question is asked both ways round and a choice
-  with its options in both orders, and the two readings are averaged. See D40.
+  with its options in both orders, and the two readings are averaged.
 
 The subject goes first and the question last, so every question about one subject -- and both
 readings of each -- shares a prefix.
@@ -93,7 +93,7 @@ def claim_for(question: str) -> str:
     """A yes/no question as a claim about the text: `"is spam"` -> `"the text is spam"`.
 
     "The text" rather than "the subject": a small model reads "the subject is spam" as a claim about
-    an email's subject line. See D40.
+    an email's subject line.
     """
     stripped = question.strip()
     return f"the text {stripped}" if is_predicate(stripped) else stripped

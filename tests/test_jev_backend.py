@@ -112,7 +112,7 @@ def test_the_underlying_client_is_reachable() -> None:
 def test_an_api_key_in_the_environment_infers_the_backend(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Building a billable client implicitly needs an explicit statement of intent (D13)."""
+    """Building a billable client implicitly needs an explicit statement of intent."""
     monkeypatch.setenv("TYPESAFE_API_KEY", "test-key-not-used")
     from gut._config import current_backend
 
@@ -297,7 +297,7 @@ def test_sdk_errors_are_wrapped_and_the_cause_is_kept() -> None:
 
 
 def test_we_do_not_stack_a_second_retry_loop() -> None:
-    """The SDK already retries with backoff and honours retry-after (D4).
+    """The SDK already retries with backoff and honours retry-after.
 
     A failing call must reach the client exactly once from our side; retrying here would double
     the delay on a 429.

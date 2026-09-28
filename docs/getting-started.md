@@ -5,9 +5,9 @@
 ## Install
 
 ```bash
-pip install gutfeel                  # core: any OpenAI-compatible server, and FakeBackend
+pip install "gutfeel[jev]"           # TypeSafe AI's Jev -- the model gut is built around
 pip install "gutfeel[local]"         # + models that run in your process (PyTorch)
-pip install "gutfeel[jev]"           # + TypeSafe AI's Jev
+pip install gutfeel                  # core only: any OpenAI-compatible server, and FakeBackend
 ```
 
 The distribution is called `gutfeel` because `gut` was already taken on PyPI. Everything else --
@@ -16,7 +16,16 @@ the import, the module, every name in these docs -- is `gut`.
 ## Pick a model
 
 `gut` does not come with a model; it makes whichever one you choose answer like a function. Pick
-one once, at startup:
+one once, at startup. The one it is designed around is Jev:
+
+```python
+import gut
+
+gut.configure(backend=gut.JevBackend())      # needs TYPESAFE_API_KEY
+```
+
+Jev answers typed questions natively, so `gut` hands it each question as it is and reads the
+probabilities straight back. No key, or no network? A 70M-parameter NLI model runs on your own CPU:
 
 ```python
 import gut
@@ -24,11 +33,9 @@ import gut
 gut.configure(backend=gut.ZeroShotBackend())
 ```
 
-That is a 70M-parameter NLI model. It downloads once (about 150 MB), runs on a CPU in about a tenth
-of a second per question, costs nothing per call, and never sends your data anywhere. It is a good
-first choice for yes/no questions and routing on short text. [Backends](backends.md) covers the
-others: a small language model on your machine, Ollama, vLLM, OpenAI, Jev, and a `Cascade` that
-combines them.
+It downloads once (about 150 MB), answers in about a tenth of a second per question, costs nothing
+per call, and never sends your data anywhere. [Backends](backends.md) covers the rest: a small
+language model on your machine, Ollama, vLLM, OpenAI, and a `Cascade` that combines them.
 
 Nothing is chosen for you. With no backend configured, `gut` raises and lists the options -- except
 that setting `TYPESAFE_API_KEY` selects Jev, since that variable has no other use.

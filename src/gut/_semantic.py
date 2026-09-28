@@ -355,7 +355,7 @@ def _async_wrapper(
     request per judgment.
 
     A backend that speaks `async` natively would avoid the thread entirely. That is a larger change
-    and is noted as a next step rather than done here. See D27.
+    and is noted as a next step rather than done here.
     """
 
     @functools.wraps(func)

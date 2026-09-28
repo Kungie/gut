@@ -14,7 +14,7 @@ let `ask_human=True` and [`Cascade`](backends.md#cascade) catch what the cheap m
 - NLI models read one claim at a time. "Is spam or abusive" is two questions.
 - Language models under a billion parameters lean towards whichever label they are offered first.
   `gut` reads every yes/no question and choice in both orders and averages them, which removes most
-  of the lean and doubles the requests on a hosted server. See [D40](../DECISIONS.md).
+  of the lean and doubles the requests on a hosted server.
 - Text-model backends label a choice's options A to Z, so they take at most 26 options. The NLI
   backend and Jev have no such limit.
 - OpenAI-compatible servers report their top 20 tokens. An option that does not appear there is given

@@ -2,8 +2,7 @@
 
 `Outcome` is an `enum.Enum` rather than a set of module-level sentinels because only a *dotted*
 name is a value pattern in a `match` statement. A bare ``case YES:`` is a capture pattern: it binds
-anything and makes the following clauses unreachable, which the compiler rejects outright. See D7
-in DECISIONS.md.
+anything and makes the following clauses unreachable, which the compiler rejects outright.
 """
 
 from __future__ import annotations

@@ -3,6 +3,35 @@
 [← docs index](README.md)
 
 
+## Many subjects, one question
+
+```python
+import gut
+
+spam = gut.each(comments).likely("is spam")          # a list of decisions, in order
+teams = gut.each(tickets).classify(Team, ask_human=True)
+
+for comment, decision in zip(comments, spam):
+    ...
+```
+
+Each decision is exactly what `gut.likely(comment, "is spam")` would have returned -- the same
+posture words, the same `on_decision` hook -- with `source="batch"`. How the subjects travel is the
+backend's business:
+
+- **Jev**, and any other server, gets one request per subject, eight in flight at a time
+  (`gut.each(..., concurrency=16)` to change that). Jev's SDK backs off on its own if it hits a
+  rate limit.
+- **A local model** runs the subjects through batched forward passes. On one laptop the NLI model
+  answered 200 comments in 5.2 s through `each()` against 15.9 s in a loop; Qwen3-0.6B on the GPU
+  gained little, since it is limited by compute either way.
+- **A `Cascade`** sends every subject to its cheap stage and only the unsettled ones onwards, as one
+  batch.
+
+Subjects already in the cache are not asked again, and a subject that appears twice is asked once.
+
+## One subject, many questions
+
 The expensive part of a judgment is reading the subject, not the question. Hand a backend every
 question about one subject at once and it reads the subject once: Jev bills it once per request, a
 local model computes it once and answers every question from there, and a server with prefix caching
