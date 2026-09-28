@@ -393,7 +393,7 @@
       <h2 id="be-title">One line of code. <em>Six places to run it.</em></h2>
       <p class="intro">gut is built around TypeSafe's Jev, a model that answers typed questions directly, with probabilities. It is also model-agnostic: the same line runs on a laptop CPU, a small local LLM or any OpenAI-compatible server.</p>
       <ol class="backends">
-        <li class="first"><span class="nm">JevBackend</span><span class="ex">gutfeel[jev]</span><span class="wh">TypeSafe's Jev. Answers typed questions directly with probabilities. Set <code>TYPESAFE_API_KEY</code> and go.</span></li>
+        <li class="first"><span class="nm">JevBackend</span><span class="ex">gutfeel[jev]</span><span class="wh">TypeSafe's Jev. Answers typed questions directly with probabilities. Set <code>TYPESAFE_API_KEY</code> and go, or reach it through OpenRouter with <code>JevBackend.openrouter()</code>.</span></li>
         <li><span class="nm">ZeroShotBackend</span><span class="ex">gutfeel[local]</span><span class="wh">A 70M NLI model on a laptop CPU, about 0.1 s a question. Free, offline, and hard to talk round.</span></li>
         <li><span class="nm">TransformersBackend</span><span class="ex">gutfeel[local]</span><span class="wh">A small local LLM such as Qwen3-0.6B, for when you want a language model without a server.</span></li>
         <li><span class="nm">OpenAICompatibleBackend</span><span class="ex">gutfeel</span><span class="wh">Anything that speaks the OpenAI API: Ollama, vLLM, llama.cpp, or OpenAI itself.</span></li>
