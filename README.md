@@ -1,4 +1,4 @@
-# gut
+# <img src="https://raw.githubusercontent.com/Kungie/gut/main/site/assets/favicon.svg" alt="" height="44"> gut
 
 [![PyPI](https://img.shields.io/pypi/v/gutfeel)](https://pypi.org/project/gutfeel/) [![CI](https://github.com/Kungie/gut/actions/workflows/ci.yml/badge.svg)](https://github.com/Kungie/gut/actions/workflows/ci.yml) [![Downloads](https://static.pepy.tech/badge/gutfeel)](https://pepy.tech/project/gutfeel) [![Glama MCP server](https://glama.ai/mcp/servers/Kungie/gut/badges/score.svg)](https://glama.ai/mcp/servers/Kungie/gut)
 
