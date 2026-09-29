@@ -113,6 +113,11 @@ select = [
 "scripts/build_site.py" = ["E501"]
 
 [[tool.mypy.overrides]]
+# fontTools draws the README's wordmark (scripts/make_wordmark.py); it is run with `uv run --with`.
+module = ["fontTools", "fontTools.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
 # The `local` extra, absent from a core install and from CI. Used only through `Any`.
 module = ["torch", "torch.*", "transformers", "transformers.*"]
 ignore_missing_imports = true
