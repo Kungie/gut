@@ -31,7 +31,7 @@ A test fails while the built pages are behind the markdown, so they cannot drift
 ## Releasing
 
 Bump the version in `pyproject.toml`, `packages/gutfeel-mcp/pyproject.toml` (its own version and
-its pin), `server.json` and `src/gut/__init__.py` (tests check they agree),
+its pin), `server.json`, `src/gut/__init__.py` and the PyPI badge in the README (tests check they agree),
 rebuild the site so it shows the new version, commit, then tag and push:
 
 ```bash

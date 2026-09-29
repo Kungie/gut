@@ -78,3 +78,12 @@ def test_the_registry_entry_names_the_current_release() -> None:
     readme = (root / "packages" / "gutfeel-mcp" / "README.md").read_text(encoding="utf-8")
     assert f"mcp-name: {entry['name']} " in readme or f"mcp-name: {entry['name']} -->" in readme
     assert len(entry["description"]) <= 100
+
+
+def test_the_readme_badge_names_the_release() -> None:
+    """GitHub and shields.io each cache the PyPI badge for hours, so a new release would show the
+    old version; a URL that changes with every release leaves neither a stale copy to serve."""
+    from pathlib import Path
+
+    readme = (Path(__file__).resolve().parent.parent / "README.md").read_text(encoding="utf-8")
+    assert f"https://img.shields.io/pypi/v/gutfeel?release={gut.__version__})" in readme
