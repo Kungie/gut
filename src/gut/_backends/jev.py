@@ -51,6 +51,29 @@ OPENROUTER_MODEL: Final = "~typesafe/jev-latest"
 
 OLLAYA_HOST: Final = "127.0.0.1:11435"
 """Where Ollaya listens unless `OLLAYA_HOST` says otherwise. It serves TypeSafe's API there."""
+
+CLM_BASE_URL: Final = "http://127.0.0.1:8700"
+"""Where `clm-serve` listens unless `CLM_BASE_URL` says otherwise, speaking TypeSafe's API."""
+
+CLM_MODEL: Final = "clm-latest"
+"""The model `clm-serve` answers with by default."""
+
+_START_HINTS: Final = {
+    "Ollaya": " Is Ollaya running? Any ollaya command starts it, such as `ollaya pull {model}`, "
+    "which also downloads the model.",
+    "CLM": " Is clm-serve running, with the vLLM encoder it reads through? "
+    "See https://github.com/Contrastive-LM/CLM.",
+}
+
+
+def _local_address(address: str) -> str:
+    """A server address as a URL: `host:port` gains a scheme, and `0.0.0.0` means this machine."""
+    address = address.strip().rstrip("/")
+    if "://" not in address:
+        address = f"http://{address}"
+    return address.replace("//0.0.0.0", "//127.0.0.1")
+
+
 """OpenRouter's name for the latest Jev. Pin a version, such as `typesafe/jev-1.13`, to keep it."""
 
 # The SDK parses `usage` into token counts and drops everything else, including the `cost` that
@@ -234,8 +257,9 @@ class JevBackend:
         if client is None and async_client is None:
             self._client = self._new_client()
         self._supplied_async = async_client
-        # A model on your own machine: its calls cost nothing, whatever the server says.
-        self._local = False
+        # The server on your own machine this asks instead of Jev, if any ("Ollaya", "CLM"): its
+        # calls cost nothing, whatever the server says.
+        self._local: str | None = None
         self._async: tuple[asyncio.AbstractEventLoop, typesafe_sdk.AsyncTypeSafeClient] | None = (
             None
         )
@@ -321,11 +345,7 @@ class JevBackend:
             raise BackendError(
                 'Name the Ollaya model to ask, such as JevBackend.ollaya("winnow:e4b") or "laya".'
             )
-        address = (host or os.environ.get("OLLAYA_HOST", "").strip() or OLLAYA_HOST).rstrip("/")
-        if "://" not in address:
-            address = f"http://{address}"
-        # Ollaya binds 0.0.0.0 to listen everywhere; a client reaches it on this machine.
-        address = address.replace("//0.0.0.0", "//127.0.0.1")
+        address = _local_address(host or os.environ.get("OLLAYA_HOST", "").strip() or OLLAYA_HOST)
         key = api_key or os.environ.get("OLLAYA_API_KEY", "").strip() or "local"
         backend = cls(
             model=model.strip(),
@@ -334,20 +354,56 @@ class JevBackend:
             timeout=timeout,
             max_retries=max_retries,
         )
-        backend._local = True
+        backend._local = "Ollaya"
+        return backend
+
+    @classmethod
+    def clm(
+        cls,
+        model: str = CLM_MODEL,
+        *,
+        base_url: str | None = None,
+        api_key: str | None = None,
+        timeout: float | None = None,
+        max_retries: int | None = None,
+    ) -> JevBackend:
+        """CLM, the open contrastive decision model, served by its own `clm-serve`.
+
+        CLM (https://github.com/Contrastive-LM/CLM) scores each option by how well its embedding
+        matches the text's, and `clm-serve` speaks TypeSafe's API, so this is the Jev backend
+        pointed at it. It needs a GPU for its Qwen3-8B encoder. Calls are counted as free. Ollaya
+        serves CLM too, as `JevBackend.ollaya("clm:8b")`.
+
+        Args:
+            model: `"clm-latest"`, `"clm-raw"`, or a fine-tuned head the server was started with.
+            base_url: Where `clm-serve` listens. Defaults to `CLM_BASE_URL`, then
+                `http://127.0.0.1:8700`.
+            api_key: Only needed when the server requires one; read from `CLM_API_KEY` by default.
+            timeout: Seconds per HTTP operation.
+            max_retries: How often the SDK retries a failed request.
+        """
+        address = _local_address(
+            base_url or os.environ.get("CLM_BASE_URL", "").strip() or CLM_BASE_URL
+        )
+        key = api_key or os.environ.get("CLM_API_KEY", "").strip() or "local"
+        backend = cls(
+            model=model.strip() or CLM_MODEL,
+            api_key=key,
+            base_url=address,
+            timeout=timeout,
+            max_retries=max_retries,
+        )
+        backend._local = "CLM"
         return backend
 
     def _failed(self, error: Exception) -> str:
-        if not self._local:
+        if self._local is None:
             return f"Jev request failed: {error}"
-        where = self._connection["base_url"] if self._connection else "Ollaya"
+        where = self._connection["base_url"] if self._connection else "this machine"
         hint = ""
         if "connect" in str(error).lower():
-            hint = (
-                " Is Ollaya running? Any ollaya command starts it, such as "
-                f"`ollaya pull {self._model}`, which also downloads the model."
-            )
-        return f"Ollaya at {where} did not answer: {error}.{hint}"
+            hint = _START_HINTS[self._local].format(model=self._model)
+        return f"{self._local} at {where} did not answer: {error}.{hint}"
 
     def _new_client(self) -> typesafe_sdk.TypeSafeClient:
         assert self._connection is not None  # only unset when a client was supplied

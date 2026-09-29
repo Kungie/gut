@@ -92,6 +92,26 @@ gut.configure(backend=gut.Cascade(
 On a Mac with a system HTTP proxy, set `NO_PROXY=localhost,127.0.0.1`, or requests to Ollaya go
 through the proxy.
 
+### CLM, on its own server
+
+[CLM](https://github.com/Contrastive-LM/CLM) is an open decision model that scores each option by
+how well its embedding matches the text's. Its server, `clm-serve`, speaks TypeSafe's API too:
+
+```python
+import gut
+
+gut.configure(backend=gut.JevBackend.clm())   # clm-serve on 127.0.0.1:8700, or CLM_BASE_URL
+```
+
+It needs an NVIDIA GPU for its Qwen3-8B encoder, run under vLLM; `CLM_API_KEY` is read if the
+server wants one, and its calls count as free. `gut` is tested against a stand-in that answers the
+way CLM's documentation says it does, not against a running `clm-serve`. Ollaya serves CLM as well,
+so on a machine with Ollaya the same model is `gut.JevBackend.ollaya("clm:8b")`.
+
+CLM's authors report parity with Jev on agentic tasks such as tool choice and verification; on
+classification-style typed decisions, Ollaya's own comparison scores it well below Jev. Try it on
+your own questions before relying on it.
+
 ## `ZeroShotBackend`
 
 A natural-language-inference model: it reads the subject and a *hypothesis* and scores how strongly

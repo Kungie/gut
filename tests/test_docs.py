@@ -86,6 +86,10 @@ class StandIn(gut.FakeBackend):
     def ollaya(cls, model: str, **options: object) -> StandIn:
         return cls(model=model)
 
+    @classmethod
+    def clm(cls, model: str = "clm-latest", **options: object) -> StandIn:
+        return cls(model=model)
+
 
 @pytest.fixture
 def sandbox(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:

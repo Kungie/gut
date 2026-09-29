@@ -8,13 +8,13 @@
     "url": "https://github.com/Kungie/gut",
     "source": "github"
   },
-  "version": "0.7.4",
+  "version": "0.8.0",
   "packages": [
     {
       "registryType": "pypi",
       "registryBaseUrl": "https://pypi.org",
       "identifier": "gutfeel-mcp",
-      "version": "0.7.4",
+      "version": "0.8.0",
       "runtimeHint": "uvx",
       "transport": {
         "type": "stdio"
@@ -28,7 +28,7 @@
         },
         {
           "name": "GUT_BACKEND",
-          "description": "Another model: openrouter, ollaya, ollama, openai, zeroshot or transformers",
+          "description": "Another model: openrouter, ollaya, clm, ollama, openai, zeroshot or transformers",
           "isRequired": false
         },
         {

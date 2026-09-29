@@ -47,6 +47,7 @@ The documentation is also published at https://gutpy.dev/docs/.
 - `usage(max_cost=...)` — count calls and dollars; past the budget the next call raises `BudgetExceeded`.
 - `JevBackend.openrouter()` — Jev through OpenRouter, which reports the price of every call.
 - `JevBackend.ollaya(model)` — an open decision model on your machine, served by Ollaya (TypeSafe's API).
+- `JevBackend.clm()` — CLM, the open contrastive decision model, on its own `clm-serve`.
 
 ## Traps worth knowing before you write any code
 

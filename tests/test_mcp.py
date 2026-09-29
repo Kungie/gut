@@ -264,6 +264,16 @@ def test_ollaya_is_jev_on_this_machine_and_needs_a_model() -> None:
         backend_from_env({"GUT_BACKEND": "ollaya"})
 
 
+def test_clm_is_jev_on_clm_serve() -> None:
+    pytest.importorskip("typesafe_sdk")
+    chosen = backend_from_env({"GUT_BACKEND": "clm"})
+    assert isinstance(chosen, gut.JevBackend)
+    assert chosen.model_id == "clm-latest"
+    chosen = backend_from_env({"GUT_BACKEND": "clm", "GUT_MODEL": "clm-raw"})
+    assert isinstance(chosen, gut.JevBackend)
+    assert chosen.model_id == "clm-raw"
+
+
 def test_jev_is_built_from_the_environment(monkeypatch: pytest.MonkeyPatch) -> None:
     pytest.importorskip("typesafe_sdk")
     monkeypatch.setenv("TYPESAFE_API_KEY", "test-key-not-real")

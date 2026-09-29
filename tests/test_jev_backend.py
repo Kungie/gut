@@ -619,3 +619,75 @@ def test_ollaya_reports_its_own_errors_as_they_are(wire: Any) -> None:
     with pytest.raises(BackendError, match="Ollaya at") as caught:
         JevBackend.ollaya("nope", max_retries=0).ask("text", {"q": BUG})
     assert "Is Ollaya running" not in str(caught.value)
+
+
+# --------------------------------------------------------------------------- CLM
+
+
+def clm_reply() -> Any:
+    """What `clm-serve` answers, as its README documents: Jev's shape, plus `billing_units`."""
+    import httpx2
+
+    seen: list[Any] = []
+
+    def handler(request: Any) -> Any:
+        seen.append(request)
+        body = {
+            "model": "clm-latest",
+            "answers": {
+                "q": {
+                    "type": "choice",
+                    "choice": "BILLING",
+                    "confidence": 0.8776,
+                    "probabilities": {"BILLING": 0.93878, "PLATFORM": 0.06122},
+                }
+            },
+            "usage": {"input_tokens": 38, "billing_units": 1},
+        }
+        return httpx2.Response(200, json=body, headers={"X-CLM-Latency-Ms": "58.1"})
+
+    return handler, seen
+
+
+def test_clm_asks_clm_serve_and_calls_it_free(wire: Any, monkeypatch: pytest.MonkeyPatch) -> None:
+    handler, seen = clm_reply()
+    wire(handler)
+    monkeypatch.delenv("CLM_BASE_URL", raising=False)
+    monkeypatch.delenv("CLM_API_KEY", raising=False)
+    backend = JevBackend.clm()
+    response = backend.ask("my invoice was charged twice", {"q": TEAM})
+    assert backend.model_id == "clm-latest"
+    assert str(seen[0].url) == "http://127.0.0.1:8700/v1/systemone"
+    assert seen[0].headers["authorization"] == "Bearer local"
+    answer = response.answers["q"]
+    assert isinstance(answer, ChoiceAnswer)
+    assert answer.choice == "BILLING"
+    assert response.model == "clm-latest"
+    assert response.cost == 0.0
+    assert response.input_tokens == 38
+
+
+def test_clm_follows_clm_base_url_and_key(wire: Any, monkeypatch: pytest.MonkeyPatch) -> None:
+    handler, seen = clm_reply()
+    wire(handler)
+    monkeypatch.setenv("CLM_BASE_URL", "gpu-box:8700/")
+    monkeypatch.setenv("CLM_API_KEY", "clm-key")
+    JevBackend.clm("clm-raw").ask("text", {"q": TEAM})
+    assert str(seen[0].url) == "http://gpu-box:8700/v1/systemone"
+    assert seen[0].headers["authorization"] == "Bearer clm-key"
+
+
+def test_clm_not_running_says_what_to_start(monkeypatch: pytest.MonkeyPatch) -> None:
+    import httpx2
+
+    from gut._backends import jev
+
+    def refuse(request: Any) -> Any:
+        raise httpx2.ConnectError("All connection attempts failed", request=request)
+
+    monkeypatch.setattr(jev, "_inner_transport", lambda: httpx2.MockTransport(refuse))
+    monkeypatch.delenv("CLM_BASE_URL", raising=False)
+    with pytest.raises(
+        BackendError, match=r"CLM at http://127.0.0.1:8700 did not answer.*clm-serve"
+    ):
+        JevBackend.clm(max_retries=0).ask("text", {"q": BUG})
