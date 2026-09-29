@@ -8,13 +8,13 @@
     "url": "https://github.com/Kungie/gut",
     "source": "github"
   },
-  "version": "0.7.3",
+  "version": "0.7.4",
   "packages": [
     {
       "registryType": "pypi",
       "registryBaseUrl": "https://pypi.org",
       "identifier": "gutfeel-mcp",
-      "version": "0.7.3",
+      "version": "0.7.4",
       "runtimeHint": "uvx",
       "transport": {
         "type": "stdio"

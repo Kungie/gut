@@ -52,6 +52,29 @@ jobs:
           path: dist/
       - uses: pypa/gh-action-pypi-publish@release/v1
 
+  mcp-registry:
+    # The MCP Registry entry (server.json) follows every release. The registry checks that
+    # gutfeel-mcp's README on PyPI names io.github.Kungie/gut, so this waits for PyPI to have it.
+    needs: publish
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+      - name: install mcp-publisher
+        run: curl -sL "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_linux_amd64.tar.gz" | tar xz mcp-publisher
+      - name: wait for PyPI to serve the release
+        run: |
+          version=${GITHUB_REF_NAME#v}
+          for attempt in $(seq 1 30); do
+            curl -sf "https://pypi.org/pypi/gutfeel-mcp/$version/json" >/dev/null && exit 0
+            sleep 10
+          done
+          echo "::error::gutfeel-mcp $version did not appear on PyPI"; exit 1
+      - run: ./mcp-publisher login github-oidc
+      - run: ./mcp-publisher publish
+
   github-release:
     needs: publish
     runs-on: ubuntu-latest

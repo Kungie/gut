@@ -25,7 +25,8 @@ The documentation is also published at https://gutpy.dev/docs/.
 - [docs/cli.md](docs/cli.md): `gut filter` and `gut map`, judgments over lines of text from a shell,
   with a cost summary and `--max-cost`.
 - [docs/mcp.md](docs/mcp.md): `gutfeel-mcp`, the same judgments as MCP tools (`likely`, `classify`,
-  `rate`, `each`) for Claude Code, Claude Desktop, Cursor and other MCP clients.
+  `rate`, `each`) for Claude Code, Claude Desktop, Cursor and other MCP clients. `uvx gutfeel-mcp`;
+  in the MCP Registry as `io.github.Kungie/gut`.
 - [examples/](examples/): the same handlers on any backend, chosen with `--backend`.
 - [CONTRIBUTING.md](CONTRIBUTING.md): how to run the suite.
 

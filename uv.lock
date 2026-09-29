@@ -560,7 +560,7 @@ wheels = [
 
 [[package]]
 name = "gutfeel"
-version = "0.7.3"
+version = "0.7.4"
 source = { editable = "." }
 dependencies = [
     { name = "httpx" },
@@ -618,7 +618,7 @@ dev = [
 
 [[package]]
 name = "gutfeel-mcp"
-version = "0.7.3"
+version = "0.7.4"
 source = { editable = "packages/gutfeel-mcp" }
 dependencies = [
     { name = "gutfeel" },

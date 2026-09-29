@@ -42,7 +42,8 @@ git tag -a v0.2.0 -m "gutfeel 0.2.0" && git push origin main --tags
 `gutfeel` and `gutfeel-mcp` to PyPI and creates a GitHub release. `gutfeel-mcp`
 (`packages/gutfeel-mcp`) is the MCP server's command as a package of its own, so `uvx gutfeel-mcp`
 works alone; its version and its pin on gutfeel move with gutfeel's, which a test checks. After a
-release, `mcp-publisher publish` updates the MCP Registry entry from `server.json`. There is no token: PyPI trusts the workflow itself
+release, the same workflow updates the MCP Registry entry from `server.json`, signing in as the
+repository with GitHub's OIDC token, so no registry key is stored either. There is no token: PyPI trusts the workflow itself
 (trusted publishing), configured once under the project's *Publishing* settings on pypi.org with
 owner `Kungie`, repository `gut`, workflow `release.yml` and environment `pypi`.
 

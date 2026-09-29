@@ -7,6 +7,9 @@ other MCP client can then hand its judgment calls -- *is this spam, which team o
 urgent is it* -- to a small, fast, cheap model, and get back an outcome and a probability.
 
 It runs over stdio, and `uvx` fetches it on first use, so there is nothing to install by hand.
+It is listed in the [official MCP Registry](https://registry.modelcontextprotocol.io/v0/servers?search=io.github.Kungie/gut)
+as `io.github.Kungie/gut`, and on [Glama](https://glama.ai/mcp/servers/Kungie/gut), so clients that
+browse a directory can find it there too.
 
 ## Add it to your agent
 

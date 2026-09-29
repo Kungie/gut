@@ -22,7 +22,7 @@
 <div style="width: 100%; background-color: var(--paper); color: var(--ink); font-family: var(--sans)">
 <header class="nav">
   <div class="wrap nav-in">
-    <a class="mark" href="../index.html" aria-label="gut, home"><b>gut</b><small>docs · 0.7.3</small></a>
+    <a class="mark" href="../index.html" aria-label="gut, home"><b>gut</b><small>docs · 0.7.4</small></a>
     <ul class="nav-links">
       <li><a href="../index.html#playground">Playground</a></li>
       <li><a href="../index.html#backends">Backends</a></li>
@@ -76,7 +76,7 @@
     <div class="crumbs">docs / 9 / mcp</div>
     <h1>MCP server</h1>
     <p><code class="inline-code">gutfeel-mcp</code> gives an agent gut's judgments as tools. Claude Code, Claude Desktop, Cursor or any other MCP client can then hand its judgment calls — <em>is this spam, which team owns this, how urgent is it</em> — to a small, fast, cheap model, and get back an outcome and a probability.</p>
-    <p>It runs over stdio, and <code class="inline-code">uvx</code> fetches it on first use, so there is nothing to install by hand.</p>
+    <p>It runs over stdio, and <code class="inline-code">uvx</code> fetches it on first use, so there is nothing to install by hand. It is listed in the <a href="https://registry.modelcontextprotocol.io/v0/servers?search=io.github.Kungie/gut">official MCP Registry</a> as <code class="inline-code">io.github.Kungie/gut</code>, and on <a href="https://glama.ai/mcp/servers/Kungie/gut">Glama</a>, so clients that browse a directory can find it there too.</p>
     <h2 id="add-it-to-your-agent"><span class="sc">9.1</span>Add it to your agent</h2>
     <p>With Jev, the model gut is built around, the only setting is your TypeSafe key. In Claude Code:</p>
     <figure class="listing">

@@ -105,7 +105,7 @@ commits or search results in one command instead of reading each one itself:
 
 ```bash
 git ls-files | gut filter "retries failed requests" --read-files --max-cost 0.50
-claude mcp add gut --env TYPESAFE_API_KEY=your-key -- uvx gutfeel-mcp
+claude mcp add gut --env TYPESAFE_API_KEY=your-key -- uvx gutfeel-mcp   # MCP Registry: io.github.Kungie/gut
 npx skills add Kungie/gut --skill gut     # teaches a coding agent when to reach for it
 ```
 

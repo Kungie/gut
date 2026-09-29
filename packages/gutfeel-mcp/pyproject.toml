@@ -1,6 +1,6 @@
 [project]
 name = "gutfeel-mcp"
-version = "0.7.3"
+version = "0.7.4"
 description = "gut's judgment calls as MCP tools: likely, classify, rate and each, answered by small models."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -16,7 +16,7 @@ classifiers = [
 # The server itself lives in gutfeel (gut._mcp); this package is its dependencies and its command,
 # so that `uvx gutfeel-mcp` is all an MCP client needs. Released in lockstep with gutfeel.
 dependencies = [
-    "gutfeel==0.7.3",
+    "gutfeel==0.7.4",
     "mcp>=2.2,<3",
     "typesafe-sdk>=0.7",
 ]
