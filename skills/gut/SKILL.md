@@ -54,6 +54,7 @@ class Team(Enum):
 | a small LLM on this machine | `gut.TransformersBackend("Qwen/Qwen3-0.6B")` | `gutfeel[local]` |
 | a model already served (Ollama, vLLM, llama.cpp) | `gut.OpenAICompatibleBackend(name, base_url=...)` | core |
 | OpenAI | `gut.OpenAICompatibleBackend("gpt-4.1-nano")` | core |
+| OpenAI's Decisions API (`gpt-6-luna`, typed answers) | `gut.OpenAIDecisionsBackend()` | core |
 | cheap first, bigger only when unsure | `gut.Cascade(small, bigger)` | core |
 | tests | `gut.FakeBackend(answers={...})` | core |
 

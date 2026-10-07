@@ -41,6 +41,7 @@ The documentation is also published at https://gutpy.dev/docs/.
 - `alikely` / `aclassify` / `arate`, `each(...).alikely(...)`, `judge.aresolve()` — the same, awaitable.
 - `JevBackend` — TypeSafe's Jev, the default; `.openrouter()` and `.ollaya(model)` reach it, or open models like it, elsewhere. `ZeroShotBackend`, `TransformersBackend` — models in
   your process. `OpenAICompatibleBackend` — Ollama, vLLM, llama.cpp, OpenAI.
+  `OpenAIDecisionsBackend` — OpenAI's Decisions API (`gpt-6-luna`), typed answers like Jev's.
 - `Cascade(small, bigger)` — the cheap model first; only unsure answers go on.
 - `FakeBackend` — develop and test with no model at all.
 - `configure(on_decision=...)` and `decision.to_dict()` — see every decision as it is made.

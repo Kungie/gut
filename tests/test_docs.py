@@ -177,7 +177,13 @@ def test_every_link_in_the_docs_resolves() -> None:
 # --------------------------------------------------------------------------- the claims
 
 
-BACKENDS = ("ZeroShotBackend", "TransformersBackend", "OpenAICompatibleBackend", "JevBackend")
+BACKENDS = (
+    "ZeroShotBackend",
+    "TransformersBackend",
+    "OpenAICompatibleBackend",
+    "OpenAIDecisionsBackend",
+    "JevBackend",
+)
 
 
 def test_the_readmes_links_work_on_pypi_too() -> None:

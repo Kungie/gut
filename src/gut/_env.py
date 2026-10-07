@@ -6,7 +6,7 @@ and the MCP server. A library user configures a backend in code instead.
 | `TYPESAFE_API_KEY` | use TypeSafe's Jev -- the default whenever it is set |
 | `GUT_BACKEND` | one of `gut._env.BACKENDS`: `jev`, `openrouter`, `ollaya`, `ollama`, ... |
 | `GUT_MODEL` | the model to ask, for backends that take one |
-| `GUT_BASE_URL` | a server's URL, for `ollaya`, `clm`, `openai` and `ollama` |
+| `GUT_BASE_URL` | a server's URL, for `ollaya`, `clm`, `openai`, `openai-decisions` and `ollama` |
 """
 
 from __future__ import annotations
@@ -25,6 +25,7 @@ BACKENDS: Final = (
     "ollaya",
     "clm",
     "openai",
+    "openai-decisions",
     "ollama",
     "zeroshot",
     "transformers",
@@ -40,6 +41,7 @@ NO_MODEL: Final = (
     '  GUT_BACKEND="clm"                             CLM, on its own clm-serve\n'
     '  GUT_BACKEND="ollama", GUT_MODEL="qwen3:0.6b"  a local Ollama server\n'
     '  GUT_BACKEND="openai", GUT_MODEL="..."         OpenAI, or any server via GUT_BASE_URL\n'
+    '  GUT_BACKEND="openai-decisions"                OpenAI\'s Decisions API (OPENAI_API_KEY)\n'
     '  GUT_BACKEND="zeroshot"                        a local NLI model, with gutfeel[local]\n'
     "See https://gutpy.dev/docs/backends.html"
 )
@@ -78,6 +80,10 @@ def backend_from_env(env: Mapping[str, str]) -> Backend | None:
         if name == "openrouter":
             return JevBackend.openrouter(model=model, api_key=env.get("OPENROUTER_API_KEY"))
         return JevBackend(model=model, base_url=base_url)
+    if name == "openai-decisions":
+        from gut._backends.decisions import DECISIONS_MODEL, OpenAIDecisionsBackend
+
+        return OpenAIDecisionsBackend(model or DECISIONS_MODEL, base_url=base_url)
     if name in ("openai", "ollama"):
         if model is None:
             raise ConfigurationError(f"GUT_BACKEND={name} needs GUT_MODEL, the model to ask.")

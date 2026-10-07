@@ -18,6 +18,7 @@ gut.configure(backend=gut.JevBackend())
 | [`ZeroShotBackend`](#zeroshotbackend) | in your process, CPU is fine | `gutfeel[local]` | yes/no and routing on short text, for free, offline |
 | [`TransformersBackend`](#transformersbackend) | in your process, GPU helps | `gutfeel[local]` | you want a small language model and no server |
 | [`OpenAICompatibleBackend`](#openaicompatiblebackend) | Ollama, vLLM, llama.cpp, OpenAI | core | a model is already served somewhere |
+| [`OpenAIDecisionsBackend`](#openaidecisionsbackend) | OpenAI's Decisions API | core | you have an OpenAI key and want typed answers, not log-probabilities |
 | [`Cascade`](#cascade) | wherever its stages run | core | cheap model first, bigger only when unsure |
 | [`FakeBackend`](#fakebackend) | nowhere | core | tests and offline work |
 | [your own](#writing-your-own) | anywhere | -- | you have a model, or a rule, `gut` does not know |
@@ -196,6 +197,41 @@ better cheap model. To check your own server, run the live tests against it:
 
 `OPENAI_API_KEY` is sent only to OpenAI, or to `OPENAI_BASE_URL` if you set one. Point the backend
 anywhere else and it sends no key unless you pass `api_key=`.
+
+## `OpenAIDecisionsBackend`
+
+OpenAI's [Decisions API](https://developers.openai.com/api/docs/guides/decisions) answers typed
+questions the way Jev does: a probability for a yes/no question, a distribution over options, a
+score against ordered levels. So `gut` hands it the question as it is, with no prompt to build and
+no label to read.
+
+```python
+import gut
+
+gut.OpenAIDecisionsBackend()                                        # gpt-6-luna
+gut.OpenAIDecisionsBackend(base_url="https://gateway.example/v1")   # a gateway serving /decisions
+```
+
+It is in the core, with nothing extra to install, and reads `OPENAI_API_KEY` under the same rule as
+the backend above: sent to OpenAI, or to `OPENAI_BASE_URL` if you set one, and nowhere else unless
+you pass `api_key=`. Every question about one subject goes in a single request and billing is on
+input only, so `@semantic`, `judge()` and `each()` pay off the way they do on Jev. `gut` never picks
+it on its own: an OpenAI key on a machine says nothing about wanting to spend it here.
+
+The API is in public beta, and a few things follow from that and from its shape:
+
+- **One model.** `gpt-6-luna` is the only one it serves so far, and the default here.
+- **It may decline a question.** That is a `BackendError`, never a guessed answer, so in a
+  `Cascade` the question moves on to the next stage.
+- **Tokens, not dollars.** It reports what a call read but not what it cost, so `gut.usage()`
+  counts its calls as unpriced and `--max-cost` stops after the first one and says why.
+- **Text only.** The API also reads images; `gut`'s subjects are text and JSON.
+- **Its limits are not published** -- questions per request, options, levels. `gut` enforces only
+  its own, and what the server refuses comes back as a `BackendError` with its explanation.
+
+`yes_means` and `no_means` are added to the question's text, since a predicate has no field for
+them. `gut` is tested against a stand-in that answers the way OpenAI's guide says the API does, not
+against the API itself.
 
 ## `Cascade`
 

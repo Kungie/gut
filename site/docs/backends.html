@@ -68,6 +68,7 @@
       <li><a href="#zeroshotbackend">ZeroShotBackend</a></li>
       <li><a href="#transformersbackend">TransformersBackend</a></li>
       <li><a href="#openaicompatiblebackend">OpenAICompatibleBackend</a></li>
+      <li><a href="#openaidecisionsbackend">OpenAIDecisionsBackend</a></li>
       <li><a href="#cascade">Cascade</a></li>
       <li><a href="#fakebackend">FakeBackend</a></li>
       <li><a href="#writing-your-own">Writing your own</a></li>
@@ -84,7 +85,7 @@
 <span class="l"> </span>
 <span class="l">gut.<span class="f">configure</span>(backend=gut.<span class="f">JevBackend</span>())</span></code></pre>
 </figure>
-    <div class="doc-table"><table class="band-table"><thead><tr><th>backend</th><th>runs</th><th>install</th><th>reach for it when</th></tr></thead><tbody><tr><td><a href="#jevbackend"><code class="inline-code">JevBackend</code></a></td><td>TypeSafe AI's API, <a href="#through-openrouter">OpenRouter</a>, or <a href="#on-your-own-machine-through-ollaya">Ollaya</a> on your machine</td><td><code class="inline-code">gutfeel[jev]</code></td><td>the default: a model built for exactly these questions</td></tr><tr><td><a href="#zeroshotbackend"><code class="inline-code">ZeroShotBackend</code></a></td><td>in your process, CPU is fine</td><td><code class="inline-code">gutfeel[local]</code></td><td>yes/no and routing on short text, for free, offline</td></tr><tr><td><a href="#transformersbackend"><code class="inline-code">TransformersBackend</code></a></td><td>in your process, GPU helps</td><td><code class="inline-code">gutfeel[local]</code></td><td>you want a small language model and no server</td></tr><tr><td><a href="#openaicompatiblebackend"><code class="inline-code">OpenAICompatibleBackend</code></a></td><td>Ollama, vLLM, llama.cpp, OpenAI</td><td>core</td><td>a model is already served somewhere</td></tr><tr><td><a href="#cascade"><code class="inline-code">Cascade</code></a></td><td>wherever its stages run</td><td>core</td><td>cheap model first, bigger only when unsure</td></tr><tr><td><a href="#fakebackend"><code class="inline-code">FakeBackend</code></a></td><td>nowhere</td><td>core</td><td>tests and offline work</td></tr><tr><td><a href="#writing-your-own">your own</a></td><td>anywhere</td><td>—</td><td>you have a model, or a rule, <code class="inline-code">gut</code> does not know</td></tr></tbody></table></div>
+    <div class="doc-table"><table class="band-table"><thead><tr><th>backend</th><th>runs</th><th>install</th><th>reach for it when</th></tr></thead><tbody><tr><td><a href="#jevbackend"><code class="inline-code">JevBackend</code></a></td><td>TypeSafe AI's API, <a href="#through-openrouter">OpenRouter</a>, or <a href="#on-your-own-machine-through-ollaya">Ollaya</a> on your machine</td><td><code class="inline-code">gutfeel[jev]</code></td><td>the default: a model built for exactly these questions</td></tr><tr><td><a href="#zeroshotbackend"><code class="inline-code">ZeroShotBackend</code></a></td><td>in your process, CPU is fine</td><td><code class="inline-code">gutfeel[local]</code></td><td>yes/no and routing on short text, for free, offline</td></tr><tr><td><a href="#transformersbackend"><code class="inline-code">TransformersBackend</code></a></td><td>in your process, GPU helps</td><td><code class="inline-code">gutfeel[local]</code></td><td>you want a small language model and no server</td></tr><tr><td><a href="#openaicompatiblebackend"><code class="inline-code">OpenAICompatibleBackend</code></a></td><td>Ollama, vLLM, llama.cpp, OpenAI</td><td>core</td><td>a model is already served somewhere</td></tr><tr><td><a href="#openaidecisionsbackend"><code class="inline-code">OpenAIDecisionsBackend</code></a></td><td>OpenAI's Decisions API</td><td>core</td><td>you have an OpenAI key and want typed answers, not log-probabilities</td></tr><tr><td><a href="#cascade"><code class="inline-code">Cascade</code></a></td><td>wherever its stages run</td><td>core</td><td>cheap model first, bigger only when unsure</td></tr><tr><td><a href="#fakebackend"><code class="inline-code">FakeBackend</code></a></td><td>nowhere</td><td>core</td><td>tests and offline work</td></tr><tr><td><a href="#writing-your-own">your own</a></td><td>anywhere</td><td>—</td><td>you have a model, or a rule, <code class="inline-code">gut</code> does not know</td></tr></tbody></table></div>
     <p>Every real backend is imported on first use, so <code class="inline-code">import gut</code> never loads PyTorch, an HTTP client or a vendor SDK you did not ask for.</p>
     <h2 id="jevbackend"><span class="sc">2.1</span><code class="inline-code">JevBackend</code></h2>
     <p>The model <code class="inline-code">gut</code> is designed around. TypeSafe AI's Jev answers typed questions natively — a probability for a yes/no question, a distribution over options, a score on a rubric — so <code class="inline-code">gut</code> hands it the question as it is: no prompt, no labels, nothing to read out of generated text. It takes every question about one subject in a single request and bills on input only, which makes batching with <code class="inline-code">@semantic</code>, <code class="inline-code">judge()</code> and <code class="inline-code">each()</code> close to free.</p>
@@ -177,10 +178,23 @@
     <p>Log-probabilities are the one hard requirement. OpenAI's reasoning models (the o-series and <code class="inline-code">gpt-5</code>) do not return them, and Ollama needs 0.12.11 or later. A server that leaves them out gets a <code class="inline-code">BackendError</code> saying so, never a guessed answer. Choices are labelled A to Z on this backend, so they are capped at 26 options.</p>
     <p>Tried against Ollama 0.34: <code class="inline-code">qwen2.5:1.5b</code> got every obvious case right; <code class="inline-code">qwen2.5:0.5b</code> answered "no" to nearly everything, spam included. Below about a billion parameters, the NLI backend is the better cheap model. To check your own server, run the live tests against it: <code class="inline-code">GUT_LIVE_BASE_URL=http://localhost:11434/v1 GUT_LIVE_MODEL=qwen2.5:1.5b pytest -m live</code>.</p>
     <p><code class="inline-code">OPENAI_API_KEY</code> is sent only to OpenAI, or to <code class="inline-code">OPENAI_BASE_URL</code> if you set one. Point the backend anywhere else and it sends no key unless you pass <code class="inline-code">api_key=</code>.</p>
-    <h2 id="cascade"><span class="sc">2.5</span><code class="inline-code">Cascade</code></h2>
-    <p>Ask the cheapest model first, and pass on only what it is unsure of:</p>
+    <h2 id="openaidecisionsbackend"><span class="sc">2.5</span><code class="inline-code">OpenAIDecisionsBackend</code></h2>
+    <p>OpenAI's <a href="https://developers.openai.com/api/docs/guides/decisions">Decisions API</a> answers typed questions the way Jev does: a probability for a yes/no question, a distribution over options, a score against ordered levels. So <code class="inline-code">gut</code> hands it the question as it is, with no prompt to build and no label to read.</p>
     <figure class="listing">
   <figcaption class="listing-head" style="margin:0;font:12px/1.3 var(--mono)"><span>python</span><span>listing 2.10</span></figcaption>
+  <pre><code><span class="l"><span class="k">import</span> gut</span>
+<span class="l"> </span>
+<span class="l">gut.<span class="f">OpenAIDecisionsBackend</span>()                                        <span class="c"># gpt-6-luna</span></span>
+<span class="l">gut.<span class="f">OpenAIDecisionsBackend</span>(base_url=<span class="s">&quot;https://gateway.example/v1&quot;</span>)   <span class="c"># a gateway serving /decisions</span></span></code></pre>
+</figure>
+    <p>It is in the core, with nothing extra to install, and reads <code class="inline-code">OPENAI_API_KEY</code> under the same rule as the backend above: sent to OpenAI, or to <code class="inline-code">OPENAI_BASE_URL</code> if you set one, and nowhere else unless you pass <code class="inline-code">api_key=</code>. Every question about one subject goes in a single request and billing is on input only, so <code class="inline-code">@semantic</code>, <code class="inline-code">judge()</code> and <code class="inline-code">each()</code> pay off the way they do on Jev. <code class="inline-code">gut</code> never picks it on its own: an OpenAI key on a machine says nothing about wanting to spend it here.</p>
+    <p>The API is in public beta, and a few things follow from that and from its shape:</p>
+    <ul><li><strong>One model.</strong> <code class="inline-code">gpt-6-luna</code> is the only one it serves so far, and the default here.</li><li><strong>It may decline a question.</strong> That is a <code class="inline-code">BackendError</code>, never a guessed answer, so in a <code class="inline-code">Cascade</code> the question moves on to the next stage.</li><li><strong>Tokens, not dollars.</strong> It reports what a call read but not what it cost, so <code class="inline-code">gut.usage()</code> counts its calls as unpriced and <code class="inline-code">--max-cost</code> stops after the first one and says why.</li><li><strong>Text only.</strong> The API also reads images; <code class="inline-code">gut</code>'s subjects are text and JSON.</li><li><strong>Its limits are not published</strong> — questions per request, options, levels. <code class="inline-code">gut</code> enforces only its own, and what the server refuses comes back as a <code class="inline-code">BackendError</code> with its explanation.</li></ul>
+    <p><code class="inline-code">yes_means</code> and <code class="inline-code">no_means</code> are added to the question's text, since a predicate has no field for them. <code class="inline-code">gut</code> is tested against a stand-in that answers the way OpenAI's guide says the API does, not against the API itself.</p>
+    <h2 id="cascade"><span class="sc">2.6</span><code class="inline-code">Cascade</code></h2>
+    <p>Ask the cheapest model first, and pass on only what it is unsure of:</p>
+    <figure class="listing">
+  <figcaption class="listing-head" style="margin:0;font:12px/1.3 var(--mono)"><span>python</span><span>listing 2.11</span></figcaption>
   <pre><code><span class="l"><span class="k">import</span> gut</span>
 <span class="l"> </span>
 <span class="l">gut.<span class="f">configure</span>(backend=gut.<span class="f">Cascade</span>(</span>
@@ -193,10 +207,10 @@
 </figure>
     <p>Whatever reaches the last stage is kept. A stage that fails — a server that is down, a choice with more options than a model can label — hands its questions on too, so a cascade doubles as a fallback chain. It is an ordinary backend: <code class="inline-code">@semantic</code> hands it a whole batch, the cache stores its answers, and <code class="inline-code">decision.model</code> names the stage that actually answered. <code class="inline-code">cascade.answered_by</code> counts answers per model — the number that shows what the cheap stage saved.</p>
     <p>The band is the cascade's own. Your <code class="inline-code">stakes</code> and <code class="inline-code">ask_human</code> still apply to the final answer, so what the last model is unsure of can still reach a person.</p>
-    <h2 id="fakebackend"><span class="sc">2.6</span><code class="inline-code">FakeBackend</code></h2>
+    <h2 id="fakebackend"><span class="sc">2.7</span><code class="inline-code">FakeBackend</code></h2>
     <p>Answers from fixtures, counts its calls, and never touches a model. It is strict: a question with no fixture raises rather than inventing a probability.</p>
     <figure class="listing">
-  <figcaption class="listing-head" style="margin:0;font:12px/1.3 var(--mono)"><span>python</span><span>listing 2.11</span></figcaption>
+  <figcaption class="listing-head" style="margin:0;font:12px/1.3 var(--mono)"><span>python</span><span>listing 2.12</span></figcaption>
   <pre><code><span class="l"><span class="k">import</span> gut</span>
 <span class="l"> </span>
 <span class="l">backend = gut.<span class="f">FakeBackend</span>(answers={</span>
@@ -208,10 +222,10 @@
 <span class="l"> </span>
 <span class="l">gut.<span class="f">configure</span>(backend=gut.<span class="f">FakeBackend</span>(rule=gut.deterministic_rule))  <span class="c"># any question, stable answers</span></span></code></pre>
 </figure>
-    <h2 id="writing-your-own"><span class="sc">2.7</span>Writing your own</h2>
+    <h2 id="writing-your-own"><span class="sc">2.8</span>Writing your own</h2>
     <p>A backend is two members: a <code class="inline-code">model_id</code>, and an <code class="inline-code">ask()</code> that takes one subject and a batch of named questions and returns one answer per name. Here is the keyword rule you already had, as the free first stage of a cascade:</p>
     <figure class="listing">
-  <figcaption class="listing-head" style="margin:0;font:12px/1.3 var(--mono)"><span>python</span><span>listing 2.12</span></figcaption>
+  <figcaption class="listing-head" style="margin:0;font:12px/1.3 var(--mono)"><span>python</span><span>listing 2.13</span></figcaption>
   <pre><code><span class="l"><span class="k">import</span> re</span>
 <span class="l"> </span>
 <span class="l"><span class="k">import</span> gut</span>

@@ -38,6 +38,7 @@ export GUT_BACKEND=zeroshot                                # on your machine, fr
 export GUT_BACKEND=ollaya GUT_MODEL=winnow:e4b              # an open decision model, on Ollaya
 export GUT_BACKEND=clm                                     # CLM, on its own clm-serve
 export GUT_BACKEND=ollama GUT_MODEL=qwen3:0.6b             # a local Ollama server
+export GUT_BACKEND=openai-decisions OPENAI_API_KEY=...     # OpenAI's Decisions API
 ```
 
 `--backend` and `--model` override them for one run. Jev, OpenRouter and Ollaya need the `jev`

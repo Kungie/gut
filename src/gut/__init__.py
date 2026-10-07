@@ -63,6 +63,7 @@ from gut._semantic import Plan, PlannedQuestion, semantic
 from gut._usage import Usage, usage
 
 if TYPE_CHECKING:
+    from gut._backends.decisions import OpenAIDecisionsBackend as OpenAIDecisionsBackend
     from gut._backends.jev import JevBackend as JevBackend
     from gut._backends.local import TransformersBackend as TransformersBackend
     from gut._backends.local import ZeroShotBackend as ZeroShotBackend
@@ -102,6 +103,7 @@ __all__ = [
     "NoulSpec",
     "NullCache",
     "OpenAICompatibleBackend",
+    "OpenAIDecisionsBackend",
     "Outcome",
     "Plan",
     "PlannedQuestion",

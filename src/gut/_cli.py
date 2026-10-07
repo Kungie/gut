@@ -359,7 +359,7 @@ def parser() -> tuple[argparse.ArgumentParser, dict[str, argparse.ArgumentParser
         prog="gut",
         description="Judgment calls over lines of text, answered by a small, fast, cheap model.",
         epilog="The model: TYPESAFE_API_KEY for Jev, or GUT_BACKEND (jev, openrouter, ollaya, "
-        "openai, ollama, zeroshot, transformers) with GUT_MODEL. "
+        "openai, openai-decisions, ollama, zeroshot, transformers) with GUT_MODEL. "
         "Docs: https://gutpy.dev/docs/cli.html",
     )
     top.add_argument("--version", action="version", version=f"gut {__version__}")

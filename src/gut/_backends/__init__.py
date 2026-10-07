@@ -21,6 +21,7 @@ from gut._backends.cascade import Cascade
 from gut._backends.fake import FakeBackend, RecordedCall, deterministic_rule
 
 if TYPE_CHECKING:
+    from gut._backends.decisions import OpenAIDecisionsBackend as OpenAIDecisionsBackend
     from gut._backends.jev import JevBackend as JevBackend
     from gut._backends.local import TransformersBackend as TransformersBackend
     from gut._backends.local import ZeroShotBackend as ZeroShotBackend
@@ -29,6 +30,7 @@ if TYPE_CHECKING:
 LAZY: dict[str, str] = {
     "JevBackend": "gut._backends.jev",
     "OpenAICompatibleBackend": "gut._backends.openai",
+    "OpenAIDecisionsBackend": "gut._backends.decisions",
     "TransformersBackend": "gut._backends.local",
     "ZeroShotBackend": "gut._backends.local",
 }
@@ -44,6 +46,7 @@ __all__ = [
     "JevBackend",
     "NoulAnswer",
     "OpenAICompatibleBackend",
+    "OpenAIDecisionsBackend",
     "RecordedCall",
     "ScoreAnswer",
     "TransformersBackend",

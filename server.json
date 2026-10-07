@@ -28,7 +28,7 @@
         },
         {
           "name": "GUT_BACKEND",
-          "description": "Another model: openrouter, ollaya, clm, ollama, openai, zeroshot or transformers",
+          "description": "Another model: openrouter, ollaya, clm, ollama, openai, openai-decisions, zeroshot or transformers",
           "isRequired": false
         },
         {

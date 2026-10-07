@@ -74,6 +74,7 @@ gut.configure(backend=gut.TransformersBackend("Qwen/Qwen3-0.6B"))  # small LLM, 
 gut.configure(backend=gut.OpenAICompatibleBackend(                 # Ollama, vLLM, llama.cpp
     "qwen2.5:1.5b", base_url="http://localhost:11434/v1"))
 gut.configure(backend=gut.OpenAICompatibleBackend("gpt-4.1-nano")) # OpenAI
+gut.configure(backend=gut.OpenAIDecisionsBackend())                # OpenAI's Decisions API
 ```
 
 Or several at once. `Cascade` asks the cheapest model first and passes on only what it is unsure of:
@@ -115,5 +116,4 @@ npx skills add Kungie/gut --skill gut     # teaches a coding agent when to reach
 
 ## Status and license
 
-Pre-1.0, Apache-2.0. Every code block in these docs runs in the test suite ·
-[contributing](https://github.com/Kungie/gut/blob/main/CONTRIBUTING.md)
+Pre-1.0, Apache-2.0. Every code block in these docs runs in the test suite · [contributing](https://github.com/Kungie/gut/blob/main/CONTRIBUTING.md)
