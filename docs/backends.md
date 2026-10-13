@@ -75,8 +75,10 @@ import gut
 gut.configure(backend=gut.JevBackend.ollaya("winnow:e4b"))   # after: ollaya pull winnow:e4b
 ```
 
-It finds the server where Ollaya's own `OLLAYA_HOST` says (`127.0.0.1:11435` by default), and uses
-`OLLAYA_API_KEY` if the server set one. Its calls count as free in `gut.usage()`. Name the model you
+It finds the server where Ollaya's own `OLLAYA_HOST` says (`127.0.0.1:11435` by default), read the
+way Ollaya reads it: `localhost`, `:8080` and `https://example.com/ollaya` all work, and a host
+with no port means 11435. It uses `OLLAYA_API_KEY` if the server set one. Its calls count as free
+in `gut.usage()`. Name the model you
 pulled: Ollaya has none called Jev's default. The open models are smaller than Jev, with shorter
 contexts -- `laya:en` reads 512 tokens, and a longer text is refused rather than cut -- so they pair
 well with a `Cascade`: the local model settles what it is sure of, and Jev sees the rest.
@@ -85,10 +87,16 @@ well with a `Cascade`: the local model settles what it is sure of, and Jev sees 
 import gut
 
 gut.configure(backend=gut.Cascade(
-    gut.JevBackend.ollaya("laya"),   # local, about 10 ms
+    gut.JevBackend.ollaya("laya"),   # local: about 10 ms on a GPU
     gut.JevBackend(),                # only what the first was unsure of
 ))
 ```
+
+That figure is Ollaya's for an NVIDIA GPU. On a CPU `laya` takes a few hundred milliseconds, and it
+is still the model Ollaya suggests there: `winnow:e4b` without a GPU is much slower. The cascade's
+`unsure_band` does not carry over from one model to another either, since how often an answer at a
+given probability is right depends on the model and the task. Set it for the local model you use,
+on a few examples of your own whose answers you know.
 
 On a Mac with a system HTTP proxy, set `NO_PROXY=localhost,127.0.0.1`, or requests to Ollaya go
 through the proxy.

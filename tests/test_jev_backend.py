@@ -577,6 +577,17 @@ def test_ollaya_asks_a_local_server_and_calls_it_free(
         ("0.0.0.0:11435", "http://127.0.0.1:11435/v1/systemone"),
         ("gpu-box:9000", "http://gpu-box:9000/v1/systemone"),
         ("https://decide.example.com/", "https://decide.example.com/v1/systemone"),
+        # Ollaya's own rules for a missing port or host, from its crates/ollaya-api/src/host.rs.
+        ("0.0.0.0", "http://127.0.0.1:11435/v1/systemone"),
+        ("localhost", "http://localhost:11435/v1/systemone"),
+        (":8080", "http://127.0.0.1:8080/v1/systemone"),
+        ("example.com:80", "http://example.com/v1/systemone"),
+        ("http://example.com", "http://example.com:11435/v1/systemone"),
+        ("HTTPS://example.com:8443/ollaya/", "https://example.com:8443/ollaya/v1/systemone"),
+        ("[::1]:9000", "http://[::1]:9000/v1/systemone"),
+        ("[::1]", "http://[::1]:11435/v1/systemone"),
+        ("::1", "http://[::1]:11435/v1/systemone"),
+        ("  10.0.0.5:1234  ", "http://10.0.0.5:1234/v1/systemone"),
     ],
 )
 def test_ollaya_follows_ollaya_host(
@@ -589,6 +600,24 @@ def test_ollaya_follows_ollaya_host(
     JevBackend.ollaya("laya").ask("text", {"q": BUG})
     assert str(seen[0].url) == expected
     assert seen[0].headers["authorization"] == "Bearer server-key"
+
+
+@pytest.mark.parametrize(
+    ("host", "reason"),
+    [
+        ("ftp://x", "the scheme must be http or https"),
+        ("host:99999", "the port must be 0-65535"),
+        ("host:", "the port must be 0-65535"),
+        ("host:http", "the port must be 0-65535"),
+        ("[::1", "unclosed"),
+        ("[::1]x", "junk after"),
+        ("a b:1", "the host contains invalid characters"),
+        ("user@host", "the host contains invalid characters"),
+    ],
+)
+def test_ollaya_refuses_a_host_ollaya_would_refuse(host: str, reason: str) -> None:
+    with pytest.raises(BackendError, match=f"OLLAYA_HOST.*{reason}"):
+        JevBackend.ollaya("laya", host=host)
 
 
 def test_ollaya_needs_a_model_named() -> None:

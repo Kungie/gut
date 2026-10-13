@@ -115,16 +115,17 @@
 <span class="l"> </span>
 <span class="l">gut.<span class="f">configure</span>(backend=gut.JevBackend.ollaya(<span class="s">&quot;winnow:e4b&quot;</span>))   <span class="c"># after: ollaya pull winnow:e4b</span></span></code></pre>
 </figure>
-    <p>It finds the server where Ollaya's own <code class="inline-code">OLLAYA_HOST</code> says (<code class="inline-code">127.0.0.1:11435</code> by default), and uses <code class="inline-code">OLLAYA_API_KEY</code> if the server set one. Its calls count as free in <code class="inline-code">gut.usage()</code>. Name the model you pulled: Ollaya has none called Jev's default. The open models are smaller than Jev, with shorter contexts — <code class="inline-code">laya:en</code> reads 512 tokens, and a longer text is refused rather than cut — so they pair well with a <code class="inline-code">Cascade</code>: the local model settles what it is sure of, and Jev sees the rest.</p>
+    <p>It finds the server where Ollaya's own <code class="inline-code">OLLAYA_HOST</code> says (<code class="inline-code">127.0.0.1:11435</code> by default), read the way Ollaya reads it: <code class="inline-code">localhost</code>, <code class="inline-code">:8080</code> and <code class="inline-code">https://example.com/ollaya</code> all work, and a host with no port means 11435. It uses <code class="inline-code">OLLAYA_API_KEY</code> if the server set one. Its calls count as free in <code class="inline-code">gut.usage()</code>. Name the model you pulled: Ollaya has none called Jev's default. The open models are smaller than Jev, with shorter contexts — <code class="inline-code">laya:en</code> reads 512 tokens, and a longer text is refused rather than cut — so they pair well with a <code class="inline-code">Cascade</code>: the local model settles what it is sure of, and Jev sees the rest.</p>
     <figure class="listing">
   <figcaption class="listing-head" style="margin:0;font:12px/1.3 var(--mono)"><span>python</span><span>listing 2.5</span></figcaption>
   <pre><code><span class="l"><span class="k">import</span> gut</span>
 <span class="l"> </span>
 <span class="l">gut.<span class="f">configure</span>(backend=gut.<span class="f">Cascade</span>(</span>
-<span class="l">    gut.JevBackend.ollaya(<span class="s">&quot;laya&quot;</span>),   <span class="c"># local, about 10 ms</span></span>
+<span class="l">    gut.JevBackend.ollaya(<span class="s">&quot;laya&quot;</span>),   <span class="c"># local: about 10 ms on a GPU</span></span>
 <span class="l">    gut.<span class="f">JevBackend</span>(),                <span class="c"># only what the first was unsure of</span></span>
 <span class="l">))</span></code></pre>
 </figure>
+    <p>That figure is Ollaya's for an NVIDIA GPU. On a CPU <code class="inline-code">laya</code> takes a few hundred milliseconds, and it is still the model Ollaya suggests there: <code class="inline-code">winnow:e4b</code> without a GPU is much slower. The cascade's <code class="inline-code">unsure_band</code> does not carry over from one model to another either, since how often an answer at a given probability is right depends on the model and the task. Set it for the local model you use, on a few examples of your own whose answers you know.</p>
     <p>On a Mac with a system HTTP proxy, set <code class="inline-code">NO_PROXY=localhost,127.0.0.1</code>, or requests to Ollaya go through the proxy.</p>
     <h3 id="clm-on-its-own-server">CLM, on its own server</h3>
     <p><a href="https://github.com/Contrastive-LM/CLM">CLM ↗</a> is an open decision model that scores each option by how well its embedding matches the text's. Its server, <code class="inline-code">clm-serve</code>, speaks TypeSafe's API too:</p>

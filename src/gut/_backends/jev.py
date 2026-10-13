@@ -49,8 +49,9 @@ OPENROUTER_BASE_URL: Final = "https://openrouter.ai/api"
 
 OPENROUTER_MODEL: Final = "~typesafe/jev-latest"
 
-OLLAYA_HOST: Final = "127.0.0.1:11435"
-"""Where Ollaya listens unless `OLLAYA_HOST` says otherwise. It serves TypeSafe's API there."""
+OLLAYA_PORT: Final = 11435
+"""Ollaya's port on this machine, and the one an `OLLAYA_HOST` without a port means. It serves
+TypeSafe's API there."""
 
 CLM_BASE_URL: Final = "http://127.0.0.1:8700"
 """Where `clm-serve` listens unless `CLM_BASE_URL` says otherwise, speaking TypeSafe's API."""
@@ -72,6 +73,61 @@ def _local_address(address: str) -> str:
     if "://" not in address:
         address = f"http://{address}"
     return address.replace("//0.0.0.0", "//127.0.0.1")
+
+
+def _ollaya_address(host: str) -> str:
+    """`OLLAYA_HOST` as the URL to connect to, read the way Ollaya itself reads it.
+
+    Ollaya takes what Ollama takes -- `127.0.0.1:11435`, `0.0.0.0`, `:8080`, `localhost`, `[::1]`,
+    `https://example.com/ollaya` -- and fills in what is left out: no scheme means `http`, no port
+    means 11435 (the scheme's own with `https`), no host means this machine, and a path is kept as
+    a prefix. Reading it any other way sends a host that works for `ollaya` to port 80 from here.
+    The rules are Ollaya's `docs/api.md` section 15, and this follows its `host.rs` case by case.
+
+    One thing differs on purpose: `0.0.0.0` is where a server listens, not somewhere to connect,
+    so it becomes `127.0.0.1`.
+
+    Raises:
+        BackendError: The address is one Ollaya would refuse too.
+    """
+
+    def refused(reason: str) -> BackendError:
+        return BackendError(f"OLLAYA_HOST {host!r} is not an address Ollaya accepts: {reason}.")
+
+    text = host.strip()
+    scheme, separator, rest = text.partition("://")
+    if not separator:
+        scheme, rest = "http", text
+    scheme = scheme.lower()
+    if scheme not in ("http", "https"):
+        raise refused("the scheme must be http or https")
+    hostport, _, path = rest.partition("/")
+    path = f"/{path}".rstrip("/")
+
+    port: str | None = None
+    if hostport.startswith("["):
+        name, closed, after = hostport[1:].partition("]")
+        if not closed:
+            raise refused("unclosed '['")
+        if after and not after.startswith(":"):
+            raise refused("junk after ']'")
+        name, port = f"[{name}]", after[1:] if after else None
+    elif hostport.count(":") > 1:
+        name = f"[{hostport}]"  # a bare IPv6 address, without a port
+    elif ":" in hostport:
+        name, _, port = hostport.rpartition(":")
+    else:
+        name = hostport
+    if port is not None and not (port.isascii() and port.isdigit() and int(port) <= 65535):
+        raise refused("the port must be 0-65535")
+    if any(character.isspace() or character in "@?#" for character in name):
+        raise refused("the host contains invalid characters")
+
+    if name in ("", "0.0.0.0"):
+        name = "127.0.0.1"
+    if port is None and scheme == "http":
+        port = str(OLLAYA_PORT)
+    return f"{scheme}://{name}" + (f":{port}" if port is not None else "") + path
 
 
 """OpenRouter's name for the latest Jev. Pin a version, such as `typesafe/jev-1.13`, to keep it."""
@@ -333,19 +389,20 @@ class JevBackend:
         Args:
             model: The model to ask, as pulled with `ollaya pull`, such as `"winnow:e4b"` or
                 `"laya"`. Required: Ollaya has no model called Jev's default.
-            host: Where Ollaya listens. Defaults to `OLLAYA_HOST`, then `127.0.0.1:11435`.
+            host: Where Ollaya listens, in any form `OLLAYA_HOST` takes: `gpu-box`, `:8080`,
+                `https://example.com/ollaya`. Defaults to `OLLAYA_HOST`, then `127.0.0.1:11435`.
             api_key: Only needed when the server sets `OLLAYA_API_KEY`; read from there by default.
             timeout: Seconds per HTTP operation. The first request to a model waits while it loads.
             max_retries: How often the SDK retries a failed request.
 
         Raises:
-            BackendError: No model was named.
+            BackendError: No model was named, or the host is not an address Ollaya accepts.
         """
         if not model or not model.strip():
             raise BackendError(
                 'Name the Ollaya model to ask, such as JevBackend.ollaya("winnow:e4b") or "laya".'
             )
-        address = _local_address(host or os.environ.get("OLLAYA_HOST", "").strip() or OLLAYA_HOST)
+        address = _ollaya_address(host or os.environ.get("OLLAYA_HOST", ""))
         key = api_key or os.environ.get("OLLAYA_API_KEY", "").strip() or "local"
         backend = cls(
             model=model.strip(),
